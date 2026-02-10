@@ -115,3 +115,8 @@ void Dialog::on_pushButton_next_clicked()
     ui->pushButton_next->hide();
 }
 
+/*开关窗口*/
+void Dialog::toggleVisible()
+{
+    setVisible(!isVisible());
+}

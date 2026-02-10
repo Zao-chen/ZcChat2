@@ -11,6 +11,9 @@ Tachie::Tachie(QWidget *parent)
 {
     ui->setupUi(this);
 
+
+
+
     /*无边框设置*/
     setAttribute(Qt::WA_TranslucentBackground);
     setWindowFlags(Qt::SubWindow | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);

@@ -16,6 +16,9 @@ public:
     explicit Dialog(QWidget *parent = nullptr);
     ~Dialog();
 
+public slots:
+    void toggleVisible();
+
 private slots:
 
     void on_pushButton_next_clicked();
