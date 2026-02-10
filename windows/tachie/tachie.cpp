@@ -3,6 +3,8 @@
 
 #include "../../GlobalConstants.h"
 
+#include "../../utils/DragHelper.h"
+
 Tachie::Tachie(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Tachie)
@@ -12,6 +14,8 @@ Tachie::Tachie(QWidget *parent)
     /*无边框设置*/
     setAttribute(Qt::WA_TranslucentBackground);
     setWindowFlags(Qt::SubWindow | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+
+    new DragHelper(this); // 给窗口添加拖拽功能
 
     QPixmap pixmap;
     pixmap.load(CharacterTachiePath + "/default.png");

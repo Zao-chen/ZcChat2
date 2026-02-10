@@ -1,8 +1,10 @@
 #include "dialog.h"
 #include "ui_dialog.h"
 
-#include "../../utils/CustomScrollBinder.h"
 #include "../../GlobalConstants.h"
+
+#include "../../utils/CustomScrollBinder.h"
+#include "../../utils/DragHelper.h"
 
 #include <QSettings>
 #include <QPainterPath>
@@ -31,31 +33,6 @@ void Dialog::paintEvent(QPaintEvent *event)
         painter.drawPath(shadowPath); //绘制阴影路径
     }
 }
-/*窗口的移动*/
-void Dialog::mousePressEvent(QMouseEvent *event) //鼠标按下事件
-{
-
-    isLeftPressDown = true;
-    this->mouseGrabber(); //返回当前抓取鼠标输入的窗口
-    m_movePoint = event->globalPosition().toPoint() - this->frameGeometry().topLeft();
-}
-void Dialog::mouseMoveEvent(QMouseEvent *event) //鼠标移动事件
-{
-    if(isLeftPressDown) //按下左键时移动到鼠标
-    {
-        move(event->globalPosition().toPoint() - m_movePoint);
-        event->accept();
-    }
-}
-void Dialog::mouseReleaseEvent(QMouseEvent *event) //鼠标释放事件
-{
-    if (event->button() == Qt::LeftButton)
-    {
-        isLeftPressDown = false;
-        this->releaseMouse(); //释放鼠标抓取
-        this->setCursor(QCursor(Qt::ArrowCursor));
-    }
-}
 /*初始化窗口*/
 void Dialog::initWindow()
 {
@@ -68,6 +45,7 @@ void Dialog::initWindow()
     ui->verticalScrollBar->hide();
     //TextEdit的滚动条
     new CustomScrollBinder(ui->textEdit, ui->verticalScrollBar, 5, this);
+    new DragHelper(this); // 给窗口添加拖拽功能
 }
 
 /*构建窗口*/
