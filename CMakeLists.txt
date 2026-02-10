@@ -14,16 +14,16 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
-        setting/mainwindow.cpp
-        setting/mainwindow.h
-        setting/mainwindow.ui
+        windows/setting/mainwindow.cpp
+        windows/setting/mainwindow.h
+        windows/setting/mainwindow.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(ZcChat2
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        pet/dialog.h pet/dialog.cpp pet/dialog.ui
+        windows/pet/dialog.h windows/pet/dialog.cpp windows/pet/dialog.ui
         GlobalConstants.h
         res.qrc
         utils/customscrollbinder.h utils/customscrollbinder.cpp

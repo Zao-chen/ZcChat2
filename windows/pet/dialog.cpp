@@ -1,7 +1,8 @@
 #include "dialog.h"
 #include "ui_dialog.h"
 
-#include "../GlobalConstants.h"
+#include "../../utils/CustomScrollBinder.h"
+#include "../../GlobalConstants.h"
 
 #include <QSettings>
 #include <QPainterPath>
@@ -66,38 +67,7 @@ void Dialog::initWindow()
     ui->pushButton_next->hide();
     ui->verticalScrollBar->hide();
     //TextEdit的滚动条
-    QScrollBar *scroll = ui->textEdit->verticalScrollBar();
-    //范围同步
-    connect(scroll, &QScrollBar::rangeChanged, this, [=](int min, int max)
-            {
-                QSignalBlocker blocker(ui->verticalScrollBar);
-                ui->verticalScrollBar->setRange(min, max / 5);
-                ui->verticalScrollBar->setPageStep(scroll->pageStep() / 5);
-                ui->verticalScrollBar->setSingleStep(qMax(1, scroll->singleStep() / 5));
-                ui->verticalScrollBar->setVisible(max > min);
-            });
-    //拖动时实时更新
-    connect(ui->verticalScrollBar, &QScrollBar::sliderMoved, this, [=](int value)
-            {
-                QSignalBlocker blocker(scroll);
-                scroll->setValue(value * 5);
-                ui->textEdit->viewport()->update(); //更新视口
-            });
-    //点击滚动条空白区域
-    connect(ui->verticalScrollBar, &QScrollBar::actionTriggered, this, [=](int action)
-            {
-                if (action == QScrollBar::SliderPageStepAdd || action == QScrollBar::SliderPageStepSub)
-                {
-                    QSignalBlocker blocker(scroll);
-                    scroll->setValue(ui->verticalScrollBar->value() * 5);
-                    ui->textEdit->viewport()->update();
-                }
-            });
-    //滚动 → 自定义滚动条
-    connect(scroll, &QScrollBar::valueChanged, this, [=](int value) {
-        QSignalBlocker blocker(ui->verticalScrollBar);
-        ui->verticalScrollBar->setValue(value / 5);
-    });
+    new CustomScrollBinder(ui->textEdit, ui->verticalScrollBar, 5, this);
 }
 
 /*构建窗口*/

@@ -1,4 +1,4 @@
-#include "pet/dialog.h"
+#include "windows/pet/dialog.h"
 
 #include <QApplication>
 
