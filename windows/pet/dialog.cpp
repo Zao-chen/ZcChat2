@@ -89,7 +89,8 @@ Dialog::Dialog(QWidget *parent)
     //接收回复
     connect(ai, &AiProvider::replyReceived, [=](const QString &reply)
     {
-        qDebug()<<reply;
+        ui->pushButton_next->show();
+        ui->textEdit->setText(reply);
     });
     //错误处理
     connect(ai, &AiProvider::errorOccurred, [=](const QString &error)
@@ -103,3 +104,36 @@ Dialog::~Dialog()
 {
     delete ui;
 }
+
+/*按键相关*/
+void Dialog::keyPressEvent(QKeyEvent* event)
+{
+    keys.append(event->key());
+}
+void Dialog::keyReleaseEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Return)
+        if (!keys.contains(Qt::Key_Shift)) //过滤Shift换行
+        {
+            //对话框设置
+            ui->label_name->setText("她");
+            ui->textEdit->setEnabled(false);
+            ui->pushButton_next->hide();
+            //去除换行
+            QTextCursor cursor=ui->textEdit->textCursor(); //得到当前text的光标
+            if(cursor.hasSelection()) cursor.clearSelection();
+            cursor.deletePreviousChar(); //删除前一个字符
+            ai->chat(ui->textEdit->toPlainText());
+            ui->textEdit->setText("……");
+        }
+    keys.removeAll(event->key());
+}
+
+void Dialog::on_pushButton_next_clicked()
+{
+    ui->label_name->setText("你");
+    ui->textEdit->clear();
+    ui->textEdit->setEnabled(true);
+    ui->pushButton_next->hide();
+}
+

@@ -258,7 +258,7 @@ QPushButton:pressed {
       <string/>
      </property>
      <property name="icon">
-      <iconset resource="../res.qrc">
+      <iconset resource="../../res.qrc">
        <normaloff>:/res/img/ico/log-24.svg</normaloff>:/res/img/ico/log-24.svg</iconset>
      </property>
     </widget>
@@ -300,7 +300,8 @@ QPushButton:pressed {
      <property name="font">
       <font>
        <family>Microsoft YaHei</family>
-       <pointsize>14</pointsize>
+       <pointsize>16</pointsize>
+       <bold>false</bold>
       </font>
      </property>
      <property name="text">
@@ -317,7 +318,7 @@ QPushButton:pressed {
   </layout>
  </widget>
  <resources>
-  <include location="../res.qrc"/>
+  <include location="../../res.qrc"/>
  </resources>
  <connections/>
 </ui>
