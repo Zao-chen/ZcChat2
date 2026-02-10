@@ -23,6 +23,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(ZcChat2
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        pet/dialog.h pet/dialog.cpp pet/dialog.ui
+        GlobalConstants.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ZcChat2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -42,7 +44,16 @@ else()
     endif()
 endif()
 
-target_link_libraries(ZcChat2 PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+
+# 添加头文件路径
+target_include_directories(ZcChat2 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/include
+)
+
+target_link_libraries(ZcChat2 PRIVATE
+    Qt${QT_VERSION_MAJOR}::Widgets
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/ZcAiLib.lib
+)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

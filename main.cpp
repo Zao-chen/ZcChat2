@@ -1,11 +1,12 @@
-#include "setting/mainwindow.h"
+#include "pet/dialog.h"
 
 #include <QApplication>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;
+
+    Dialog w;
     w.show();
     return a.exec();
 }
