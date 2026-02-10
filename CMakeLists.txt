@@ -23,10 +23,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(ZcChat2
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        windows/pet/dialog.h windows/pet/dialog.cpp windows/pet/dialog.ui
+        windows/dialog/dialog.h windows/dialog/dialog.cpp windows/dialog/dialog.ui
         GlobalConstants.h
         res.qrc
         utils/customscrollbinder.h utils/customscrollbinder.cpp
+        windows/tachie/tachie.h windows/tachie/tachie.cpp windows/tachie/tachie.ui
+        utils/draghelper.h utils/draghelper.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ZcChat2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

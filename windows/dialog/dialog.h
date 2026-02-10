@@ -16,6 +16,9 @@ public:
     explicit Dialog(QWidget *parent = nullptr);
     ~Dialog();
 
+public slots:
+    void toggleVisible();
+
 private slots:
 
     void on_pushButton_next_clicked();
@@ -24,11 +27,6 @@ private:
     /*初始化*/
     //鼠标事件
     virtual void paintEvent(QPaintEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-    bool isLeftPressDown; //判断左键是否按下
-    QPoint m_movePoint; //鼠标的位置
     //键盘事件
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
