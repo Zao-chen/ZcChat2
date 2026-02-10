@@ -80,7 +80,7 @@ Dialog::Dialog(QWidget *parent)
 
 
     //配置文件
-    QSettings settings(Settingpath, QSettings::IniFormat);
+    QSettings settings(SettingPath, QSettings::IniFormat);
 
     /*初始化AI*/
     ai = new AiProvider(this);
