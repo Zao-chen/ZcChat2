@@ -59,6 +59,40 @@
         </widget>
        </item>
        <item>
+        <widget class="ElaScrollPageArea" name="widget_2" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <property name="leftMargin">
+           <number>15</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>15</number>
+          </property>
+          <item>
+           <widget class="ElaText" name="label_6">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>DeepSeek</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="ElaPushButton" name="pushButton_Deepseek_Set">
+            <property name="text">
+             <string>配置</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Orientation::Vertical</enum>
@@ -122,7 +156,7 @@
        </item>
        <item>
         <widget class="ElaScrollPageArea" name="widget_ApiKey_2" native="true">
-         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="2,1,3">
+         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="">
           <property name="leftMargin">
            <number>15</number>
           </property>
@@ -135,42 +169,37 @@
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          <item>
-           <widget class="ElaText" name="label_5">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>模型</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="ElaPushButton" name="pushButton_LoadModelList">
-            <property name="text">
-             <string>刷新</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="ElaComboBox" name="comboBox"/>
-          </item>
          </layout>
         </widget>
        </item>
        <item>
-        <widget class="ElaText" name="label_4">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <property name="topMargin">
+          <number>0</number>
          </property>
-         <property name="text">
-          <string>高级设置</string>
-         </property>
-        </widget>
+         <item>
+          <widget class="ElaText" name="label_4">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>模型列表</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="ElaPushButton" name="pushButton_LoadModelList">
+           <property name="text">
+            <string>刷新</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QListView" name="listView_ModelList"/>
        </item>
        <item>
         <spacer name="verticalSpacer_2">
@@ -180,7 +209,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>349</height>
+           <height>165</height>
           </size>
          </property>
         </spacer>
@@ -224,11 +253,6 @@
    <class>ElaLineEdit</class>
    <extends>QLineEdit</extends>
    <header location="global">elalineedit.h</header>
-  </customwidget>
-  <customwidget>
-   <class>ElaComboBox</class>
-   <extends>QComboBox</extends>
-   <header location="global">elacombobox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
