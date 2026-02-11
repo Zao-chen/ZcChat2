@@ -1,9 +1,11 @@
 #include "windows/dialog/dialog.h"
 #include "windows/tachie/tachie.h"
-#include "windows/setting/mainwindow.h"
+#include "windows/setting/setting.h"
+
+#include "ElaMenu.h"
+#include "ElaApplication.h"
 
 #include <QApplication>
-#include <QMenu>
 #include <QSystemTrayIcon>
 
 int main(int argc, char *argv[])
@@ -24,7 +26,7 @@ int main(int argc, char *argv[])
     QSystemTrayIcon tray;
     tray.setIcon(QIcon(":/res/img/logo/logo.png"));
     tray.setToolTip("ZcChat2");
-    QMenu trayMenu;
+    ElaMenu trayMenu;
     QAction *actionSettings = trayMenu.addAction("设置");
     QAction *actionQuit = trayMenu.addAction("退出");
     tray.setContextMenu(&trayMenu);
@@ -32,7 +34,11 @@ int main(int argc, char *argv[])
     //设置界面懒加载
     QObject::connect(actionSettings, &QAction::triggered, [&]()
     {
-        if (!settings) settings = new MainWindow(&dialogWin);
+        if (!settings)
+        {
+            eApp->init();
+            settings = new MainWindow(&dialogWin);
+        }
         settings->show();
         settings->raise();
         settings->activateWindow();
