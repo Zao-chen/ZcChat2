@@ -1,7 +1,8 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef SETTING_H
+#define SETTING_H
 
 #include <QMainWindow>
+#include "ElaWindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -9,7 +10,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
+class MainWindow : public ElaWindow
 {
     Q_OBJECT
 
@@ -20,4 +21,4 @@ public:
 private:
     Ui::MainWindow *ui;
 };
-#endif // MAINWINDOW_H
+#endif // SETTING_H

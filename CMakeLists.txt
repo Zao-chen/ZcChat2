@@ -14,9 +14,9 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
-        windows/setting/mainwindow.cpp
-        windows/setting/mainwindow.h
-        windows/setting/mainwindow.ui
+        windows/setting/setting.cpp
+        windows/setting/setting.h
+        windows/setting/setting.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -29,6 +29,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         utils/customscrollbinder.h utils/customscrollbinder.cpp
         windows/tachie/tachie.h windows/tachie/tachie.cpp windows/tachie/tachie.ui
         utils/draghelper.h utils/draghelper.cpp
+        windows/setting/child/settingchild_llm.h windows/setting/child/settingchild_llm.cpp windows/setting/child/settingchild_llm.ui
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ZcChat2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -52,11 +54,15 @@ endif()
 # 添加头文件路径
 target_include_directories(ZcChat2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/include
 )
 
 target_link_libraries(ZcChat2 PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/ZcAiLib.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/lib/elawidgettools.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/ZcWidgetTools.lib
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
