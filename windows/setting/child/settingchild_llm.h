@@ -3,6 +3,7 @@
 
 #include "AiProvider.h"
 #include <QWidget>
+#include <QStringListModel>
 
 namespace Ui {
 class SettingChild_LLM;
@@ -27,6 +28,7 @@ private:
     Ui::SettingChild_LLM *ui;
     AiProvider *ai; //用于AI交互
     QString NowSelectServer; //当前正在编辑的模型
+    QStringListModel *modelListModel;
 };
 
 #endif // SETTINGCHILD_LLM_H

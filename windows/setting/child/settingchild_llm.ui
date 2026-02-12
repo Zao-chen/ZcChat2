@@ -155,24 +155,6 @@
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_ApiKey_2" native="true">
-         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="">
-          <property name="leftMargin">
-           <number>15</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>15</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-         </layout>
-        </widget>
-       </item>
-       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <property name="topMargin">
           <number>0</number>
@@ -199,7 +181,57 @@
         </layout>
        </item>
        <item>
-        <widget class="QListView" name="listView_ModelList"/>
+        <widget class="ElaListView" name="listView_ModelList">
+         <property name="styleSheet">
+          <string notr="true">/* 去除滚动条的边框和背景 */
+QScrollBar:vertical {
+    border: none;              /* 去除边框 */
+    background: transparent;   /* 背景透明 */
+    width: 8px;                /* 设置滚动条的宽度 */
+}
+
+QScrollBar::handle:vertical {
+    background: rgba(136, 136, 136, 0.5);
+    border-radius: 4px;
+}
+
+
+/* 滑块悬停时的颜色变化 */
+QScrollBar::handle:vertical:hover {
+    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
+}
+
+/* 去除滚动条上下箭头按钮 */
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    background: transparent; /* 去除上下箭头 */
+    border: none;             /* 去除箭头边框 */
+    height: 0px;              /* 强制去除箭头按钮 */
+}
+
+/* 滚动条轨道样式 */
+QScrollBar::groove:vertical {
+    background: transparent;   /* 设置轨道背景为透明 */
+    border: none;               /* 去除轨道的边框 */
+    width: 8px;                 /* 设置轨道的宽度 */
+}
+
+/* 设置滚动条范围变化时的显示效果 */
+QScrollBar:vertical:disabled {
+    background: transparent;  /* 禁用时的背景色透明 */
+    border: none;              /* 禁用时的边框 */
+}
+</string>
+         </property>
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+         </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::SelectionMode::NoSelection</enum>
+         </property>
+        </widget>
        </item>
        <item>
         <spacer name="verticalSpacer_2">
@@ -253,6 +285,11 @@
    <class>ElaLineEdit</class>
    <extends>QLineEdit</extends>
    <header location="global">elalineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ElaListView</class>
+   <extends>QListView</extends>
+   <header location="global">elalistview.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
