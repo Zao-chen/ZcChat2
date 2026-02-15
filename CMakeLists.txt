@@ -30,6 +30,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         windows/tachie/tachie.h windows/tachie/tachie.cpp windows/tachie/tachie.ui
         utils/draghelper.h utils/draghelper.cpp
         windows/setting/child/settingchild_llm.h windows/setting/child/settingchild_llm.cpp windows/setting/child/settingchild_llm.ui
+        windows/setting/child/settingchild_char.h windows/setting/child/settingchild_char.cpp windows/setting/child/settingchild_char.ui
 
     )
 # Define target properties for Android with Qt 6 as:

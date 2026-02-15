@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SettingChild_Char</class>
+ <widget class="QWidget" name="SettingChild_Char">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>756</width>
+    <height>440</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="ElaBreadcrumbBar" name="BreadcrumbBar" native="true">
+     <property name="font">
+      <font>
+       <pointsize>15</pointsize>
+      </font>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="ElaScrollPageArea" name="widget_ApiKey" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="3,1,2">
+      <property name="leftMargin">
+       <number>15</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>15</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="ElaText" name="label_2">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>选中角色</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="ElaPushButton" name="pushButton_RefreshCharList">
+        <property name="text">
+         <string>刷新</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="ElaComboBox" name="comboBox_CharList"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Orientation::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ElaBreadcrumbBar</class>
+   <extends>QWidget</extends>
+   <header location="global">elabreadcrumbbar.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ElaText</class>
+   <extends>QLabel</extends>
+   <header location="global">elatext.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ElaPushButton</class>
+   <extends>QPushButton</extends>
+   <header location="global">elapushbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ElaScrollPageArea</class>
+   <extends>QWidget</extends>
+   <header location="global">elascrollpagearea.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ElaComboBox</class>
+   <extends>QComboBox</extends>
+   <header location="global">elacombobox.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

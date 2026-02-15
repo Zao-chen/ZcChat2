@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
         if (!settings)
         {
             eApp->init();
-            settings = new MainWindow(&dialogWin);
+            settings = new MainWindow(&dialogWin, &tachieWin, &dialogWin);
         }
         settings->show();
         settings->raise();
