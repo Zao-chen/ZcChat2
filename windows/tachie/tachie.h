@@ -18,6 +18,9 @@ public:
 signals:
     void toggleVisible();  // 信号：请求切换窗口B
 
+public slots:
+    void ReloadCharSelect();
+
 private:
     Ui::Tachie *ui;
 

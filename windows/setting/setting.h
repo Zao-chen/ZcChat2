@@ -4,6 +4,9 @@
 #include <QMainWindow>
 #include "ElaWindow.h"
 
+#include "../tachie/tachie.h"
+#include "../dialog/dialog.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -15,7 +18,7 @@ class MainWindow : public ElaWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent = nullptr);
     ~MainWindow();
 
 private:

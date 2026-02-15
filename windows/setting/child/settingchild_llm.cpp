@@ -12,7 +12,7 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
     ui->setupUi(this);
     /*初始化*/
     ui->BreadcrumbBar->setTextPixelSize(25);
-    ui->BreadcrumbBar->appendBreadcrumb("大模型设置");
+    ui->BreadcrumbBar->appendBreadcrumb("对话模型设置");
     modelListModel = new QStringListModel(this);
     ui->listView_ModelList->setModel(modelListModel);
     ai = new AiProvider(this);

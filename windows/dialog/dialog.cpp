@@ -63,7 +63,7 @@ Dialog::Dialog(QWidget *parent)
     /*初始化AI*/
     ai = new AiProvider(this);
     ai->setServiceType(AiProvider::DeepSeek);
-    ai->setApiKey(settings.value("llm/deepseek/key").toString());  // 替换成你的 Key
+    ai->setApiKey(settings.value("llm/deepseek/ApiKey").toString());  // 替换成你的 Key
     //接收回复
     connect(ai, &AiProvider::replyReceived, [=](const QString &reply)
     {

@@ -10,18 +10,25 @@ Tachie::Tachie(QWidget *parent)
     , ui(new Ui::Tachie)
 {
     ui->setupUi(this);
-
-
-
-
     /*无边框设置*/
     setAttribute(Qt::WA_TranslucentBackground);
     setWindowFlags(Qt::SubWindow | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
 
-    new DragHelper(this); // 给窗口添加拖拽功能
+    new DragHelper(this); //给窗口添加拖拽功能
 
+    ReloadCharSelect(); //重载立绘
+}
+
+Tachie::~Tachie()
+{
+    delete ui;
+}
+
+void Tachie::ReloadCharSelect()
+{
+    qDebug()<<"重载立绘";
     QPixmap pixmap;
-    pixmap.load(CharacterTachiePath + "/default.png");
+    pixmap.load(ReadCharacterTachiePath() + "/default.png");
     //缩放新图片并设置到 label
     QPixmap scaledPixmap = pixmap.scaled(
         pixmap.width() * 1,
@@ -29,9 +36,4 @@ Tachie::Tachie(QWidget *parent)
         Qt::KeepAspectRatio,
         Qt::SmoothTransformation);
     ui->label_tachie1->setPixmap(scaledPixmap);
-}
-
-Tachie::~Tachie()
-{
-    delete ui;
 }
