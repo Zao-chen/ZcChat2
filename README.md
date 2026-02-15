@@ -64,8 +64,8 @@
 
 ZcChat2是一个开源项目。参与ZcChat2项目的方法有很多！
 
-* **为项目做出贡献**：有兴趣做出贡献吗？欢迎[Pull Request](https://github.com/Zao-chen/ZcChat2/pulls)！详情参考[开发指南](https://github.com/Zao-chen/ZcChat/blob/main/CONTRIBUTING.md#-参与开发)。
-* **报告BUG、建议**：有BUG或有功能请求？请通过[Issues](https://github.com/Zao-chen/ZcCha2t/issues)提交它们。详情参考[Issue指南](https://github.com/Zao-chen/ZcChat/blob/main/CONTRIBUTING.md#-提交-Issue)
+* **为项目做出贡献**：有兴趣做出贡献吗？欢迎[Pull Request](https://github.com/Zao-chen/ZcChat2/pulls)！详情参考[开发指南](https://github.com/Zao-chen/ZcChat2/blob/main/CONTRIBUTING.md#-参与开发)。
+* **报告BUG、建议**：有BUG或有功能请求？请通过[Issues](https://github.com/Zao-chen/ZcCha2t/issues)提交它们。详情参考[Issue指南](https://github.com/Zao-chen/ZcChat2/blob/main/CONTRIBUTING.md#-提交-Issue)
 * **或者……**：给项目来一个star⭐怎么样？
 
 🔗 相关链接
