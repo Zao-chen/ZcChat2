@@ -12,7 +12,7 @@ SettingChild_Char::SettingChild_Char(QWidget *parent)
     ui->setupUi(this);
     RefreshCharList();
     //设置默认项
-    QSettings *settings = new QSettings(SettingPath, QSettings::IniFormat, this);
+    QSettings *settings = new QSettings(IniSettingPath, QSettings::IniFormat, this);
     QString defaultChar = settings->value("character/CharSelect", "未选择").toString();
     ui->comboBox_CharList->setCurrentText("defaultChar");
     ui->BreadcrumbBar->appendBreadcrumb("角色设置");
@@ -42,7 +42,7 @@ void SettingChild_Char::RefreshCharList()
 void SettingChild_Char::on_comboBox_CharList_currentTextChanged(const QString &arg1)
 {
     //保存到配置文件
-    QSettings *settings = new QSettings(SettingPath, QSettings::IniFormat, this);
+    QSettings *settings = new QSettings(IniSettingPath, QSettings::IniFormat, this);
     settings->setValue("character/CharSelect", ui->comboBox_CharList->currentText());
     emit requestReloadCharSelect();
 }

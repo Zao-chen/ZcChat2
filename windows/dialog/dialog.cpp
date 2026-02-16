@@ -6,6 +6,7 @@
 #include "../../utils/CustomScrollBinder.h"
 #include "../../utils/DragHelper.h"
 
+#include "ZcJsonLib.h"
 #include <QSettings>
 #include <QPainterPath>
 #include <QPainter>
@@ -56,14 +57,12 @@ Dialog::Dialog(QWidget *parent)
     ui->setupUi(this);
     initWindow();
 
-
-    //配置文件
-    QSettings settings(SettingPath, QSettings::IniFormat);
-
-    /*初始化AI*/
+    ZcJsonLib config(JsonSettingPath);
+    config.load();
     ai = new AiProvider(this);
     ai->setServiceType(AiProvider::DeepSeek);
-    ai->setApiKey(settings.value("llm/deepseek/ApiKey").toString());  // 替换成你的 Key
+    QString apiKey = config.value("llm/deepseek/ApiKey").toString();  // 替换成你的 Key
+    ai->setApiKey(apiKey);
     //接收回复
     connect(ai, &AiProvider::replyReceived, [=](const QString &reply)
     {

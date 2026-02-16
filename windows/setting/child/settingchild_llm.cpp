@@ -3,6 +3,7 @@
 
 #include "../../../GlobalConstants.h"
 
+#include "ZcJsonLib.h"
 #include <QSettings>
 
 SettingChild_LLM::SettingChild_LLM(QWidget *parent)
@@ -35,9 +36,11 @@ void SettingChild_LLM::on_pushButton_Openai_Set_clicked()
     ui->stackedWidget->setCurrentIndex(1);
     NowSelectServer = "OpenAI";
     ui->BreadcrumbBar->appendBreadcrumb(NowSelectServer);
+
     //读取配置
-    QSettings *settings = new QSettings(SettingPath, QSettings::IniFormat, this);
-    QString apiKey = settings->value("llm/" + NowSelectServer + "/ApiKey", "").toString();
+    ZcJsonLib config(JsonSettingPath);
+    QString apiKey = config.value("llm/" + NowSelectServer + "/ApiKey").toString();
+
     ui->lineEdit_ApiKey->setText(apiKey);
     modelListModel->setStringList(QStringList());
 }
@@ -46,9 +49,11 @@ void SettingChild_LLM::on_pushButton_Deepseek_Set_clicked()
     ui->stackedWidget->setCurrentIndex(1);
     NowSelectServer = "DeepSeek";
     ui->BreadcrumbBar->appendBreadcrumb(NowSelectServer);
+
     //读取配置
-    QSettings *settings = new QSettings(SettingPath, QSettings::IniFormat, this);
-    QString apiKey = settings->value("llm/" + NowSelectServer + "/ApiKey", "").toString();
+    ZcJsonLib config(JsonSettingPath);
+    QString apiKey = config.value("llm/" + NowSelectServer + "/ApiKey").toString();
+
     ui->lineEdit_ApiKey->setText(apiKey);
     modelListModel->setStringList(QStringList());
 }
@@ -85,8 +90,7 @@ void SettingChild_LLM::on_pushButton_LoadModelList_clicked()
 /*配置修改*/
 void SettingChild_LLM::on_lineEdit_ApiKey_textChanged(const QString &arg1)
 {
-    //写入配置
-    QSettings *settings = new QSettings(SettingPath, QSettings::IniFormat, this);
-    settings->setValue("llm/" + NowSelectServer + "/ApiKey",arg1);
+    ZcJsonLib config(JsonSettingPath);
+    config.setValue("llm/" + NowSelectServer + "/ApiKey", arg1);
 }
 

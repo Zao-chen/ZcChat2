@@ -78,3 +78,5 @@ ZcChat2是一个开源项目。参与ZcChat2项目的方法有很多！
 - [Zao-chen/ZcAILib: High-performance AI Request Library for Qt](https://github.com/Zao-chen/ZcAILib)
 
 - [Zao-chen/ZcWidgetTools: Extension for ElaWidgetTools adding missing Qt widgets](https://github.com/Zao-chen/ZcWidgetTools)
+
+- [Zao-chen/ZcJsonLib: Lightweight JSON key/value library for Qt, QSettings-style.](https://github.com/Zao-chen/ZcJsonLib)
