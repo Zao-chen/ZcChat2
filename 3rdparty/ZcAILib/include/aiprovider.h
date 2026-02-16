@@ -45,6 +45,10 @@ public:
     // 发送消息
     void chat(const QString &message);
 
+    void setSystemPrompt(const QString &prompt);
+
+    QString m_systemPrompt; // 系统提示词
+
 signals:
     void replyReceived(const QString &reply);
     void errorOccurred(const QString &error);

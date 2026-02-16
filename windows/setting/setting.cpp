@@ -24,7 +24,7 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
 
     //连接
     connect(settingchild_charWin, &SettingChild_Char::requestReloadCharSelect,
-            tachie, &Tachie::ReloadCharSelect);
+            tachie, &Tachie::SetCharTachie);
 
 }
 

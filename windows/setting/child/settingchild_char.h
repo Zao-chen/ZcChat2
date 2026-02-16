@@ -21,7 +21,7 @@ private slots:
     void on_comboBox_CharList_currentTextChanged(const QString &arg1);
 
 signals:
-    void requestReloadCharSelect();
+    void requestReloadCharSelect(QString TachieName);
 
 private:
     Ui::SettingChild_Char *ui;

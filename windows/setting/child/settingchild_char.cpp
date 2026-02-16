@@ -44,6 +44,6 @@ void SettingChild_Char::on_comboBox_CharList_currentTextChanged(const QString &a
     //保存到配置文件
     QSettings *settings = new QSettings(IniSettingPath, QSettings::IniFormat, this);
     settings->setValue("character/CharSelect", ui->comboBox_CharList->currentText());
-    emit requestReloadCharSelect();
+    emit requestReloadCharSelect("default");
 }
 
