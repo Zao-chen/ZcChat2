@@ -6,13 +6,13 @@
 
 //主要是一些可迁移的配置，如APIKey
 inline const QString JsonSettingPath = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
-                                .filePath("ZcChat2/config.json");
-//一些随机子走的无需迁移的配置，如立绘位置
+                                    .filePath("ZcChat2/config.json");
+//一些随机子走的无需迁移的配置，如立绘位置和大小
 inline const QString IniSettingPath = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
-                                .filePath("ZcChat2/config.ini");
-
+                                    .filePath("ZcChat2/config.ini");
+//角色资源位置
 inline const QString CharacterAssestPath = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
-                                               .filePath("ZcChat2/Character/Assets");
+                                    .filePath("ZcChat2/Character/Assets");
 //读取当前选中的角色
 inline QString ReadCharacterTachiePath()
 {

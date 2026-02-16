@@ -29,6 +29,7 @@ void SettingChild_Char::on_pushButton_RefreshCharList_clicked()
     RefreshCharList();
 }
 
+//刷新角色列表
 void SettingChild_Char::RefreshCharList()
 {
     //获取所有角色文件夹并添加到combox
@@ -38,7 +39,7 @@ void SettingChild_Char::RefreshCharList()
     ui->comboBox_CharList->addItems(charFolders);
 }
 
-
+//修改选中角色
 void SettingChild_Char::on_comboBox_CharList_currentTextChanged(const QString &arg1)
 {
     //保存到配置文件

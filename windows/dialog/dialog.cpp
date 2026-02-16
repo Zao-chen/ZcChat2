@@ -142,7 +142,7 @@ void Dialog::on_pushButton_next_clicked()
 }
 
 /*开关窗口*/
-void Dialog::toggleVisible()
+void Dialog::ToggleVisible()
 {
     setVisible(!isVisible());
 }

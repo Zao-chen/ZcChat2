@@ -17,7 +17,6 @@ public:
 
 private slots:
     void on_pushButton_RefreshCharList_clicked();
-
     void on_comboBox_CharList_currentTextChanged(const QString &arg1);
 
 signals:

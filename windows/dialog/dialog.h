@@ -17,7 +17,7 @@ public:
     ~Dialog();
 
 public slots:
-    void toggleVisible();
+    void ToggleVisible();
 
 private slots:
     void on_pushButton_next_clicked();

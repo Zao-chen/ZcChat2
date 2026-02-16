@@ -20,7 +20,9 @@ int main(int argc, char *argv[])
     MainWindow *settings = nullptr;
 
     /*一些绑定*/
-    QObject::connect(&tachieWin, &Tachie::toggleVisible, &dialogWin, &Dialog::toggleVisible);
+    //对话框的开启和关闭
+    QObject::connect(&tachieWin, &Tachie::requestToggleVisible, &dialogWin, &Dialog::ToggleVisible);
+    //修改立绘图片
     QObject::connect(&dialogWin, &Dialog::requestSetCharTachie, &tachieWin, &Tachie::SetCharTachie);
 
     /*托盘*/

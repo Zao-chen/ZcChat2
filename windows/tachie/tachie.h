@@ -16,7 +16,7 @@ public:
     ~Tachie();
 
 signals:
-    void toggleVisible();  // 信号：请求切换窗口B
+    void requestToggleVisible(); //切换对话框的显示状态
 
 public slots:
     void SetCharTachie(QString TachieName = "default");
@@ -24,10 +24,9 @@ public slots:
 private:
     Ui::Tachie *ui;
 
-
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override {
-        emit toggleVisible();  // 发出信号，通知主窗口切换窗口B的可见性
+        emit requestToggleVisible();  //发出信号
     }
 };
 

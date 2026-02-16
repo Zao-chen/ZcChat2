@@ -10,12 +10,13 @@ Tachie::Tachie(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Tachie)
 {
+    /*窗口设置*/
     ui->setupUi(this);
-    /*无边框设置*/
+    //无边框
     setAttribute(Qt::WA_TranslucentBackground);
     setWindowFlags(Qt::SubWindow | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-
-    new DragHelper(this); //给窗口添加拖拽功能
+    //窗口拖拽
+    new DragHelper(this);
 
     //延迟加载立绘
     QTimer::singleShot(0, this, [this]() {
