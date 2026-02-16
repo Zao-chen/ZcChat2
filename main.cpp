@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
 
     /*一些绑定*/
     QObject::connect(&tachieWin, &Tachie::toggleVisible, &dialogWin, &Dialog::toggleVisible);
+    QObject::connect(&dialogWin, &Dialog::requestSetCharTachie, &tachieWin, &Tachie::SetCharTachie);
 
     /*托盘*/
     QSystemTrayIcon tray;

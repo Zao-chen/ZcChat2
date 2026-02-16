@@ -57,23 +57,26 @@ Dialog::Dialog(QWidget *parent)
     ui->setupUi(this);
     initWindow();
 
+    /*AI初始化*/
     ZcJsonLib config(JsonSettingPath);
-    config.load();
     ai = new AiProvider(this);
     ai->setServiceType(AiProvider::DeepSeek);
-    QString apiKey = config.value("llm/deepseek/ApiKey").toString();  // 替换成你的 Key
+    QString apiKey = config.value("llm/DeepSeek/ApiKey").toString();  // 替换成你的 Key
+    qDebug()<<apiKey;
     ai->setApiKey(apiKey);
     //接收回复
     connect(ai, &AiProvider::replyReceived, [=](const QString &reply)
-    {
-        ui->pushButton_next->show();
-        ui->textEdit->setText(reply);
-    });
+            {
+                ui->pushButton_next->show();
+                ui->textEdit->setText(reply.section('|', 1, 1)); //提取中文内容并显示
+                emit requestSetCharTachie(reply.section('|', 0, 0)); //提取心情并发出信号
+            });
     //错误处理
     connect(ai, &AiProvider::errorOccurred, [=](const QString &error)
-    {
-        qDebug()<<error;
-    });
+            {
+                ui->pushButton_next->show();
+                ui->textEdit->setText(error);
+            });
 }
 
 /*解构窗口*/
@@ -100,6 +103,30 @@ void Dialog::keyReleaseEvent(QKeyEvent* event)
             QTextCursor cursor=ui->textEdit->textCursor(); //得到当前text的光标
             if(cursor.hasSelection()) cursor.clearSelection();
             cursor.deletePreviousChar(); //删除前一个字符
+            //读取心情列表
+            QDir dir(ReadCharacterTachiePath());
+            QStringList nameFilters;
+            nameFilters << "*.png" << "*.jpg" << "*.jpeg";
+            QStringList fileNames = dir.entryList(nameFilters, QDir::Files);
+            QString nameListStr;
+            for (const QString &fileName : fileNames)
+            {
+                nameListStr += fileName.section('.', 0, 0) + ", ";
+            }
+            //设置系统提示词
+            ai->setSystemPrompt(
+                QStringLiteral("你是一个桌宠 AI，输出内容必须严格按照以下格式：\n"
+                               "心情|中文|日语\n\n"
+                               "要求：\n"
+                               "1. 心情必须从以下列表中选择：")+ nameListStr + "\n"
+              + QStringLiteral("2. 中文是桌宠此刻想表达的内容\n"
+                               "3. 日语是中文内容的对应翻译\n"
+                               "4. 输出中不能有多余内容或解释，严格用“|”分隔\n\n"
+                               "示例输出：\n"
+                               "快乐|今天的天气真好呀！|今日はいい天気ですね！\n"
+                               "生气|为什么一直打扰我！|なんでずっと邪魔するの！"
+                               )
+            );
             ai->chat(ui->textEdit->toPlainText());
             ui->textEdit->setText("……");
         }

@@ -20,8 +20,10 @@ public slots:
     void toggleVisible();
 
 private slots:
-
     void on_pushButton_next_clicked();
+
+signals:
+    void requestSetCharTachie(QString TachieName);
 
 private:
     /*初始化*/

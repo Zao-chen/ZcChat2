@@ -19,7 +19,7 @@ signals:
     void toggleVisible();  // 信号：请求切换窗口B
 
 public slots:
-    void ReloadCharSelect();
+    void SetCharTachie(QString TachieName = "default");
 
 private:
     Ui::Tachie *ui;
