@@ -57,6 +57,7 @@ target_include_directories(ZcChat2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/include
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/include
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/include
 )
 
 target_link_libraries(ZcChat2 PRIVATE
@@ -64,6 +65,7 @@ target_link_libraries(ZcChat2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/ZcAiLib.lib
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/lib/elawidgettools.lib
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/ZcWidgetTools.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/ZcJsonLib.lib
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
