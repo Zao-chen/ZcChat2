@@ -5,6 +5,8 @@
 
 #include "ZcJsonLib.h"
 #include <QSettings>
+#include <QJsonArray>
+#include <QJsonValue>
 
 SettingChild_LLM::SettingChild_LLM(QWidget *parent)
     : QWidget(parent)
@@ -37,12 +39,20 @@ void SettingChild_LLM::on_pushButton_Openai_Set_clicked()
     NowSelectServer = "OpenAI";
     ui->BreadcrumbBar->appendBreadcrumb(NowSelectServer);
 
-    //读取配置
+    /*读取配置*/
+    //apikey
     ZcJsonLib config(JsonSettingPath);
     QString apiKey = config.value("llm/" + NowSelectServer + "/ApiKey").toString();
-
     ui->lineEdit_ApiKey->setText(apiKey);
     modelListModel->setStringList(QStringList());
+    //模型列表
+     QJsonArray modelIds = config.value("llm/" + NowSelectServer + "/ModelList").toArray();
+     QStringList modelList;
+     for (const auto &modelId : modelIds)
+     {
+         modelList.append(modelId.toString());
+     }
+     modelListModel->setStringList(modelList);
 }
 void SettingChild_LLM::on_pushButton_Deepseek_Set_clicked()
 {
@@ -64,7 +74,7 @@ void SettingChild_LLM::on_BreadcrumbBar_breadcrumbClicked(QString breadcrumb, QS
     ui->stackedWidget->setCurrentIndex(0);
 }
 
-/*刷新模型列表*/
+/*读取模型列表*/
 void SettingChild_LLM::on_pushButton_LoadModelList_clicked()
 {
     /*模型判断和初始化*/
@@ -84,7 +94,17 @@ void SettingChild_LLM::on_pushButton_LoadModelList_clicked()
             list << displayText;
         }
         modelListModel->setStringList(list);
+
+        //保存列表
+        ZcJsonLib config(JsonSettingPath);
+        QJsonArray modelIds;
+        for(const auto &model : models)
+        {
+            modelIds.append(model.id);
+        }
+        config.setValue("llm/" + NowSelectServer + "/ModelList", QJsonValue(modelIds));
     });
+
 }
 
 /*配置修改*/

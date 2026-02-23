@@ -14,6 +14,12 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>12</number>
+   </property>
+   <property name="rightMargin">
+    <number>12</number>
+   </property>
    <item>
     <widget class="ElaBreadcrumbBar" name="BreadcrumbBar" native="true"/>
    </item>
@@ -35,6 +41,9 @@
           </property>
           <property name="rightMargin">
            <number>15</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
           </property>
           <item>
            <widget class="ElaText" name="label">
@@ -69,6 +78,9 @@
           </property>
           <property name="rightMargin">
            <number>15</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
           </property>
           <item>
            <widget class="ElaText" name="label_6">
@@ -174,7 +186,7 @@
          <item>
           <widget class="ElaPushButton" name="pushButton_LoadModelList">
            <property name="text">
-            <string>刷新</string>
+            <string>获取</string>
            </property>
           </widget>
          </item>

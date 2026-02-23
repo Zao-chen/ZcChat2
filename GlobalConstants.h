@@ -13,6 +13,9 @@ inline const QString IniSettingPath = QDir(QStandardPaths::writableLocation(QSta
 //角色资源位置
 inline const QString CharacterAssestPath = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
                                     .filePath("ZcChat2/Character/Assets");
+//角色配置位置
+inline const QString CharacterUserConfigPath = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
+                                               .filePath("ZcChat2/Character/UserConfig");
 //读取当前选中的角色
 inline QString ReadCharacterTachiePath()
 {
