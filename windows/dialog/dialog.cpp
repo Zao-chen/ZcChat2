@@ -44,8 +44,7 @@ void Dialog::initWindow()
     /*内容初始化*/
     ui->pushButton_next->hide();
     ui->verticalScrollBar->hide();
-    //TextEdit的滚动条
-    new CustomScrollBinder(ui->textEdit, ui->verticalScrollBar, 5, this);
+    new CustomScrollBinder(ui->textEdit, ui->verticalScrollBar, 5, this); //TextEdit的滚动条
     new DragHelper(this); // 给窗口添加拖拽功能
 }
 
