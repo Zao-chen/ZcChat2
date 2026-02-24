@@ -25,6 +25,9 @@ private slots:
 signals:
     void requestSetCharTachie(QString TachieName);
 
+public slots:
+    void ReloadAIConfig();
+
 private:
     /*初始化*/
     //鼠标事件
@@ -33,12 +36,10 @@ private:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     QList<int> keys; //按键按键获取
-
     /*主逻辑*/
     void initWindow();
     Ui::Dialog *ui;
     AiProvider *ai; //用于AI交互
-
 };
 
 #endif // DIALOG_H

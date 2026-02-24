@@ -55,11 +55,11 @@ Dialog::Dialog(QWidget *parent)
 {
     ui->setupUi(this);
     initWindow();
-
-    /*AI初始化*/
-    ZcJsonLib config(JsonSettingPath);
     ai = new AiProvider(this);
-    ai->setServiceType(AiProvider::DeepSeek);
+    ReloadAIConfig();
+
+    ZcJsonLib config(JsonSettingPath);
+
     QString apiKey = config.value("llm/DeepSeek/ApiKey").toString();  // 替换成你的 Key
     qDebug()<<apiKey;
     ai->setApiKey(apiKey);
@@ -132,6 +132,7 @@ void Dialog::keyReleaseEvent(QKeyEvent* event)
     keys.removeAll(event->key());
 }
 
+/*点击继续*/
 void Dialog::on_pushButton_next_clicked()
 {
     ui->label_name->setText("你");
@@ -144,4 +145,22 @@ void Dialog::on_pushButton_next_clicked()
 void Dialog::ToggleVisible()
 {
     setVisible(!isVisible());
+}
+
+/*重载ai配置*/
+void Dialog::ReloadAIConfig()
+{
+    /*AI初始化*/
+    ZcJsonLib CharConfig(ReadCharacterUserConfigPath());
+    //读取当前角色的服务商选择
+    QString serverSelect = CharConfig.value("serverSelect").toString();
+    if(serverSelect == "DeepSeek")
+        ai->setServiceType(AiProvider::DeepSeek);
+    else if(serverSelect == "OpenAI")
+        ai->setServiceType(AiProvider::OpenAI);
+    else
+        ai->setServiceType(AiProvider::DeepSeek);
+    //读取当前角色的模型选择
+    QString modelSelect = CharConfig.value("modelSelect").toString();
+    ai->setModel(modelSelect);
 }

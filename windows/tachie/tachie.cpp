@@ -21,9 +21,8 @@ Tachie::Tachie(QWidget *parent)
 
     //延迟加载立绘
     QTimer::singleShot(0, this, [this]() {
-        SetCharTachie("default");
+        SetTachieImg("default");
     });
-
 }
 
 Tachie::~Tachie()
@@ -32,7 +31,7 @@ Tachie::~Tachie()
 }
 
 //设置立绘
-void Tachie::SetCharTachie(QString TachieName)
+void Tachie::SetTachieImg(QString TachieName)
 {
     NowTachie.load(ReadCharacterTachiePath() + "/"+ TachieName +".png");
     //读取立绘大小
@@ -49,4 +48,10 @@ void Tachie::SetTachieSize(int size)
         Qt::KeepAspectRatio,
         Qt::SmoothTransformation);
     ui->label_tachie1->setPixmap(scaledPixmap);
+}
+
+//重置立绘位置
+void Tachie::ResetTachieLoc()
+{
+    this->move(0,0);
 }

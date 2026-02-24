@@ -99,6 +99,7 @@ void SettingChild_Char::on_comboBox_ServerSelect_currentTextChanged(const QStrin
     ZcJsonLib charConfig(CharacterUserConfigPath + "/" + charName + "/config.json");
     charConfig.setValue("serverSelect", serverSelect);
     RefreshModelList();
+    emit requestReloadAIConfig();
 }
 
 //刷新模型列表
@@ -124,5 +125,12 @@ void SettingChild_Char::on_comboBox_ModelSelect_currentTextChanged(const QString
     QString modelSelect = ui->comboBox_ModelSelect->currentText();
     ZcJsonLib charConfig(CharacterUserConfigPath + "/" + charName + "/config.json");
     charConfig.setValue("modelSelect", modelSelect);
+    emit requestReloadAIConfig();
+}
+
+//重置立绘位置
+void SettingChild_Char::on_pushButton_ResetTachieLoc_clicked()
+{
+    emit requestResetTachieLoc();
 }
 

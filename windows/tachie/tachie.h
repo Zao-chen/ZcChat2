@@ -19,8 +19,9 @@ signals:
     void requestToggleVisible(); //切换对话框的显示状态
 
 public slots:
-    void SetCharTachie(QString TachieName = "default");
+    void SetTachieImg(QString TachieName = "default");
     void SetTachieSize(int size);
+    void ResetTachieLoc();
 
 private:
     Ui::Tachie *ui;

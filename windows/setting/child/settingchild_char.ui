@@ -242,7 +242,7 @@ QScrollBar:vertical:disabled {
        </widget>
       </item>
       <item>
-       <widget class="ElaPushButton" name="pushButton">
+       <widget class="ElaPushButton" name="pushButton_ResetTachieLoc">
         <property name="text">
          <string>重置位置</string>
         </property>

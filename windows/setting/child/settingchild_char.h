@@ -23,9 +23,13 @@ private slots:
     void on_comboBox_ServerSelect_currentTextChanged(const QString &arg1);
     void on_comboBox_ModelSelect_currentTextChanged(const QString &arg1);
 
+    void on_pushButton_ResetTachieLoc_clicked();
+
 signals:
     void requestReloadCharSelect(QString TachieName);
     void requestSetTachieSize(int size);
+    void requestResetTachieLoc();
+    void requestReloadAIConfig();
 
 private:
     Ui::SettingChild_Char *ui;

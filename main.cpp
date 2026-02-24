@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     //对话框的开启和关闭
     QObject::connect(&tachieWin, &Tachie::requestToggleVisible, &dialogWin, &Dialog::ToggleVisible);
     //修改立绘图片
-    QObject::connect(&dialogWin, &Dialog::requestSetCharTachie, &tachieWin, &Tachie::SetCharTachie);
+    QObject::connect(&dialogWin, &Dialog::requestSetCharTachie, &tachieWin, &Tachie::SetTachieImg);
 
     /*托盘*/
     QSystemTrayIcon tray;
