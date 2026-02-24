@@ -8,8 +8,6 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     : ElaWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    //ui->setupUi(this);
-
     /*初始化窗口*/
     setWindowTitle("ZcChat2");
     setUserInfoCardVisible(false);
@@ -24,8 +22,13 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
 
     //连接
     connect(settingchild_charWin, &SettingChild_Char::requestReloadCharSelect,
-            tachie, &Tachie::SetCharTachie);
-
+            tachie, &Tachie::SetTachieImg); //设置立绘图像（重载角色）
+    connect(settingchild_charWin, &SettingChild_Char::requestSetTachieSize,
+           tachie, &Tachie::SetTachieSize); //设置立绘大小
+    connect(settingchild_charWin, &SettingChild_Char::requestResetTachieLoc,
+            tachie, &Tachie::ResetTachieLoc); //重置立绘位置
+    connect(settingchild_charWin, &SettingChild_Char::requestReloadAIConfig,
+            dialog, &Dialog::ReloadAIConfig); //重载AI配置
 }
 
 MainWindow::~MainWindow()

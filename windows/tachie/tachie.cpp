@@ -4,6 +4,7 @@
 #include "../../GlobalConstants.h"
 
 #include "../../utils/DragHelper.h"
+#include "zcjsonlib.h"
 #include <QTimer>
 
 Tachie::Tachie(QWidget *parent)
@@ -20,9 +21,8 @@ Tachie::Tachie(QWidget *parent)
 
     //延迟加载立绘
     QTimer::singleShot(0, this, [this]() {
-        SetCharTachie("default");
+        SetTachieImg("default");
     });
-
 }
 
 Tachie::~Tachie()
@@ -30,15 +30,28 @@ Tachie::~Tachie()
     delete ui;
 }
 
-void Tachie::SetCharTachie(QString TachieName)
+//设置立绘
+void Tachie::SetTachieImg(QString TachieName)
 {
-    qDebug()<<"重载立绘";
-    QPixmap pixmap;
-    pixmap.load(ReadCharacterTachiePath() + "/"+ TachieName +".png");
+    NowTachie.load(ReadCharacterTachiePath() + "/"+ TachieName +".png");
+    //读取立绘大小
+    ZcJsonLib charUserConfig(ReadCharacterUserConfigPath());
+    SetTachieSize(charUserConfig.value("tachieSize").toString().toInt());
+}
+//设置窗口大小并重载立绘
+void Tachie::SetTachieSize(int size)
+{
+    qInfo() << "设置立绘大小为" << size;
     //缩放新图片并设置到 label
-    QPixmap scaledPixmap = pixmap.scaled(
-        ui->label_tachie1->size(),
+    QPixmap scaledPixmap = NowTachie.scaled(
+        NowTachie.size() * (size / 100.0),
         Qt::KeepAspectRatio,
         Qt::SmoothTransformation);
     ui->label_tachie1->setPixmap(scaledPixmap);
+}
+
+//重置立绘位置
+void Tachie::ResetTachieLoc()
+{
+    this->move(0,0);
 }
