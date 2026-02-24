@@ -21,11 +21,11 @@ private slots:
     void on_plainTextEdit_CharPrompt_textChanged();
     void on_spinBox_TachieSize_textChanged(const QString &arg1);
     void on_comboBox_ServerSelect_currentTextChanged(const QString &arg1);
-
     void on_comboBox_ModelSelect_currentTextChanged(const QString &arg1);
 
 signals:
     void requestReloadCharSelect(QString TachieName);
+    void requestSetTachieSize(int size);
 
 private:
     Ui::SettingChild_Char *ui;

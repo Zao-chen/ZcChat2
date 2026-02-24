@@ -87,6 +87,7 @@ void SettingChild_Char::on_spinBox_TachieSize_textChanged(const QString &arg1)
     QString tachieSize = ui->spinBox_TachieSize->text();
     ZcJsonLib charConfig(CharacterUserConfigPath + "/" + charName + "/config.json");
     charConfig.setValue("tachieSize", tachieSize);
+    emit requestSetTachieSize(arg1.toInt());
 }
 
 //切换服务商选择
