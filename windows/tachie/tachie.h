@@ -20,9 +20,11 @@ signals:
 
 public slots:
     void SetCharTachie(QString TachieName = "default");
+    void SetTachieSize(int size);
 
 private:
     Ui::Tachie *ui;
+    QPixmap NowTachie;
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override {
