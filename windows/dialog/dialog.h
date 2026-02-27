@@ -18,6 +18,7 @@ public:
 
 public slots:
     void ToggleVisible();
+    void VitsGetAndPlay(QString text);
 
 private slots:
     void on_pushButton_next_clicked();

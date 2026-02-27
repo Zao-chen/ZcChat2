@@ -25,6 +25,8 @@ private slots:
 
     void on_pushButton_ResetTachieLoc_clicked();
 
+    void on_comboBox_Vits_MASSelect_currentTextChanged(const QString &arg1);
+
 signals:
     void requestReloadCharSelect(QString TachieName);
     void requestSetTachieSize(int size);

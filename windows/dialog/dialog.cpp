@@ -12,6 +12,13 @@
 #include <QPainter>
 #include <QMouseEvent>
 
+#include <QNetworkRequest>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QTemporaryFile>
+#include <QMediaPlayer>
+#include <QAudioOutput>
+
 /*窗口的绘制*/
 void Dialog::paintEvent(QPaintEvent *event)
 {
@@ -68,6 +75,7 @@ Dialog::Dialog(QWidget *parent)
             {
                 ui->pushButton_next->show();
                 ui->textEdit->setText(reply.section('|', 1, 1)); //提取中文内容并显示
+                VitsGetAndPlay(reply.section('|', 1, 1)); //提取中文内容并进行语音合成播放
                 emit requestSetCharTachie(reply.section('|', 0, 0)); //提取心情并发出信号
             });
     //错误处理
@@ -163,4 +171,68 @@ void Dialog::ReloadAIConfig()
     //读取当前角色的模型选择
     QString modelSelect = CharConfig.value("modelSelect").toString();
     ai->setModel(modelSelect);
+}
+
+/*语音合成并播放*/
+void Dialog::VitsGetAndPlay(QString text)
+{
+    /*请求地址构建*/
+    //获取地址
+    ZcJsonLib config(JsonSettingPath);
+    QString apiUrl = config.value("vits/ApiUrl").toString();
+    //获取选中模型
+    ZcJsonLib charConfig(ReadCharacterUserConfigPath());
+    QString modelAndSpeaker = charConfig.value("vitsMasSelect").toString();
+    QString model = modelAndSpeaker.section(" - ", 0, 0).trimmed().toLower(); //提取模型名
+    QString speaker = modelAndSpeaker.section(" - ", 2, 2).trimmed(); //提取说话人
+    //构建请求 URL，对文本进行 URL 编码
+    QString urlString = QString(apiUrl + "/voice/%2?id=%3&text=%1")
+                             .arg(QString(QUrl::toPercentEncoding(text)))
+                             .arg(QString(QUrl::toPercentEncoding(model)))
+                             .arg(QString(QUrl::toPercentEncoding(speaker)));
+    qInfo() << "语音合成请求" << modelAndSpeaker;
+    //创建网络管理器（建议作为类成员变量，避免重复创建）
+    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    QNetworkRequest request(urlString);
+    //发送 GET 请求
+    QNetworkReply *reply = manager->get(request);
+    //连接信号处理响应
+    QObject::connect(reply, &QNetworkReply::finished, [=]()
+    {
+        if (reply->error() == QNetworkReply::NoError)
+        {
+            //读取 MP3 数据
+            QByteArray audioData = reply->readAll();
+            //创建临时文件保存音频
+            QTemporaryFile *tempFile = new QTemporaryFile(QDir::tempPath() + "/vits_XXXXXX.mp3");
+            if (tempFile->open())
+            {
+                tempFile->write(audioData);
+                tempFile->flush();
+                //创建播放器（建议作为类成员变量）
+                QMediaPlayer *player = new QMediaPlayer();
+                QAudioOutput *audioOutput = new QAudioOutput();
+                player->setAudioOutput(audioOutput);
+                //设置音频源
+                player->setSource(QUrl::fromLocalFile(tempFile->fileName()));
+                //播放
+                player->play();
+                //播放完成后清理资源
+                QObject::connect(player, &QMediaPlayer::playbackStateChanged,
+                                 [=](QMediaPlayer::PlaybackState state)
+                                 {
+                                     if (state == QMediaPlayer::StoppedState) {
+                                         player->deleteLater();
+                                         tempFile->deleteLater();
+                                     }
+                                 });
+                //保持临时文件引用，防止过早删除
+                QObject::connect(player, &QObject::destroyed, [=]() {
+                    delete tempFile;
+                });
+            }
+        }
+        reply->deleteLater();
+        manager->deleteLater();
+    });
 }

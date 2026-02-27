@@ -17,12 +17,13 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     SettingChild_LLM *settingchild_llmWin = new SettingChild_LLM(this);
     settingchild_llmWin->show();
     addPageNode("对话模型",settingchild_llmWin, ElaIconType::Message);
+    SettingChild_Vits *settingchild_vitsWin = new SettingChild_Vits(this);
+    settingchild_vitsWin->show();
+    addPageNode("语音合成",settingchild_vitsWin, ElaIconType::Bullhorn);
     SettingChild_Char *settingchild_charWin = new SettingChild_Char(this);
     settingchild_charWin->show();
     addPageNode("角色设置",settingchild_charWin, ElaIconType::SquareUser);
-    SettingChild_Vits *settingchild_vitsWin = new SettingChild_Vits(this);
-    settingchild_vitsWin->show();
-    addPageNode("语音合成",settingchild_vitsWin, ElaIconType::SquareUser);
+
 
     //连接
     connect(settingchild_charWin, &SettingChild_Char::requestReloadCharSelect,
