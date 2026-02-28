@@ -1,0 +1,6 @@
+{
+    "cmake.buildDirectory": "P:/Qt/Project/ZcChat2/build/Desktop_Qt_6_6_3_MSVC2019_64bit-Release",
+    "clangd.arguments": [
+        "--compile-commands-dir=P:/Qt/Project/ZcChat2/build/Desktop_Qt_6_6_3_MSVC2019_64bit-Release"
+    ]
+}
