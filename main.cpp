@@ -1,16 +1,24 @@
 #include "windows/dialog/dialog.h"
-#include "windows/tachie/tachie.h"
 #include "windows/setting/setting.h"
+#include "windows/tachie/tachie.h"
 
-#include "ElaMenu.h"
 #include "ElaApplication.h"
+#include "ElaMenu.h"
 
 #include <QApplication>
 #include <QSystemTrayIcon>
 
+#include <QDir>
+#include <QMessageBox>
+#include <qmessagebox.h>
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    QCoreApplication::setApplicationName("ZcChat2");
+    QCoreApplication::setOrganizationName("MyOrganization");
+    qInfo() << "Debugging Output";
 
     /*窗口创建*/
     Dialog dialogWin;
@@ -35,17 +43,18 @@ int main(int argc, char *argv[])
     tray.setContextMenu(&trayMenu);
     tray.show();
     //设置界面懒加载
-    QObject::connect(actionSettings, &QAction::triggered, [&]()
-    {
-        if (!settings)
-        {
-            eApp->init();
-            settings = new MainWindow(&dialogWin, &tachieWin, &dialogWin);
-        }
-        settings->show();
-        settings->raise();
-        settings->activateWindow();
-    });
+    QObject::connect(actionSettings, &QAction::triggered,
+                     [&]()
+                     {
+                         if (!settings)
+                         {
+                             eApp->init();
+                             settings = new MainWindow(&dialogWin, &tachieWin, &dialogWin);
+                         }
+                         settings->show();
+                         settings->raise();
+                         settings->activateWindow();
+                     });
     //退出程序
     QObject::connect(actionQuit, &QAction::triggered, &a, &QApplication::quit);
 

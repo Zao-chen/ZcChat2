@@ -5,12 +5,11 @@
 
 #include "ZcJsonLib.h"
 
-#include <QSettings>
 #include <QJsonArray>
+#include <QSettings>
 
 SettingChild_Char::SettingChild_Char(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::SettingChild_Char)
+    : QWidget(parent), ui(new Ui::SettingChild_Char)
 {
     ui->setupUi(this);
     RefreshCharList();
@@ -38,6 +37,22 @@ SettingChild_Char::SettingChild_Char(QWidget *parent)
     //读取模型选择
     QString modelSelect = charUserConfig.value("modelSelect").toString();
     ui->comboBox_ModelSelect->setCurrentText(modelSelect);
+    /*Vits*/
+    //读取是否启用Vits
+    bool vitsEnable = charUserConfig.value("vitsEnable").toBool();
+    ui->ToggleSwitch_VitsEnable->setIsToggled(vitsEnable);
+    ui->comboBox_Vits_MASSelect->setEnabled(vitsEnable);
+    ui->comboBox_Vits_ServerSelect->setEnabled(vitsEnable);
+    //读取模型角色列表到
+    ZcJsonLib config(JsonSettingPath);
+    QJsonArray arr = config.value("vits/ModelAndSpeakerList").toArray();
+    QStringList vitsMasList;
+    for (const QJsonValue &val : arr)
+        vitsMasList.append(val.toString());
+    ui->comboBox_Vits_MASSelect->addItems(vitsMasList);
+    //读取语音合成模型选择
+    QString vitsMasSelect = charUserConfig.value("vitsMasSelect").toString();
+    ui->comboBox_Vits_MASSelect->setCurrentText(vitsMasSelect);
 }
 
 SettingChild_Char::~SettingChild_Char()
@@ -85,7 +100,7 @@ void SettingChild_Char::on_spinBox_TachieSize_textChanged(const QString &arg1)
     //保存到角色配置位置下的config.json
     QString charName = ui->comboBox_CharList->currentText();
     QString tachieSize = ui->spinBox_TachieSize->text();
-    ZcJsonLib charConfig(CharacterUserConfigPath + "/" + charName + "/config.json");
+    ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("tachieSize", tachieSize);
     emit requestSetTachieSize(arg1.toInt());
 }
@@ -96,7 +111,7 @@ void SettingChild_Char::on_comboBox_ServerSelect_currentTextChanged(const QStrin
     //保存到角色配置位置下的config.json
     QString charName = ui->comboBox_CharList->currentText();
     QString serverSelect = ui->comboBox_ServerSelect->currentText();
-    ZcJsonLib charConfig(CharacterUserConfigPath + "/" + charName + "/config.json");
+    ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("serverSelect", serverSelect);
     RefreshModelList();
     emit requestReloadAIConfig();
@@ -123,7 +138,7 @@ void SettingChild_Char::on_comboBox_ModelSelect_currentTextChanged(const QString
     //保存到角色配置位置下的config.json
     QString charName = ui->comboBox_CharList->currentText();
     QString modelSelect = ui->comboBox_ModelSelect->currentText();
-    ZcJsonLib charConfig(CharacterUserConfigPath + "/" + charName + "/config.json");
+    ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("modelSelect", modelSelect);
     emit requestReloadAIConfig();
 }
@@ -134,3 +149,23 @@ void SettingChild_Char::on_pushButton_ResetTachieLoc_clicked()
     emit requestResetTachieLoc();
 }
 
+//切换语音合成模型选择
+void SettingChild_Char::on_comboBox_Vits_MASSelect_currentTextChanged(const QString &arg1)
+{
+    //保存到角色配置位置下的config.json
+    QString charName = ui->comboBox_CharList->currentText();
+    QString vitsMasSelect = ui->comboBox_Vits_MASSelect->currentText();
+    ZcJsonLib charConfig(ReadCharacterUserConfigPath());
+    charConfig.setValue("vitsMasSelect", vitsMasSelect);
+}
+
+//切换是否启用Vits
+void SettingChild_Char::on_ToggleSwitch_VitsEnable_toggled(bool checked)
+{
+    //保存到角色配置位置下的config.json
+    QString charName = ui->comboBox_CharList->currentText();
+    ZcJsonLib charConfig(ReadCharacterUserConfigPath());
+    charConfig.setValue("vitsEnable", checked);
+    ui->comboBox_Vits_MASSelect->setEnabled(checked);
+    ui->comboBox_Vits_ServerSelect->setEnabled(checked);
+}

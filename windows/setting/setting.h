@@ -1,14 +1,15 @@
 #ifndef SETTING_H
 #define SETTING_H
 
-#include <QMainWindow>
 #include "ElaWindow.h"
+#include <QMainWindow>
 
-#include "../tachie/tachie.h"
 #include "../dialog/dialog.h"
+#include "../tachie/tachie.h"
 
 QT_BEGIN_NAMESPACE
-namespace Ui {
+namespace Ui
+{
 class MainWindow;
 }
 QT_END_NAMESPACE
@@ -17,11 +18,11 @@ class MainWindow : public ElaWindow
 {
     Q_OBJECT
 
-public:
+  public:
     MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent = nullptr);
     ~MainWindow();
 
-private:
+  private:
     Ui::MainWindow *ui;
 };
 #endif // SETTING_H

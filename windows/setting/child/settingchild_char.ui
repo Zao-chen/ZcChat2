@@ -277,7 +277,7 @@ QScrollBar:vertical:disabled {
     </widget>
    </item>
    <item>
-    <widget class="ElaScrollPageArea" name="widget_ApiKey_3" native="true">
+    <widget class="ElaScrollPageArea" name="widget_Run_LLM" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,1,2">
       <property name="leftMargin">
        <number>15</number>
@@ -405,9 +405,161 @@ QScrollBar:vertical:disabled {
     </widget>
    </item>
    <item>
+    <widget class="ElaScrollPageArea" name="widget_Run_Vits" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="5,0,10,2,5">
+      <property name="leftMargin">
+       <number>15</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>15</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="ElaText" name="label_8">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>语音合成</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="ElaToggleSwitch" name="ToggleSwitch_VitsEnable" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="ElaComboBox" name="comboBox_Vits_ServerSelect">
+        <property name="styleSheet">
+         <string notr="true">/* 去除滚动条的边框和背景 */
+QScrollBar:vertical {
+    border: none;              /* 去除边框 */
+    background: transparent;   /* 背景透明 */
+    width: 8px;                /* 设置滚动条的宽度 */
+}
+
+QScrollBar::handle:vertical {
+    background: rgba(136, 136, 136, 0.5);
+    border-radius: 4px;
+}
+
+
+/* 滑块悬停时的颜色变化 */
+QScrollBar::handle:vertical:hover {
+    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
+}
+
+/* 去除滚动条上下箭头按钮 */
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    background: transparent; /* 去除上下箭头 */
+    border: none;             /* 去除箭头边框 */
+    height: 0px;              /* 强制去除箭头按钮 */
+}
+
+/* 滚动条轨道样式 */
+QScrollBar::groove:vertical {
+    background: transparent;   /* 设置轨道背景为透明 */
+    border: none;               /* 去除轨道的边框 */
+    width: 8px;                 /* 设置轨道的宽度 */
+}
+
+/* 设置滚动条范围变化时的显示效果 */
+QScrollBar:vertical:disabled {
+    background: transparent;  /* 禁用时的背景色透明 */
+    border: none;              /* 禁用时的边框 */
+}
+</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>vits-simple-api</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="ElaComboBox" name="comboBox_Vits_MASSelect">
+        <property name="styleSheet">
+         <string notr="true">/* 去除滚动条的边框和背景 */
+QScrollBar:vertical {
+    border: none;              /* 去除边框 */
+    background: transparent;   /* 背景透明 */
+    width: 8px;                /* 设置滚动条的宽度 */
+}
+
+QScrollBar::handle:vertical {
+    background: rgba(136, 136, 136, 0.5);
+    border-radius: 4px;
+}
+
+
+/* 滑块悬停时的颜色变化 */
+QScrollBar::handle:vertical:hover {
+    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
+}
+
+/* 去除滚动条上下箭头按钮 */
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    background: transparent; /* 去除上下箭头 */
+    border: none;             /* 去除箭头边框 */
+    height: 0px;              /* 强制去除箭头按钮 */
+}
+
+/* 滚动条轨道样式 */
+QScrollBar::groove:vertical {
+    background: transparent;   /* 设置轨道背景为透明 */
+    border: none;               /* 去除轨道的边框 */
+    width: 8px;                 /* 设置轨道的宽度 */
+}
+
+/* 设置滚动条范围变化时的显示效果 */
+QScrollBar:vertical:disabled {
+    background: transparent;  /* 禁用时的背景色透明 */
+    border: none;              /* 禁用时的边框 */
+}
+</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
-      <enum>Qt::Orientation::Vertical</enum>
+      <enum>Qt::Vertical</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -456,6 +608,12 @@ QScrollBar:vertical:disabled {
    <class>ElaPlainTextEdit</class>
    <extends>QPlainTextEdit</extends>
    <header location="global">elaplaintextedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ElaToggleSwitch</class>
+   <extends>QWidget</extends>
+   <header location="global">elatoggleswitch.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
