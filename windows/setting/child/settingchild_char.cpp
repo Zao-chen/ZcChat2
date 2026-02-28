@@ -38,7 +38,12 @@ SettingChild_Char::SettingChild_Char(QWidget *parent)
     QString modelSelect = charUserConfig.value("modelSelect").toString();
     ui->comboBox_ModelSelect->setCurrentText(modelSelect);
     /*Vits*/
-    //读取模型角色列表到comboBox_Vits_MASSelect
+    //读取是否启用Vits
+    bool vitsEnable = charUserConfig.value("vitsEnable").toBool();
+    ui->ToggleSwitch_VitsEnable->setIsToggled(vitsEnable);
+    ui->comboBox_Vits_MASSelect->setEnabled(vitsEnable);
+    ui->comboBox_Vits_ServerSelect->setEnabled(vitsEnable);
+    //读取模型角色列表到
     ZcJsonLib config(JsonSettingPath);
     QJsonArray arr = config.value("vits/ModelAndSpeakerList").toArray();
     QStringList vitsMasList;
@@ -152,5 +157,15 @@ void SettingChild_Char::on_comboBox_Vits_MASSelect_currentTextChanged(const QStr
     QString vitsMasSelect = ui->comboBox_Vits_MASSelect->currentText();
     ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("vitsMasSelect", vitsMasSelect);
-    emit requestReloadAIConfig();
+}
+
+//切换是否启用Vits
+void SettingChild_Char::on_ToggleSwitch_VitsEnable_toggled(bool checked)
+{
+    //保存到角色配置位置下的config.json
+    QString charName = ui->comboBox_CharList->currentText();
+    ZcJsonLib charConfig(ReadCharacterUserConfigPath());
+    charConfig.setValue("vitsEnable", checked);
+    ui->comboBox_Vits_MASSelect->setEnabled(checked);
+    ui->comboBox_Vits_ServerSelect->setEnabled(checked);
 }

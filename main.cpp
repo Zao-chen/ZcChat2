@@ -16,7 +16,9 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    qDebug() << "cwd =" << QDir::currentPath();
+    QCoreApplication::setApplicationName("ZcChat2");
+    QCoreApplication::setOrganizationName("MyOrganization");
+    qInfo() << "Debugging Output";
 
     /*窗口创建*/
     Dialog dialogWin;

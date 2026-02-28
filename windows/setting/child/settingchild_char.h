@@ -23,13 +23,13 @@ class SettingChild_Char : public QWidget
     void on_spinBox_TachieSize_textChanged(const QString &arg1);
     void on_comboBox_ServerSelect_currentTextChanged(const QString &arg1);
     void on_comboBox_ModelSelect_currentTextChanged(const QString &arg1);
-
     void on_pushButton_ResetTachieLoc_clicked();
-
     void on_comboBox_Vits_MASSelect_currentTextChanged(const QString &arg1);
+    void on_ToggleSwitch_VitsEnable_toggled(bool checked);
 
   signals:
-    void requestReloadCharSelect(QString TachieName);
+    void
+    requestReloadCharSelect(QString TachieName);
     void requestSetTachieSize(int size);
     void requestResetTachieLoc();
     void requestReloadAIConfig();

@@ -278,7 +278,7 @@ QScrollBar:vertical:disabled {
    </item>
    <item>
     <widget class="ElaScrollPageArea" name="widget_Run_LLM" native="true">
-     <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,1,3">
+     <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,1,2">
       <property name="leftMargin">
        <number>15</number>
       </property>
@@ -406,7 +406,7 @@ QScrollBar:vertical:disabled {
    </item>
    <item>
     <widget class="ElaScrollPageArea" name="widget_Run_Vits" native="true">
-     <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="3,1,3">
+     <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="5,0,10,2,5">
       <property name="leftMargin">
        <number>15</number>
       </property>
@@ -421,6 +421,12 @@ QScrollBar:vertical:disabled {
       </property>
       <item>
        <widget class="ElaText" name="label_8">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="font">
          <font>
           <pointsize>12</pointsize>
@@ -430,6 +436,29 @@ QScrollBar:vertical:disabled {
          <string>语音合成</string>
         </property>
        </widget>
+      </item>
+      <item>
+       <widget class="ElaToggleSwitch" name="ToggleSwitch_VitsEnable" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
       <item>
        <widget class="ElaComboBox" name="comboBox_Vits_ServerSelect">
@@ -530,7 +559,7 @@ QScrollBar:vertical:disabled {
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
-      <enum>Qt::Orientation::Vertical</enum>
+      <enum>Qt::Vertical</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -579,6 +608,12 @@ QScrollBar:vertical:disabled {
    <class>ElaPlainTextEdit</class>
    <extends>QPlainTextEdit</extends>
    <header location="global">elaplaintextedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ElaToggleSwitch</class>
+   <extends>QWidget</extends>
+   <header location="global">elatoggleswitch.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

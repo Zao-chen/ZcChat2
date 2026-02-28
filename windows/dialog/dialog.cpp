@@ -78,12 +78,13 @@ Dialog::Dialog(QWidget *parent) : QWidget(parent), ui(new Ui::Dialog)
             [=](const QString &reply)
             {
                 ui->pushButton_next->show();
-                ui->textEdit->setText(
-                    reply.section('|', 1, 1)); //提取中文内容并显示
-                VitsGetAndPlay(
-                    reply.section('|', 1, 1)); //提取中文内容并进行语音合成播放
-                emit requestSetCharTachie(
-                    reply.section('|', 0, 0)); //提取心情并发出信号
+                ui->textEdit->setText(reply.section('|', 1, 1)); //提取中文内容并显示
+                //判断是否开启了Vits语音合成
+                ZcJsonLib charConfig(ReadCharacterUserConfigPath());
+                bool vitsEnable = charConfig.value("vitsEnable").toBool();
+                if (vitsEnable)
+                    VitsGetAndPlay(reply.section('|', 1, 1));        //提取中文内容并进行语音合成播放
+                emit requestSetCharTachie(reply.section('|', 0, 0)); //提取心情并发出信号
             });
     //错误处理
     connect(ai, &AiProvider::errorOccurred,
