@@ -3,7 +3,8 @@
 
 #include <QWidget>
 
-namespace Ui {
+namespace Ui
+{
 class Tachie;
 }
 
@@ -11,25 +12,26 @@ class Tachie : public QWidget
 {
     Q_OBJECT
 
-public:
+  public:
     explicit Tachie(QWidget *parent = nullptr);
     ~Tachie();
 
-signals:
+  signals:
     void requestToggleVisible(); //切换对话框的显示状态
 
-public slots:
+  public slots:
     void SetTachieImg(QString TachieName = "default");
     void SetTachieSize(int size);
     void ResetTachieLoc();
 
-private:
+  private:
     Ui::Tachie *ui;
     QPixmap NowTachie;
 
-protected:
-    void contextMenuEvent(QContextMenuEvent *event) override {
-        emit requestToggleVisible();  //发出信号
+  protected:
+    void contextMenuEvent(QContextMenuEvent *event) override
+    {
+        emit requestToggleVisible(); //发出信号
     }
 };
 

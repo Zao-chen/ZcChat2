@@ -5,12 +5,11 @@
 
 #include "ZcJsonLib.h"
 
-#include <QSettings>
 #include <QJsonArray>
+#include <QSettings>
 
 SettingChild_Char::SettingChild_Char(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::SettingChild_Char)
+    : QWidget(parent), ui(new Ui::SettingChild_Char)
 {
     ui->setupUi(this);
     RefreshCharList();
@@ -43,7 +42,8 @@ SettingChild_Char::SettingChild_Char(QWidget *parent)
     ZcJsonLib config(JsonSettingPath);
     QJsonArray arr = config.value("vits/ModelAndSpeakerList").toArray();
     QStringList vitsMasList;
-    for (const QJsonValue& val : arr)  vitsMasList.append(val.toString());
+    for (const QJsonValue &val : arr)
+        vitsMasList.append(val.toString());
     ui->comboBox_Vits_MASSelect->addItems(vitsMasList);
     //读取语音合成模型选择
     QString vitsMasSelect = charUserConfig.value("vitsMasSelect").toString();
@@ -154,4 +154,3 @@ void SettingChild_Char::on_comboBox_Vits_MASSelect_currentTextChanged(const QStr
     charConfig.setValue("vitsMasSelect", vitsMasSelect);
     emit requestReloadAIConfig();
 }
-

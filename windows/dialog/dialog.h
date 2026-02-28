@@ -4,7 +4,8 @@
 #include "AiProvider.h"
 #include <QWidget>
 
-namespace Ui {
+namespace Ui
+{
 class Dialog;
 }
 
@@ -12,24 +13,24 @@ class Dialog : public QWidget
 {
     Q_OBJECT
 
-public:
+  public:
     explicit Dialog(QWidget *parent = nullptr);
     ~Dialog();
 
-public slots:
+  public slots:
     void ToggleVisible();
     void VitsGetAndPlay(QString text);
 
-private slots:
+  private slots:
     void on_pushButton_next_clicked();
 
-signals:
+  signals:
     void requestSetCharTachie(QString TachieName);
 
-public slots:
+  public slots:
     void ReloadAIConfig();
 
-private:
+  private:
     /*初始化*/
     //鼠标事件
     virtual void paintEvent(QPaintEvent *event) override;

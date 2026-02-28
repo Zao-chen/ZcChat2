@@ -8,8 +8,7 @@
 #include <QTimer>
 
 Tachie::Tachie(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::Tachie)
+    : QWidget(parent), ui(new Ui::Tachie)
 {
     /*窗口设置*/
     ui->setupUi(this);
@@ -20,9 +19,8 @@ Tachie::Tachie(QWidget *parent)
     new DragHelper(this);
 
     //延迟加载立绘
-    QTimer::singleShot(0, this, [this]() {
-        SetTachieImg("default");
-    });
+    QTimer::singleShot(0, this, [this]()
+                       { SetTachieImg("default"); });
 }
 
 Tachie::~Tachie()
@@ -33,7 +31,7 @@ Tachie::~Tachie()
 //设置立绘
 void Tachie::SetTachieImg(QString TachieName)
 {
-    NowTachie.load(ReadCharacterTachiePath() + "/"+ TachieName +".png");
+    NowTachie.load(ReadCharacterTachiePath() + "/" + TachieName + ".png");
     //读取立绘大小
     ZcJsonLib charUserConfig(ReadCharacterUserConfigPath());
     SetTachieSize(charUserConfig.value("tachieSize").toString().toInt());
@@ -53,5 +51,5 @@ void Tachie::SetTachieSize(int size)
 //重置立绘位置
 void Tachie::ResetTachieLoc()
 {
-    this->move(0,0);
+    this->move(0, 0);
 }

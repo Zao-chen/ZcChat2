@@ -5,16 +5,15 @@
 
 #include "ZcJsonLib.h"
 
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QStringListModel>
 
 SettingChild_Vits::SettingChild_Vits(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::SettingChild_Vits)
+    : QWidget(parent), ui(new Ui::SettingChild_Vits)
 {
     ui->setupUi(this);
     /*初始化*/
@@ -47,8 +46,9 @@ void SettingChild_Vits::on_pushButton_VSA_Set_clicked()
     //读取模型角色列表
     QStringList list;
     QJsonArray arr = config.value("vits/ModelAndSpeakerList").toArray();
-    for (const QJsonValue& val : arr)  list.append(val.toString());
-    QStringListModel* model = new QStringListModel(list,ui->listView_ModelAndSpeakerlList);
+    for (const QJsonValue &val : arr)
+        list.append(val.toString());
+    QStringListModel *model = new QStringListModel(list, ui->listView_ModelAndSpeakerlList);
     ui->listView_ModelAndSpeakerlList->setModel(model);
 }
 
@@ -62,12 +62,12 @@ void SettingChild_Vits::on_BreadcrumbBar_breadcrumbClicked(QString breadcrumb, Q
 void SettingChild_Vits::on_pushButton_LoadModelAndSpeakerlList_clicked()
 {
     //发送get请求
-    QNetworkAccessManager* manager = new QNetworkAccessManager(this);
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     QUrl url(ui->lineEdit_ApiUrl->text() + "/voice/speakers"); //改成你的地址
     QNetworkRequest request(url);
-    QNetworkReply* reply = manager->get(request);
-    connect(reply,&QNetworkReply::finished,this,[=]()
-    {
+    QNetworkReply *reply = manager->get(request);
+    connect(reply, &QNetworkReply::finished, this, [=]()
+            {
         if(reply->error() != QNetworkReply::NoError)
         {
             reply->deleteLater();
@@ -107,6 +107,5 @@ void SettingChild_Vits::on_pushButton_LoadModelAndSpeakerlList_clicked()
         ZcJsonLib config(JsonSettingPath);
         QJsonArray arr;
         for(const QString& s : list)    arr.append(s);
-        config.setValue("vits/ModelAndSpeakerList", arr);
-    });
+        config.setValue("vits/ModelAndSpeakerList", arr); });
 }
