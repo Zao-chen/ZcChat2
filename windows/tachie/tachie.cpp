@@ -3,7 +3,7 @@
 
 #include "../../GlobalConstants.h"
 
-#include "../../utils/DragHelper.h"
+#include "../../utils/draghelper.h"
 #include "zcjsonlib.h"
 #include <QTimer>
 

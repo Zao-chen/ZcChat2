@@ -1,7 +1,7 @@
 #ifndef SETTINGCHILD_LLM_H
 #define SETTINGCHILD_LLM_H
 
-#include "AiProvider.h"
+#include "aiprovider.h"
 #include <QStringListModel>
 #include <QWidget>
 

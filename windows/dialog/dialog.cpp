@@ -3,10 +3,10 @@
 
 #include "../../GlobalConstants.h"
 
-#include "../../utils/CustomScrollBinder.h"
-#include "../../utils/DragHelper.h"
+#include "../../utils/customscrollbinder.h"
+#include "../../utils/draghelper.h"
 
-#include "ZcJsonLib.h"
+#include "zcjsonlib.h"
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
