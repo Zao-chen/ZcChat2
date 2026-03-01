@@ -1,4 +1,4 @@
-#include "CustomScrollBinder.h"
+#include "customscrollbinder.h"
 #include <QSignalBlocker>
 
 CustomScrollBinder::CustomScrollBinder(
