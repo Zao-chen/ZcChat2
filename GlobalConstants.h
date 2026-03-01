@@ -5,9 +5,15 @@
 #include <QString>
 
 //主要是一些可迁移的配置，如APIKey
+#ifdef Q_OS_LINUX //对于linux的适配
+inline const QString JsonSettingPath = 
+    QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
+        .filePath("ZcChat2/config.json");
+#else
 inline const QString JsonSettingPath =
     QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
         .filePath("ZcChat2/config.json");
+#endif
 
 //一些随机子走的无需迁移的配置，如立绘位置和大小
 inline const QString IniSettingPath =

@@ -9,10 +9,19 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
-find_package(Qt6 COMPONENTS Network REQUIRED)
-find_package(Qt6 COMPONENTS Multimedia REQUIRED)
+#find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+#find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+#find_package(Qt6 COMPONENTS Network REQUIRED)
+#find_package(Qt6 COMPONENTS Multimedia REQUIRED)
+#这样更稳妥一点,同时支持qt5和qt6
+find_package(Qt6 QUIET COMPONENTS Widgets Network Multimedia Svg)
+if(NOT Qt6_FOUND)
+    find_package(Qt5 REQUIRED COMPONENTS Widgets Network Multimedia Svg)
+    set(QT_VERSION_MAJOR 5)
+else()
+    set(QT_VERSION_MAJOR 6)
+endif()
+
 
 set(PROJECT_SOURCES
         main.cpp
@@ -73,10 +82,38 @@ target_link_libraries(ZcChat2 PRIVATE
     Qt6::Multimedia
 )
 
+#        配置linux的包含路径
+target_include_directories(ZcChat2 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/include/DeveloperComponents
+)
+
+if(UNIX AND NOT APPLE)
+    target_link_libraries(ZcChat2 PRIVATE
+        Qt6::Widgets Qt6::Network Qt6::Gui Qt6::Svg Qt6::Multimedia
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/libZcAiLib.a"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/libZcJsonLib.a"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/libZcWidgetTools.a"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/lib/libElaWidgetTools.a"
+    )
+    
+    set_target_properties(ZcChat2 PROPERTIES
+        SKIP_BUILD_RPATH FALSE
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH_USE_LINK_PATH TRUE
+        INSTALL_RPATH "$ORIGIN/3rdparty/ZcJsonLib/lib:$ORIGIN/3rdparty/ZcAILib/lib:$ORIGIN/3rdparty/ZcWidgetTools/lib:$ORIGIN/3rdparty/ElaWidgetTools/lib"
+    )
+endif()
+
+
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
-if(${QT_VERSION} VERSION_LESS 6.1.0)
+if("${Qt${QT_VERSION_MAJOR}_VERSION}" VERSION_LESS "6.1.0") #更稳妥一点
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.ZcChat2)
 endif()
 set_target_properties(ZcChat2 PROPERTIES
