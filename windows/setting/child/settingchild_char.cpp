@@ -3,7 +3,7 @@
 
 #include "../../../GlobalConstants.h"
 
-#include "zcjsonlib.h"
+#include "ZcJsonLib.h"
 
 #include <QJsonArray>
 #include <QSettings>

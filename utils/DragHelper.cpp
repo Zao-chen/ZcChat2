@@ -1,5 +1,5 @@
 // DragHelper.cpp
-#include "draghelper.h"
+#include "DragHelper.h"
 
 DragHelper::DragHelper(QWidget *parent)
     : QObject(parent), m_widget(parent)

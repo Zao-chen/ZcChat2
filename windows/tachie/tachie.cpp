@@ -3,8 +3,8 @@
 
 #include "../../GlobalConstants.h"
 
-#include "../../utils/draghelper.h"
-#include "zcjsonlib.h"
+#include "../../utils/DragHelper.h"
+#include "ZcJsonLib.h"
 #include <QTimer>
 
 Tachie::Tachie(QWidget *parent)

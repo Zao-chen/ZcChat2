@@ -1,7 +1,7 @@
 #ifndef DIALOG_H
 #define DIALOG_H
 
-#include "aiprovider.h"
+#include "AiProvider.h"
 #include <QWidget>
 
 namespace Ui

@@ -252,7 +252,7 @@ QScrollBar:vertical:disabled {
   <customwidget>
    <class>ZcStackedWidget</class>
    <extends>QStackedWidget</extends>
-   <header location="global">zcstackedwidget.h</header>
+   <header location="global">ZcStackedWidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
