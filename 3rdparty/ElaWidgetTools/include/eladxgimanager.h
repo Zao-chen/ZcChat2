@@ -1,1 +1,0 @@
-ElaDxgiManager.h

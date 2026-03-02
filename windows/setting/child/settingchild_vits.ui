@@ -230,23 +230,23 @@ QScrollBar:vertical:disabled {
   <customwidget>
    <class>ElaBreadcrumbBar</class>
    <extends>QWidget</extends>
-   <header location="global">elabreadcrumbbar.h</header>
+   <header location="global">ElaBreadcrumbBar.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>ElaText</class>
    <extends>QLabel</extends>
-   <header location="global">elatext.h</header>
+   <header location="global">ElaText.h</header>
   </customwidget>
   <customwidget>
    <class>ElaPushButton</class>
    <extends>QPushButton</extends>
-   <header location="global">elapushbutton.h</header>
+   <header location="global">ElaPushButton.h</header>
   </customwidget>
   <customwidget>
    <class>ElaScrollPageArea</class>
    <extends>QWidget</extends>
-   <header location="global">elascrollpagearea.h</header>
+   <header location="global">ElaScrollPageArea.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
@@ -258,12 +258,12 @@ QScrollBar:vertical:disabled {
   <customwidget>
    <class>ElaLineEdit</class>
    <extends>QLineEdit</extends>
-   <header location="global">elalineedit.h</header>
+   <header location="global">ElaLineEdit.h</header>
   </customwidget>
   <customwidget>
    <class>ElaListView</class>
    <extends>QListView</extends>
-   <header location="global">elalistview.h</header>
+   <header location="global">ElaListView.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

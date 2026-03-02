@@ -1,1 +1,0 @@
-ElaSingleton.h

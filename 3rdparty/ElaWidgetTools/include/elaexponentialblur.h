@@ -1,1 +1,0 @@
-ElaExponentialBlur.h

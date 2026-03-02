@@ -1,1 +1,0 @@
-ElaDoubleSpinBox.h

@@ -1,1 +1,0 @@
-ElaProgressRing.h
