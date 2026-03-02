@@ -80,6 +80,8 @@ target_link_libraries(ZcChat2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/ZcJsonLib.lib
     Qt6::Network
     Qt6::Multimedia
+    X11 
+    Xext
 )
 
 #        配置linux的包含路径
@@ -92,9 +94,18 @@ target_include_directories(ZcChat2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/include/DeveloperComponents
 )
 
+if(UNIX AND NOT APPLE) #为了实现鼠标穿透
+    find_package(X11 REQUIRED COMPONENTS Xext)
+    if(QT_VERSION_MAJOR EQUAL 5)
+        find_package(Qt5 REQUIRED COMPONENTS X11Extras)
+    endif()
+endif()
+
 if(UNIX AND NOT APPLE)
     target_link_libraries(ZcChat2 PRIVATE
         Qt6::Widgets Qt6::Network Qt6::Gui Qt6::Svg Qt6::Multimedia
+        ${X11_LIBRARIES}     # 添加 X11 核心库
+        ${X11_Xext_LIB}      # 添加 XShape 扩展库
         "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/libZcAiLib.a"
         "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/libZcJsonLib.a"
         "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/libZcWidgetTools.a"

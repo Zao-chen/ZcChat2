@@ -27,12 +27,15 @@ class Tachie : public QWidget
   private:
     Ui::Tachie *ui;
     QPixmap NowTachie;
+    QImage _scaledImg; //用于缓存缩放后的图片，避免编译版本差异
 
   protected:
     void contextMenuEvent(QContextMenuEvent *event) override
     {
         emit requestToggleVisible(); //发出信号
     }
+
+    void mousePressEvent(QMouseEvent *event) override;  //为了实现鼠标穿透
 };
 
 #endif // TACHIE_H
