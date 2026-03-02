@@ -4,7 +4,7 @@
 #include "../../GlobalConstants.h"
 
 #include "../../utils/DragHelper.h"
-#include "zcjsonlib.h"
+#include "ZcJsonLib.h"
 #include <QTimer>
 
 Tachie::Tachie(QWidget *parent)

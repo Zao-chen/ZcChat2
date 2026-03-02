@@ -575,44 +575,44 @@ QScrollBar:vertical:disabled {
   <customwidget>
    <class>ElaBreadcrumbBar</class>
    <extends>QWidget</extends>
-   <header location="global">elabreadcrumbbar.h</header>
+   <header location="global">ElaBreadcrumbBar.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>ElaText</class>
    <extends>QLabel</extends>
-   <header location="global">elatext.h</header>
+   <header location="global">ElaText.h</header>
   </customwidget>
   <customwidget>
    <class>ElaPushButton</class>
    <extends>QPushButton</extends>
-   <header location="global">elapushbutton.h</header>
+   <header location="global">ElaPushButton.h</header>
   </customwidget>
   <customwidget>
    <class>ElaScrollPageArea</class>
    <extends>QWidget</extends>
-   <header location="global">elascrollpagearea.h</header>
+   <header location="global">ElaScrollPageArea.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>ElaComboBox</class>
    <extends>QComboBox</extends>
-   <header location="global">elacombobox.h</header>
+   <header location="global">ElaComboBox.h</header>
   </customwidget>
   <customwidget>
    <class>ElaSpinBox</class>
    <extends>QSpinBox</extends>
-   <header location="global">elaspinbox.h</header>
+   <header location="global">ElaSpinBox.h</header>
   </customwidget>
   <customwidget>
    <class>ElaPlainTextEdit</class>
    <extends>QPlainTextEdit</extends>
-   <header location="global">elaplaintextedit.h</header>
+   <header location="global">ElaPlainTextEdit.h</header>
   </customwidget>
   <customwidget>
    <class>ElaToggleSwitch</class>
    <extends>QWidget</extends>
-   <header location="global">elatoggleswitch.h</header>
+   <header location="global">ElaToggleSwitch.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
