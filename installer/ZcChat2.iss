@@ -19,12 +19,20 @@ Name: "chinesesimp"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "{#MyAppPath}\ZcChat2.exe"; DestDir: "{app}"; Flags: ignoreversion
 
-;把dist里所有dll都带上(包含子目录，防止未来改结构漏掉)
+;dist根目录dll
 Source: "{#MyAppPath}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyAppPath}\**\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
-;Qt插件(必须是plugins结构)
-Source: "{#MyAppPath}\plugins\*"; DestDir: "{app}\plugins"; Flags: ignoreversion recursesubdirs createallsubdirs
+;Qt部署目录(注意：windeployqt默认不是plugins结构，而是platforms/imageformats/...)
+Source: "{#MyAppPath}\platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#MyAppPath}\imageformats\*"; DestDir: "{app}\imageformats"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#MyAppPath}\styles\*"; DestDir: "{app}\styles"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#MyAppPath}\iconengines\*"; DestDir: "{app}\iconengines"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#MyAppPath}\multimedia\*"; DestDir: "{app}\multimedia"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#MyAppPath}\tls\*"; DestDir: "{app}\tls"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#MyAppPath}\generic\*"; DestDir: "{app}\generic"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#MyAppPath}\networkinformation\*"; DestDir: "{app}\networkinformation"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#MyAppPath}\translations\*"; DestDir: "{app}\translations"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 ;默认用户模板
 Source: "{#MyAppPath}\.config\ZcChat2\*"; DestDir: "{userdocs}\ZcChat2"; Flags: ignoreversion recursesubdirs createallsubdirs
