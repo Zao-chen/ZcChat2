@@ -1,0 +1,64 @@
+name: Qt6 CMake (Windows + Linux)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      qt_version:
+        description: "Qt version"
+        required: false
+        default: "6.6.0"
+      build_type:
+        description: "CMake build type"
+        required: false
+        default: "Release"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      #Linux需要先装一些依赖(尤其是Qt Widgets/GUI)
+      - name: Install Linux deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgl1-mesa-dev
+
+      #Windows装Ninja+MSVC环境
+      - name: Setup Ninja (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Setup MSVC (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: ${{ inputs.qt_version || '6.6.0' }}
+          target: desktop
+          #Windows用MSVC包
+          arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || '' }}
+          cache: true
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }}
+
+      - name: Build
+        run: cmake --build build
+
+      #如果你有测试就打开
+      # - name: Test
+      #   run: ctest --test-dir build --output-on-failure

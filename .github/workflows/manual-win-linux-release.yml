@@ -1,0 +1,194 @@
+name: Manual Build+Package+Release (ZcChat2 Win+Linux)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag (example: v1.0.0)"
+        required: true
+      qt_version:
+        description: "Qt version"
+        required: false
+        default: "6.6.0"
+      build_type:
+        description: "CMake build type"
+        required: false
+        default: "Release"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-22.04]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      #========================
+      # Linux依赖
+      #========================
+      - name: Install Linux deps
+        if: matrix.os == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build wget patchelf desktop-file-utils \
+            libgl1-mesa-dev \
+            libxkbcommon-x11-0 \
+            libxcb-cursor0 \
+            libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
+            libxcb-randr0 libxcb-xinerama0 libxcb-xfixes0 libxcb-shape0
+
+      #========================
+      # Windows工具链
+      #========================
+      - name: Setup Ninja (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Setup MSVC (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: ${{ inputs.qt_version }}
+          target: desktop
+          arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || 'gcc_64' }}
+          cache: true
+
+      #========================
+      # 构建
+      #========================
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ inputs.build_type }}
+
+      - name: Build
+        run: cmake --build build
+
+      #========================================================
+      # Windows：windeployqt + 默认配置复制 + Inno Setup
+      #========================================================
+      - name: Package Windows (windeployqt)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          if(!(Test-Path "build\ZcChat2.exe")){ throw "Not found: build\ZcChat2.exe" }
+
+          Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force dist | Out-Null
+
+          Copy-Item build\ZcChat2.exe dist\
+          windeployqt dist\ZcChat2.exe
+
+      #复制默认用户模板
+      - name: Copy default user config
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          if(!(Test-Path "res\default_config\ZcChat2")){ throw "Not found: res\default_config\ZcChat2" }
+
+          New-Item -ItemType Directory -Force "dist\.config\ZcChat2" | Out-Null
+          Copy-Item "res\default_config\ZcChat2\*" "dist\.config\ZcChat2" -Recurse -Force
+
+      - name: Install Inno Setup
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install innosetup -y
+          $iscc="C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if(!(Test-Path $iscc)){ throw "ISCC not found: $iscc" }
+
+      - name: Build Installer (Inno Setup)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $iscc="C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if(!(Test-Path "installer\ZcChat2.iss")){ throw "Not found: installer\ZcChat2.iss" }
+
+          $ver="${{ inputs.tag_name }}".TrimStart("v")
+          & $iscc /DMyAppVersion=$ver "installer\ZcChat2.iss"
+
+          if(!(Test-Path "installer\output\ZcChat2_Setup.exe")){ throw "Installer output not found" }
+          Move-Item "installer\output\ZcChat2_Setup.exe" "ZcChat2-${{ inputs.tag_name }}-setup.exe" -Force
+
+      - name: Upload artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-windows
+          path: ZcChat2-${{ inputs.tag_name }}-setup.exe
+
+      #========================================================
+      # Linux：AppImage
+      #========================================================
+      - name: Package Linux (AppImage via linuxdeployqt)
+        if: matrix.os == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          if [ ! -f "build/ZcChat2" ]; then
+            echo "Not found: build/ZcChat2"
+            exit 1
+          fi
+
+          rm -rf AppDir linuxdeployqt.AppImage squashfs-root dist || true
+          mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps dist
+
+          cp build/ZcChat2 AppDir/usr/bin/ZcChat2
+          chmod +x AppDir/usr/bin/ZcChat2
+
+          cat > AppDir/usr/share/applications/ZcChat2.desktop <<'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=ZcChat2
+          Exec=ZcChat2
+          Icon=ZcChat2
+          Categories=Utility;
+          Terminal=false
+          EOF
+
+          base64 -d > AppDir/usr/share/icons/hicolor/256x256/apps/ZcChat2.png <<'EOF'
+          iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2m0AAAAASUVORK5CYII=
+          EOF
+
+          wget -qO linuxdeployqt.AppImage https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
+          chmod +x linuxdeployqt.AppImage
+          ./linuxdeployqt.AppImage --appimage-extract
+
+          ./squashfs-root/AppRun AppDir/usr/share/applications/ZcChat2.desktop -appimage
+
+          OUT_APPIMAGE="$(ls -1 ZcChat2-*.AppImage | head -n 1)"
+          mv "$OUT_APPIMAGE" "dist/ZcChat2-${{ inputs.tag_name }}-linux-x86_64.AppImage"
+
+      - name: Upload artifacts (Linux)
+        if: matrix.os == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-linux
+          path: dist/ZcChat2-${{ inputs.tag_name }}-linux-x86_64.AppImage
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release_assets
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          files: release_assets/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
