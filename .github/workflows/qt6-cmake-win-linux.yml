@@ -31,7 +31,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgl1-mesa-dev
+          sudo apt-get install -y ninja-build libgl1-mesa-dev libx11-dev libxext-dev
 
       #Windows装Ninja+MSVC环境
       - name: Setup Ninja (Windows)
