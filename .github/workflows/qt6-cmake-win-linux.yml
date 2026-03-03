@@ -48,7 +48,7 @@ jobs:
           version: ${{ inputs.qt_version || '6.6.0' }}
           target: desktop
           arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || '' }}
-          modules: 'qtmultimedia qtsvg'
+          modules: 'qtmultimedia'
           cache: true
 
       - name: Configure
