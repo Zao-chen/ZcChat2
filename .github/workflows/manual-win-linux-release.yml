@@ -57,22 +57,35 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
 
+      #========================
+      # Qt(补齐Multimedia，避免Qt6_FOUND=FALSE)
+      #========================
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
           version: ${{ inputs.qt_version }}
           target: desktop
           arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2022_64' || 'gcc_64' }}
+          modules: qtmultimedia
           cache: true
 
       #========================
       # 构建
       #========================
-      - name: Configure
+      - name: Configure (Linux)
+        if: matrix.os == 'ubuntu-22.04'
         shell: bash
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} \
+            -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
+
+      - name: Configure (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} `
             -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
 
       - name: Build
