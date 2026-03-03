@@ -135,12 +135,16 @@ jobs:
         run: |
           if(!(Test-Path "dist\ZcChat2.exe")){ throw "dist\ZcChat2.exe missing" }
 
+          #关键Qt库
+          if(!(Test-Path "dist\Qt6Core.dll")){ throw "dist\Qt6Core.dll missing" }
+
+          #关键平台插件(没有这个基本一定打不开)
+          if(!(Test-Path "dist\platforms\qwindows.dll")){ throw "dist\platforms\qwindows.dll missing (windeployqt failed?)" }
+
           $dlls=Get-ChildItem "dist" -File -Filter *.dll -ErrorAction SilentlyContinue
           if($dlls.Count -eq 0){ throw "No *.dll found in dist" }
 
-          if(!(Test-Path "dist\plugins")){ throw "dist\plugins missing (windeployqt failed?)" }
-
-          "dist dll count: $($dlls.Count)"
+          "dist root dll count: $($dlls.Count)"
 
       #复制默认用户模板
       - name: Copy default user config
