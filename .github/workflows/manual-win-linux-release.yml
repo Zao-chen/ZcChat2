@@ -65,7 +65,7 @@ jobs:
         with:
           version: ${{ inputs.qt_version }}
           target: desktop
-          arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2022_64' || 'gcc_64' }}
+          arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || 'gcc_64' }}
           modules: qtmultimedia
           cache: true
 
