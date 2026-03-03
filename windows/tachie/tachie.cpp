@@ -49,6 +49,7 @@ void Tachie::SetTachieImg(QString TachieName)
 void Tachie::SetTachieSize(int size)
 {
     qInfo() << "设置立绘大小为" << size;
+     //缩放新图片并设置到 label
     QPixmap scaledPixmap = NowTachie.scaled(
         NowTachie.size() * (size / 100.0),
         Qt::KeepAspectRatio,

@@ -72,17 +72,29 @@ target_include_directories(ZcChat2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/include
 )
 
-target_link_libraries(ZcChat2 PRIVATE
-    Qt${QT_VERSION_MAJOR}::Widgets
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/ZcAiLib.lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/lib/elawidgettools.lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/ZcWidgetTools.lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/ZcJsonLib.lib
-    Qt6::Network
-    Qt6::Multimedia
-    X11 
-    Xext
-)
+if(WIN32)
+    target_link_libraries(ZcChat2 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/ZcAiLib.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/lib/elawidgettools.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/ZcWidgetTools.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/ZcJsonLib.lib
+    )
+endif()
+
+if(UNIX AND NOT APPLE)
+    find_package(X11 REQUIRED COMPONENTS Xext)
+
+    target_link_libraries(ZcChat2 PRIVATE
+        X11 
+        Xext
+        Qt${QT_VERSION_MAJOR}::Gui
+        Qt${QT_VERSION_MAJOR}::Svg
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/libZcAiLib.a"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/libZcJsonLib.a"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/libZcWidgetTools.a"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/lib/libElaWidgetTools.a"
+    )
+endif()
 
 #        配置linux的包含路径
 target_include_directories(ZcChat2 PRIVATE
