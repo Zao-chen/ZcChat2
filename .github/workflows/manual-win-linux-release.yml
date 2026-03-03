@@ -189,6 +189,8 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag_name }}
+          name: ZcChat2 ${{ inputs.tag_name }}
+          generate_release_notes: true
           files: release_assets/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

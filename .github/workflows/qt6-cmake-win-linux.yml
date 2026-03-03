@@ -47,14 +47,15 @@ jobs:
         with:
           version: ${{ inputs.qt_version || '6.6.0' }}
           target: desktop
-          #Windows用MSVC包
           arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || '' }}
+          modules: 'qtmultimedia qtsvg'
           cache: true
 
       - name: Configure
         run: >
           cmake -S . -B build -G Ninja
           -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }}
+          -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
 
       - name: Build
         run: cmake --build build

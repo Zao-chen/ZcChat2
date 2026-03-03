@@ -14,13 +14,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #find_package(Qt6 COMPONENTS Network REQUIRED)
 #find_package(Qt6 COMPONENTS Multimedia REQUIRED)
 #这样更稳妥一点,同时支持qt5和qt6
-find_package(Qt6 QUIET COMPONENTS Widgets Network Multimedia Svg)
-if(NOT Qt6_FOUND)
-    find_package(Qt5 REQUIRED COMPONENTS Widgets Network Multimedia Svg)
-    set(QT_VERSION_MAJOR 5)
-else()
-    set(QT_VERSION_MAJOR 6)
-endif()
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network Multimedia Svg)
+set(QT_VERSION_MAJOR 6)
 
 
 set(PROJECT_SOURCES
