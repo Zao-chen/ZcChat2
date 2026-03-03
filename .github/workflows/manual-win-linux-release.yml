@@ -119,7 +119,7 @@ jobs:
           if(!(Test-Path $root)){ throw "Not found: $root" }
 
           $dlls=Get-ChildItem -Path $root -Recurse -File -Filter *.dll |
-            Where-Object { $_.FullName -match "\\bin\\" }
+            Where-Object { $_.FullName -match "(\\|/)bin(\\|/)" }
 
           if($dlls.Count -eq 0){ throw "No dll found under 3rdparty/**/bin/*.dll" }
 
@@ -128,6 +128,19 @@ jobs:
           }
 
           "Copied dll count: $($dlls.Count)"
+
+      - name: Check dist files (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          if(!(Test-Path "dist\ZcChat2.exe")){ throw "dist\ZcChat2.exe missing" }
+
+          $dlls=Get-ChildItem "dist" -File -Filter *.dll -ErrorAction SilentlyContinue
+          if($dlls.Count -eq 0){ throw "No *.dll found in dist" }
+
+          if(!(Test-Path "dist\plugins")){ throw "dist\plugins missing (windeployqt failed?)" }
+
+          "dist dll count: $($dlls.Count)"
 
       #复制默认用户模板
       - name: Copy default user config
