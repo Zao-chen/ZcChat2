@@ -62,20 +62,24 @@ jobs:
         with:
           version: ${{ inputs.qt_version }}
           target: desktop
-          arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || 'gcc_64' }}
+          arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2022_64' || 'gcc_64' }}
           cache: true
 
       #========================
       # 构建
       #========================
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ inputs.build_type }}
+        shell: bash
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} \
+            -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
 
       - name: Build
         run: cmake --build build
 
       #========================================================
-      # Windows：windeployqt + 默认配置复制 + Inno Setup
+      # Windows：windeployqt + 3rdparty dll + 默认配置复制 + Inno Setup
       #========================================================
       - name: Package Windows (windeployqt)
         if: matrix.os == 'windows-latest'
@@ -87,7 +91,20 @@ jobs:
           New-Item -ItemType Directory -Force dist | Out-Null
 
           Copy-Item build\ZcChat2.exe dist\
-          windeployqt dist\ZcChat2.exe
+
+          $qtBin = Join-Path "${{ env.Qt6_DIR }}" "bin"
+          $windeploy = Join-Path $qtBin "windeployqt.exe"
+          if(!(Test-Path $windeploy)){ throw "windeployqt not found: $windeploy" }
+
+          & $windeploy --release --compiler-runtime dist\ZcChat2.exe
+
+      - name: Copy 3rdparty dlls
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $src="3rdparty/xxx/bin"
+          if(!(Test-Path $src)){ throw "Not found: $src" }
+          Copy-Item "$src\*.dll" "dist\" -Force
 
       #复制默认用户模板
       - name: Copy default user config

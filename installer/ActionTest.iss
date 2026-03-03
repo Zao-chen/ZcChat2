@@ -18,7 +18,10 @@ Name: "chinesesimp"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "{#MyAppPath}\ZcChat2.exe"; DestDir: "{app}"; Flags: ignoreversion
+
+;把dist里所有dll都带上(包含子目录，防止未来改结构漏掉)
 Source: "{#MyAppPath}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyAppPath}\**\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ;Qt插件(必须是plugins结构)
 Source: "{#MyAppPath}\plugins\*"; DestDir: "{app}\plugins"; Flags: ignoreversion recursesubdirs createallsubdirs
