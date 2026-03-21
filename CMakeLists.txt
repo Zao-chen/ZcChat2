@@ -30,6 +30,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         windows/dialog/dialog.h windows/dialog/dialog.cpp windows/dialog/dialog.ui
+        windows/dialog/history/history.h windows/dialog/history/history.cpp windows/dialog/history/history.ui
+        windows/dialog/history/historychild.h windows/dialog/history/historychild.cpp windows/dialog/history/historychild.ui
         GlobalConstants.h
         res.qrc
         utils/CustomScrollBinder.h utils/CustomScrollBinder.cpp

@@ -2,46 +2,64 @@
 #define DIALOG_H
 
 #include "AiProvider.h"
+#include <QEvent>
+#include <QMoveEvent>
+#include <QStringList>
 #include <QWidget>
 
-namespace Ui
-{
+namespace Ui {
 class Dialog;
 }
 
-class Dialog : public QWidget
-{
-    Q_OBJECT
+class history;
 
-  public:
-    explicit Dialog(QWidget *parent = nullptr);
-    ~Dialog();
+class Dialog : public QWidget {
+  Q_OBJECT
 
-  public slots:
-    void ToggleVisible();
-    void VitsGetAndPlay(QString text);
+public:
+  explicit Dialog(QWidget *parent = nullptr);
+  ~Dialog();
 
-  private slots:
-    void on_pushButton_next_clicked();
+public slots:
+  void ToggleVisible();
+  void VitsGetAndPlay(QString text);
 
-  signals:
-    void requestSetCharTachie(QString TachieName);
+private slots:
+  void on_pushButton_next_clicked();
+  void on_pushButton_history_clicked();
 
-  public slots:
-    void ReloadAIConfig();
+signals:
+  void requestSetCharTachie(QString TachieName);
 
-  private:
-    /*初始化*/
-    //鼠标事件
-    virtual void paintEvent(QPaintEvent *event) override;
-    //键盘事件
-    void keyPressEvent(QKeyEvent *event) override;
-    void keyReleaseEvent(QKeyEvent *event) override;
-    QList<int> keys; //按键按键获取
-    /*主逻辑*/
-    void initWindow();
-    Ui::Dialog *ui;
-    AiProvider *ai; //用于AI交互
+public slots:
+  void ReloadAIConfig();
+
+private:
+  /*初始化*/
+  // 鼠标事件
+  virtual void paintEvent(QPaintEvent *event) override;
+  // 键盘事件
+  void keyPressEvent(QKeyEvent *event) override;
+  void keyReleaseEvent(QKeyEvent *event) override;
+  void wheelEvent(QWheelEvent *event) override;
+  void moveEvent(QMoveEvent *event) override;
+  bool eventFilter(QObject *watched, QEvent *event) override;
+  QList<int> keys; // 按键按键获取
+  /*主逻辑*/
+  void initWindow();
+  void handleWheelUp();
+  void handleWheelDown();
+  void loadContextHistory();
+  void saveContextHistory() const;
+  QString buildUserMessageWithContext(const QString &input) const;
+  void appendHistoryLine(const QString &line);
+  Ui::Dialog *ui;
+  AiProvider *ai; // 用于AI交互
+  history *historyWin;
+  QPoint lastPos;
+  bool isHistoryOpen;
+  QStringList m_contextHistory;
+  QString m_lastUserInput;
 };
 
 #endif // DIALOG_H
