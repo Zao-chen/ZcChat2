@@ -31,7 +31,7 @@
    </item>
    <item>
     <widget class="ElaScrollPageArea" name="widget_SelectChar" native="true">
-     <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="3,1,2">
+     <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="3,1,1,4,1">
       <property name="leftMargin">
        <number>15</number>
       </property>
@@ -57,9 +57,16 @@
        </widget>
       </item>
       <item>
-       <widget class="ElaPushButton" name="pushButton_RefreshCharList">
+       <widget class="ElaPushButton" name="pushButton_InputChar">
         <property name="text">
-         <string>刷新</string>
+         <string>导入</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="ElaPushButton" name="pushButton_OutputChar">
+        <property name="text">
+         <string>导出</string>
         </property>
        </widget>
       </item>
@@ -104,6 +111,13 @@ QScrollBar:vertical:disabled {
     border: none;              /* 禁用时的边框 */
 }
 </string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="ElaPushButton" name="pushButton_RefreshCharList">
+        <property name="text">
+         <string>刷新</string>
         </property>
        </widget>
       </item>
