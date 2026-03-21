@@ -10,8 +10,6 @@
 #include "ZcJsonLib.h"
 #include <QFile>
 #include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -50,6 +48,7 @@ void Dialog::paintEvent(QPaintEvent *event) {
     painter.drawPath(shadowPath); // 绘制阴影路径
   }
 }
+
 /*初始化窗口*/
 void Dialog::initWindow() {
   /*窗口初始化*/
@@ -66,32 +65,26 @@ void Dialog::initWindow() {
   ui->textEdit->viewport()->installEventFilter(this);
 }
 
+/*打开关闭历史记录*/
 void Dialog::handleWheelUp() {
   if (!isHistoryOpen)
     ui->pushButton_history->click();
 }
-
 void Dialog::handleWheelDown() {
   if (isHistoryOpen)
     ui->pushButton_history->click();
 }
 
+/*加载上下文历史*/
 void Dialog::loadContextHistory() {
   m_contextHistory.clear();
   const QString contextPath = ReadCharacterContextPath();
   if (contextPath.isEmpty())
     return;
 
-  QFile file(contextPath);
-  if (!file.exists() || !file.open(QIODevice::ReadOnly))
-    return;
-
-  const QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-  file.close();
-  if (!doc.isObject())
-    return;
-
-  const QJsonArray historyArray = doc.object().value("history").toArray();
+  ZcJsonLib contextConfig(contextPath);
+  const QJsonArray historyArray =
+      contextConfig.value("history", QJsonValue(QJsonArray())).toArray();
   for (const QJsonValue &value : historyArray) {
     const QString line = value.toString();
     if (!line.isEmpty())
@@ -99,27 +92,24 @@ void Dialog::loadContextHistory() {
   }
 }
 
+/*保存上下文历史*/
 void Dialog::saveContextHistory() const {
   const QString contextPath = ReadCharacterContextPath();
   if (contextPath.isEmpty())
     return;
 
-  QFile file(contextPath);
-  const QFileInfo fileInfo(file);
+  const QFileInfo fileInfo(contextPath);
   QDir().mkpath(fileInfo.absolutePath());
-  if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
-    return;
 
   QJsonArray historyArray;
   for (const QString &line : m_contextHistory)
     historyArray.append(line);
 
-  QJsonObject root;
-  root.insert("history", historyArray);
-  file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-  file.close();
+  ZcJsonLib contextConfig(contextPath);
+  contextConfig.setValue("history", QJsonValue(historyArray));
 }
 
+/*构建用户消息，包含上下文*/
 QString Dialog::buildUserMessageWithContext(const QString &input) const {
   if (m_contextHistory.isEmpty())
     return input;
@@ -130,6 +120,7 @@ QString Dialog::buildUserMessageWithContext(const QString &input) const {
          input;
 }
 
+/*添加历史记录行*/
 void Dialog::appendHistoryLine(const QString &line) {
   if (line.isEmpty())
     return;
@@ -163,7 +154,7 @@ Dialog::Dialog(QWidget *parent)
     ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     bool vitsEnable = charConfig.value("vitsEnable").toBool();
     if (vitsEnable)
-      VitsGetAndPlay(chineseReply); // 提取中文内容并进行语音合成播放
+      VitsGetAndPlay(chineseReply);  // 提取中文内容并进行语音合成播放
     emit requestSetCharTachie(mood); // 提取心情并发出信号
 
     if (!m_lastUserInput.isEmpty()) {
@@ -274,6 +265,7 @@ void Dialog::ReloadAIConfig() {
   loadContextHistory();
 }
 
+/*显示历史记录*/
 void Dialog::on_pushButton_history_clicked() {
   if (!historyWin)
     historyWin = new history(this);
@@ -295,7 +287,8 @@ void Dialog::on_pushButton_history_clicked() {
     historyWin->raise();
     isHistoryOpen = true;
 
-    auto *opacityEffect = new QGraphicsOpacityEffect(historyWin);
+    QGraphicsOpacityEffect *opacityEffect =
+        new QGraphicsOpacityEffect(historyWin);
     historyWin->setGraphicsEffect(opacityEffect);
 
     QRect startRect = historyWin->geometry();
@@ -304,17 +297,19 @@ void Dialog::on_pushButton_history_clicked() {
     historyWin->setGeometry(startRect);
     opacityEffect->setOpacity(0.0);
 
-    auto *opacityAnim = new QPropertyAnimation(opacityEffect, "opacity");
+    QPropertyAnimation *opacityAnim =
+        new QPropertyAnimation(opacityEffect, "opacity");
     opacityAnim->setDuration(150);
     opacityAnim->setStartValue(0.0);
     opacityAnim->setEndValue(1.0);
 
-    auto *moveAnim = new QPropertyAnimation(historyWin, "geometry");
+    QPropertyAnimation *moveAnim =
+        new QPropertyAnimation(historyWin, "geometry");
     moveAnim->setDuration(150);
     moveAnim->setStartValue(startRect);
     moveAnim->setEndValue(endRect);
 
-    auto *group = new QParallelAnimationGroup(historyWin);
+    QParallelAnimationGroup *group = new QParallelAnimationGroup(historyWin);
     group->addAnimation(opacityAnim);
     group->addAnimation(moveAnim);
     group->start(QAbstractAnimation::DeleteWhenStopped);
@@ -332,17 +327,19 @@ void Dialog::on_pushButton_history_clicked() {
       historyWin->setGraphicsEffect(opacityEffect);
     }
 
-    auto *opacityAnim = new QPropertyAnimation(opacityEffect, "opacity");
+    QPropertyAnimation *opacityAnim =
+        new QPropertyAnimation(opacityEffect, "opacity");
     opacityAnim->setDuration(150);
     opacityAnim->setStartValue(1.0);
     opacityAnim->setEndValue(0.0);
 
-    auto *moveAnim = new QPropertyAnimation(historyWin, "geometry");
+    QPropertyAnimation *moveAnim =
+        new QPropertyAnimation(historyWin, "geometry");
     moveAnim->setDuration(150);
     moveAnim->setStartValue(startRect);
     moveAnim->setEndValue(endRect);
 
-    auto *group = new QParallelAnimationGroup(historyWin);
+    QParallelAnimationGroup *group = new QParallelAnimationGroup(historyWin);
     group->addAnimation(opacityAnim);
     group->addAnimation(moveAnim);
     connect(group, &QParallelAnimationGroup::finished, historyWin,
@@ -371,7 +368,7 @@ void Dialog::wheelEvent(QWheelEvent *event) {
 bool Dialog::eventFilter(QObject *watched, QEvent *event) {
   if ((watched == ui->textEdit || watched == ui->textEdit->viewport()) &&
       event->type() == QEvent::Wheel) {
-    auto *wheelEvent = static_cast<QWheelEvent *>(event);
+    QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
     if (wheelEvent->angleDelta().y() > 0)
       handleWheelUp();
     else if (wheelEvent->angleDelta().y() < 0)
