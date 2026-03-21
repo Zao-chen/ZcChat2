@@ -42,6 +42,7 @@ res                     # 资源文件
 utils                   # 工具类/辅助函数代码
 windows                 # 窗口模块
 ├─dialog                # 对话框窗口
+│  └─history            # 历史记录窗口
 ├─setting               # 设置窗口
 │  └─child              # 设置窗口子窗口
 └─tachie                # 角色立绘窗口
@@ -65,7 +66,6 @@ ZcChat2/
         └── {CharacteName}/       # 角色用户配置文件夹
             └── config.json       # 角色用户设置
 ```
-
 
 ### 注意事项
 
