@@ -17,6 +17,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Multimedia Svg)
 set(QT_VERSION_MAJOR 6)
 
+# 优先使用外部 ZcAILib 最新构建产物；若不存在则回退到 3rdparty。
+set(ZCAILIB_EXTERNAL_ROOT "P:/Qt/Project/ZcAILib")
+set(ZCAILIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/include")
+set(ZCAILIB_WIN_LIB "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/ZcAiLib.lib")
+set(ZCAILIB_WIN_DLL "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/bin/ZcAiLib.dll")
+
+if(EXISTS "${ZCAILIB_EXTERNAL_ROOT}/src/aiprovider.h" AND EXISTS "${ZCAILIB_EXTERNAL_ROOT}/src/ZcAiLib_global.h")
+    set(ZCAILIB_INCLUDE_DIR "${ZCAILIB_EXTERNAL_ROOT}/src")
+endif()
+
+if(EXISTS "${ZCAILIB_EXTERNAL_ROOT}/build-stream/Release/ZcAiLib.lib" AND EXISTS "${ZCAILIB_EXTERNAL_ROOT}/build-stream/Release/ZcAiLib.dll")
+    set(ZCAILIB_WIN_LIB "${ZCAILIB_EXTERNAL_ROOT}/build-stream/Release/ZcAiLib.lib")
+    set(ZCAILIB_WIN_DLL "${ZCAILIB_EXTERNAL_ROOT}/build-stream/Release/ZcAiLib.dll")
+elseif(EXISTS "${ZCAILIB_EXTERNAL_ROOT}/build/Release/ZcAiLib.lib" AND EXISTS "${ZCAILIB_EXTERNAL_ROOT}/build/Release/ZcAiLib.dll")
+    set(ZCAILIB_WIN_LIB "${ZCAILIB_EXTERNAL_ROOT}/build/Release/ZcAiLib.lib")
+    set(ZCAILIB_WIN_DLL "${ZCAILIB_EXTERNAL_ROOT}/build/Release/ZcAiLib.dll")
+endif()
+
 
 set(PROJECT_SOURCES
         main.cpp
@@ -65,7 +83,7 @@ endif()
 # 1. 统一的头文件路径 (合并原本分散在两处的路径)
 target_include_directories(ZcChat2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/include
+    ${ZCAILIB_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/include
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/include
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/include
@@ -84,10 +102,16 @@ target_link_libraries(ZcChat2 PRIVATE
 # 3. Windows 专用链接
 if(WIN32)
     target_link_libraries(ZcChat2 PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/ZcAiLib.lib
+        ${ZCAILIB_WIN_LIB}
         ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/lib/elawidgettools.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/ZcWidgetTools.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/ZcJsonLib.lib
+    )
+
+    add_custom_command(TARGET ZcChat2 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${ZCAILIB_WIN_DLL}
+            $<TARGET_FILE_DIR:ZcChat2>/ZcAiLib.dll
     )
 endif()
 
