@@ -19,6 +19,9 @@ SettingChild_Vits::SettingChild_Vits(QWidget *parent)
     /*初始化*/
     ui->BreadcrumbBar->setTextPixelSize(25);
     ui->BreadcrumbBar->appendBreadcrumb("语音合成设置");
+    ZcJsonLib config(JsonSettingPath);
+    bool sentenceSplit = config.value("vits/SentenceSplit", true).toBool();
+    ui->ToggleSwitch_VitsSentenceSplit->setIsToggled(sentenceSplit);
 }
 
 SettingChild_Vits::~SettingChild_Vits()
@@ -108,4 +111,10 @@ void SettingChild_Vits::on_pushButton_LoadModelAndSpeakerlList_clicked()
         QJsonArray arr;
         for(const QString& s : list)    arr.append(s);
         config.setValue("vits/ModelAndSpeakerList", arr); });
+}
+
+void SettingChild_Vits::on_ToggleSwitch_VitsSentenceSplit_toggled(bool checked)
+{
+    ZcJsonLib config(JsonSettingPath);
+    config.setValue("vits/SentenceSplit", checked);
 }

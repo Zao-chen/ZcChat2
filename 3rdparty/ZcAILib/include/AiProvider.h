@@ -2,6 +2,8 @@
 #define AIPROVIDER_H
 
 #include "ZcAiLib_global.h"
+#include <QByteArray>
+#include <QHash>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -20,12 +22,11 @@ public:
         Custom
     };
 
-    // 模型信息
     struct ModelInfo {
-        QString id;              // 模型 ID
-        QString created;         // 创建时间
-        QString ownedBy;         // 拥有者
-        QStringList permissions; // 权限
+        QString id;
+        QString created;
+        QString ownedBy;
+        QStringList permissions;
     };
 
     explicit AiProvider(QObject *parent = nullptr);
@@ -35,36 +36,44 @@ public:
     void setApiKey(const QString &apiKey);
     void setApiUrl(const QString &url);
     void setModel(const QString &model);
+    void setStreamEnabled(bool enabled);
 
     QString currentModel() const { return m_model; }
     ServiceType currentServiceType() const { return m_serviceType; }
+    bool isStreamEnabled() const { return m_streamEnabled; }
 
-    // 从 API 获取模型列表
     void fetchModels();
-
-    // 发送消息
     void chat(const QString &message);
-
     void setSystemPrompt(const QString &prompt);
 
-    QString m_systemPrompt; // 系统提示词
+    QString m_systemPrompt;
 
 signals:
     void replyReceived(const QString &reply);
+    void replyChunkReceived(const QString &chunk);
     void errorOccurred(const QString &error);
     void modelsReceived(const QList<ModelInfo> &models);
 
 private slots:
     void handleReply();
+    void handleStreamReadyRead();
     void handleModelsReply();
 
 private:
+    void processStreamChunk(QNetworkReply *reply, const QByteArray &chunk);
+    void finalizeStreamReply(QNetworkReply *reply);
+    void cleanupStreamReply(QNetworkReply *reply);
+
     QNetworkAccessManager *m_network;
     QString m_apiKey;
     QString m_apiUrl;
     QString m_model;
-    QString m_modelsApiUrl;  // 专门用于获取模型列表的 URL
+    bool m_streamEnabled;
+    QString m_modelsApiUrl;
     ServiceType m_serviceType;
+    QHash<QNetworkReply *, QByteArray> m_streamBuffers;
+    QHash<QNetworkReply *, QByteArray> m_rawResponses;
+    QHash<QNetworkReply *, QString> m_streamReplies;
 };
 
 #endif // AIPROVIDER_H

@@ -26,6 +26,20 @@
 #include <QTemporaryFile>
 #include <QWheelEvent>
 
+/*寻找句子分割点*/
+static int findNextSentenceEnd(const QString &text, int start) {
+  for (int i = qMax(0, start); i < text.size(); ++i) {
+    const QChar ch = text.at(i);
+    if (ch == QChar('.') || ch == QChar('!') || ch == QChar('?') ||
+        ch == QChar('\n') || ch == QStringLiteral("。").at(0) ||
+        ch == QStringLiteral("！").at(0) || ch == QStringLiteral("？").at(0) ||
+        ch == QStringLiteral("、").at(0) || ch == QStringLiteral("；").at(0) ||
+        ch == QChar(';'))
+      return i;
+  }
+  return -1;
+}
+
 /*窗口的绘制*/
 void Dialog::paintEvent(QPaintEvent *event) {
   QPainterPath path;
@@ -92,23 +106,6 @@ void Dialog::loadContextHistory() {
   }
 }
 
-/*保存上下文历史*/
-void Dialog::saveContextHistory() const {
-  const QString contextPath = ReadCharacterContextPath();
-  if (contextPath.isEmpty())
-    return;
-
-  const QFileInfo fileInfo(contextPath);
-  QDir().mkpath(fileInfo.absolutePath());
-
-  QJsonArray historyArray;
-  for (const QString &line : m_contextHistory)
-    historyArray.append(line);
-
-  ZcJsonLib contextConfig(contextPath);
-  contextConfig.setValue("history", QJsonValue(historyArray));
-}
-
 /*构建用户消息，包含上下文*/
 QString Dialog::buildUserMessageWithContext(const QString &input) const {
   if (m_contextHistory.isEmpty())
@@ -128,47 +125,153 @@ void Dialog::appendHistoryLine(const QString &line) {
 }
 
 /*构建窗口*/
-Dialog::Dialog(QWidget *parent)
-    : QWidget(parent), ui(new Ui::Dialog), historyWin(nullptr),
-      isHistoryOpen(false) {
+Dialog::Dialog(QWidget *parent) : QWidget(parent), ui(new Ui::Dialog) {
   ui->setupUi(this);
   initWindow();
+
+  /*AI初始化*/
   ai = new AiProvider(this);
+  ai->setStreamEnabled(true);
+
+  /*Vits初始化*/
+  m_vitsManager = new QNetworkAccessManager(this);
+  m_vitsPlayer = new QMediaPlayer(this);
+  m_vitsAudioOutput = new QAudioOutput(this);
+  m_vitsPlayer->setAudioOutput(m_vitsAudioOutput);
+  // 播放完成后播放下一条
+  connect(m_vitsPlayer, &QMediaPlayer::playbackStateChanged, this,
+          [this](QMediaPlayer::PlaybackState state) {
+            if (state == QMediaPlayer::StoppedState) {
+              if (m_vitsTempFile) {
+                m_vitsTempFile->deleteLater();
+                m_vitsTempFile = nullptr;
+              }
+              tryStartNextVitsPlayback();
+            }
+          });
   ReloadAIConfig();
   loadContextHistory();
 
+  /*数据读取和初始化*/
   ZcJsonLib config(JsonSettingPath);
+  QString apiKey = config.value("llm/DeepSeek/ApiKey").toString(); // 读取ApiKey
+  ai->setApiKey(apiKey); // Todo: 根据不同服务类型设置不同的Key
 
-  QString apiKey =
-      config.value("llm/DeepSeek/ApiKey").toString(); // 替换成你的 Key
-  qDebug() << apiKey;
-  ai->setApiKey(apiKey);
-  lastPos = pos();
-  // 接收回复
+  // 接收分块回复
+  connect(ai, &AiProvider::replyChunkReceived, [=](const QString &chunk) {
+    m_streamRawReply += chunk; // 追加
+
+    /*提取中文*/
+    const int firstSep = m_streamRawReply.indexOf('|'); // 寻找第一个分隔符
+    if (firstSep < 0)
+      return;
+    const int secondSep =
+        m_streamRawReply.indexOf('|',
+                                 firstSep + 1); // 寻找第二个分隔符
+    const int chineseEnd =
+        secondSep < 0
+            ? m_streamRawReply.size()
+            : secondSep; // 如果没有找到第二个分隔符，就以当前字符串末尾为中文结束位置
+    const QString chinesePartial = m_streamRawReply.mid(
+        firstSep + 1, chineseEnd - firstSep - 1); // 提取中文部分
+    // 更新中文的显示部分
+    if (!chinesePartial.isEmpty() &&
+        chinesePartial != m_streamDisplayedChinese) {
+      m_streamDisplayedChinese = chinesePartial;
+      ui->textEdit->setText(m_streamDisplayedChinese);
+    }
+
+    /*第二个分隔符处理*/
+    if (m_streamVitsEnabled && m_streamVitsSentenceSplitEnabled &&
+      secondSep >= 0) {
+      const QString japanesePartial =
+          m_streamRawReply.mid(secondSep + 1); // 提取日语的全部内容
+      if (!japanesePartial.isEmpty()) {
+        int sentenceEnd =
+            findNextSentenceEnd(japanesePartial,
+                                m_streamSynthCursor); // 初始化首个句尾位置
+        while (sentenceEnd >= 0) {
+          const QString sentence =
+              japanesePartial
+                  .mid(m_streamSynthCursor,
+                       sentenceEnd - m_streamSynthCursor + 1)
+                  .trimmed(); // 获取从上一次切分位置到当前句子结束位置的文本
+          m_streamSynthCursor = sentenceEnd + 1; // 记录切分位置
+          if (!sentence.isEmpty()) {
+            VitsGetAndPlay(sentence); // 发送到语音合成
+          }
+          sentenceEnd = findNextSentenceEnd(
+              japanesePartial,
+              m_streamSynthCursor); // 继续查找下一句结束位置
+        }
+      }
+    }
+  });
+
+  // 接收完整回复
   connect(ai, &AiProvider::replyReceived, [=](const QString &reply) {
-    const QString mood = reply.section('|', 0, 0);
-    const QString chineseReply = reply.section('|', 1, 1);
+    const QString finalReply = m_streamRawReply.isEmpty()
+                                   ? reply
+                                   : m_streamRawReply; // 确保使用完整结果
+    // 解析回复
+    const QString mood = finalReply.section('|', 0, 0).trimmed();
+    const QString chineseReply = finalReply.section('|', 1, 1).trimmed();
+    const QString japaneseReply = finalReply.section('|', 2, 2).trimmed();
+
+    // 界面更新
     ui->pushButton_next->show();
     ui->textEdit->setText(chineseReply); // 提取中文内容并显示
-    // 判断是否开启了Vits语音合成
-    ZcJsonLib charConfig(ReadCharacterUserConfigPath());
-    bool vitsEnable = charConfig.value("vitsEnable").toBool();
-    if (vitsEnable)
-      VitsGetAndPlay(chineseReply);  // 提取中文内容并进行语音合成播放
+    // 语音合成补漏或收尾生成
+    if (m_streamVitsEnabled) {
+      if (m_streamVitsSentenceSplitEnabled) {
+        // 若最后一段不足一句（无句末标点），在结束回包时补一次合成。
+        const QString remainJapanese =
+            japaneseReply.mid(qMax(0, m_streamSynthCursor)).trimmed();
+        if (!remainJapanese.isEmpty())
+          VitsGetAndPlay(remainJapanese);
+      } else {
+        // 关闭切分后，仅在完整日语输出后一次性生成语音。
+        if (!japaneseReply.isEmpty())
+          VitsGetAndPlay(japaneseReply);
+      }
+    }
     emit requestSetCharTachie(mood); // 提取心情并发出信号
 
+    // 历史记录写入
     if (!m_lastUserInput.isEmpty()) {
       appendHistoryLine(QStringLiteral("用户：") + m_lastUserInput);
       m_lastUserInput.clear();
     }
     appendHistoryLine(QStringLiteral("角色：") + chineseReply);
-    saveContextHistory();
+    const QString contextPath = ReadCharacterContextPath();
+    if (contextPath.isEmpty())
+      return;
+
+    const QFileInfo fileInfo(contextPath);
+    QDir().mkpath(fileInfo.absolutePath());
+
+    QJsonArray historyArray;
+    for (const QString &line : m_contextHistory)
+      historyArray.append(line);
+
+    ZcJsonLib contextConfig(contextPath);
+    contextConfig.setValue("history", QJsonValue(historyArray));
+
+    // 重置内容
+    m_streamRawReply.clear();
+    m_streamDisplayedChinese.clear();
+    m_streamVitsEnabled = false;
+    m_streamSynthCursor = 0;
   });
   // 错误处理
   connect(ai, &AiProvider::errorOccurred, [=](const QString &error) {
     ui->pushButton_next->show();
     ui->textEdit->setText(error);
     m_lastUserInput.clear();
+    m_streamRawReply.clear();
+    m_streamDisplayedChinese.clear();
+    m_streamVitsEnabled = false;
+    m_streamSynthCursor = 0;
   });
 }
 
@@ -179,6 +282,7 @@ Dialog::~Dialog() { delete ui; }
 void Dialog::keyPressEvent(QKeyEvent *event) { keys.append(event->key()); }
 void Dialog::keyReleaseEvent(QKeyEvent *event) {
   if (event->key() == Qt::Key_Return)
+    /*发送对话请求*/
     if (!keys.contains(Qt::Key_Shift)) // 过滤Shift换行
     {
       // 对话框设置
@@ -228,7 +332,30 @@ void Dialog::keyReleaseEvent(QKeyEvent *event) {
                          "生气|为什么一直打扰我！|なんでずっと邪魔するの！");
       ai->setSystemPrompt(systemPrompt);
 
+      /*一些东西的初始化*/
       m_lastUserInput = userInput;
+        ZcJsonLib charConfig(ReadCharacterUserConfigPath());
+        m_streamVitsEnabled = charConfig.value("vitsEnable").toBool();
+        ZcJsonLib config(JsonSettingPath);
+        m_streamVitsSentenceSplitEnabled =
+          config.value("vits/SentenceSplit", true).toBool();
+      m_streamRawReply.clear();
+      m_streamDisplayedChinese.clear();
+      m_streamSynthCursor = 0;
+      m_vitsPendingTexts.clear();
+      // 删除暂存的语音文件
+      for (QTemporaryFile *file : m_vitsReadyFiles) {
+        if (file)
+          file->deleteLater();
+      }
+      m_vitsReadyFiles.clear();
+      m_vitsRequestInFlight = false;
+      if (m_vitsTempFile) {
+        m_vitsTempFile->deleteLater();
+        m_vitsTempFile = nullptr;
+      }
+      if (m_vitsPlayer)
+        m_vitsPlayer->stop();
       ai->chat(buildUserMessageWithContext(userInput));
       ui->textEdit->setText("……");
     }
@@ -270,6 +397,7 @@ void Dialog::on_pushButton_history_clicked() {
   if (!historyWin)
     historyWin = new history(this);
 
+  // 刷新历史记录内容
   historyWin->clearHistory();
   for (const QString &line : m_contextHistory) {
     if (line.startsWith(QStringLiteral("用户：")))
@@ -287,6 +415,7 @@ void Dialog::on_pushButton_history_clicked() {
     historyWin->raise();
     isHistoryOpen = true;
 
+    // 显示历史记录窗口动画效果
     QGraphicsOpacityEffect *opacityEffect =
         new QGraphicsOpacityEffect(historyWin);
     historyWin->setGraphicsEffect(opacityEffect);
@@ -320,6 +449,7 @@ void Dialog::on_pushButton_history_clicked() {
     QRect endRect = startRect;
     endRect.moveTop(endRect.top() + 20);
 
+    // 隐藏历史记录动画效果
     QGraphicsOpacityEffect *opacityEffect =
         qobject_cast<QGraphicsOpacityEffect *>(historyWin->graphicsEffect());
     if (!opacityEffect) {
@@ -348,6 +478,7 @@ void Dialog::on_pushButton_history_clicked() {
   }
 }
 
+/*移动窗口*/
 void Dialog::moveEvent(QMoveEvent *event) {
   if (historyWin && historyWin->isVisible()) {
     QPoint offset = event->pos() - lastPos;
@@ -357,6 +488,7 @@ void Dialog::moveEvent(QMoveEvent *event) {
   QWidget::moveEvent(event);
 }
 
+/*滚动窗口*/
 void Dialog::wheelEvent(QWheelEvent *event) {
   if (event->angleDelta().y() > 0)
     handleWheelUp();
@@ -365,6 +497,7 @@ void Dialog::wheelEvent(QWheelEvent *event) {
   QWidget::wheelEvent(event);
 }
 
+/*拦截普通的滚动*/
 bool Dialog::eventFilter(QObject *watched, QEvent *event) {
   if ((watched == ui->textEdit || watched == ui->textEdit->viewport()) &&
       event->type() == QEvent::Wheel) {
@@ -378,8 +511,25 @@ bool Dialog::eventFilter(QObject *watched, QEvent *event) {
   return QWidget::eventFilter(watched, event);
 }
 
-/*语音合成并播放*/
+/*追加待合成文本*/
 void Dialog::VitsGetAndPlay(QString text) {
+  qDebug() << "请求合成文本：" << text;
+
+  m_vitsPendingTexts.append(text);
+  tryStartNextVitsRequest();
+}
+
+/*启动下一个Vits请求*/
+void Dialog::tryStartNextVitsRequest() {
+  if (!m_vitsManager || !m_vitsPlayer)
+    return;
+  if (m_vitsRequestInFlight || m_vitsPendingTexts.isEmpty())
+    return;
+
+  const QString text = m_vitsPendingTexts.takeFirst();
+  if (text.isEmpty())
+    return;
+
   /*请求地址构建*/
   // 获取地址
   ZcJsonLib config(JsonSettingPath);
@@ -396,45 +546,58 @@ void Dialog::VitsGetAndPlay(QString text) {
                           .arg(QString(QUrl::toPercentEncoding(text)))
                           .arg(QString(QUrl::toPercentEncoding(model)))
                           .arg(QString(QUrl::toPercentEncoding(speaker)));
-  qInfo() << "语音合成请求" << modelAndSpeaker;
-  // 创建网络管理器（建议作为类成员变量，避免重复创建）
-  QNetworkAccessManager *manager = new QNetworkAccessManager();
+  qInfo() << "语音合成请求到" << modelAndSpeaker;
+
+  m_vitsRequestInFlight = true;
   QNetworkRequest request(urlString);
   // 发送 GET 请求
-  QNetworkReply *reply = manager->get(request);
+  QNetworkReply *reply = m_vitsManager->get(request);
   // 连接信号处理响应
-  QObject::connect(reply, &QNetworkReply::finished, [=]() {
+  QObject::connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    m_vitsRequestInFlight = false;
+
     if (reply->error() == QNetworkReply::NoError) {
-      // 读取 MP3 数据
       QByteArray audioData = reply->readAll();
-      // 创建临时文件保存音频
-      QTemporaryFile *tempFile =
-          new QTemporaryFile(QDir::tempPath() + "/vits_XXXXXX.mp3");
-      if (tempFile->open()) {
-        tempFile->write(audioData);
-        tempFile->flush();
-        // 创建播放器（建议作为类成员变量）
-        QMediaPlayer *player = new QMediaPlayer();
-        QAudioOutput *audioOutput = new QAudioOutput();
-        player->setAudioOutput(audioOutput);
-        // 设置音频源
-        player->setSource(QUrl::fromLocalFile(tempFile->fileName()));
-        // 播放
-        player->play();
-        // 播放完成后清理资源
-        QObject::connect(player, &QMediaPlayer::playbackStateChanged,
-                         [=](QMediaPlayer::PlaybackState state) {
-                           if (state == QMediaPlayer::StoppedState) {
-                             player->deleteLater();
-                             tempFile->deleteLater();
-                           }
-                         });
-        // 保持临时文件引用，防止过早删除
-        QObject::connect(player, &QObject::destroyed,
-                         [=]() { delete tempFile; });
+      if (!audioData.isEmpty()) {
+        QTemporaryFile *readyFile =
+            new QTemporaryFile(QDir::tempPath() + "/vits_XXXXXX.mp3", this);
+        if (readyFile->open()) {
+          readyFile->write(audioData);
+          readyFile->flush();
+          // 合成完成先入就绪队列，播放端按顺序播放
+          m_vitsReadyFiles.append(readyFile);
+          tryStartNextVitsPlayback();
+        } else {
+          readyFile->deleteLater();
+        }
       }
     }
+
     reply->deleteLater();
-    manager->deleteLater();
+    // 当前请求结束后立即尝试合成下一句，实现“合成前置”。
+    tryStartNextVitsRequest();
   });
+}
+
+/*启动下一个Vits播放*/
+void Dialog::tryStartNextVitsPlayback() {
+  if (!m_vitsPlayer)
+    return;
+  if (m_vitsPlayer->playbackState() != QMediaPlayer::StoppedState)
+    return;
+  if (m_vitsReadyFiles.isEmpty())
+    return;
+
+  if (m_vitsTempFile) {
+    m_vitsTempFile->deleteLater();
+    m_vitsTempFile = nullptr;
+  }
+
+  m_vitsTempFile = m_vitsReadyFiles.takeFirst();
+  if (!m_vitsTempFile)
+    return;
+
+  // 播放严格串行：只有播放器空闲才取下一句。
+  m_vitsPlayer->setSource(QUrl::fromLocalFile(m_vitsTempFile->fileName()));
+  m_vitsPlayer->play();
 }

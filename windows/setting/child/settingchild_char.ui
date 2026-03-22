@@ -609,6 +609,12 @@ QScrollBar:vertical:disabled {
    <container>1</container>
   </customwidget>
   <customwidget>
+   <class>ElaToggleSwitch</class>
+   <extends>QWidget</extends>
+   <header location="global">ElaToggleSwitch.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>ElaComboBox</class>
    <extends>QComboBox</extends>
    <header location="global">ElaComboBox.h</header>
@@ -622,12 +628,6 @@ QScrollBar:vertical:disabled {
    <class>ElaPlainTextEdit</class>
    <extends>QPlainTextEdit</extends>
    <header location="global">ElaPlainTextEdit.h</header>
-  </customwidget>
-  <customwidget>
-   <class>ElaToggleSwitch</class>
-   <extends>QWidget</extends>
-   <header location="global">ElaToggleSwitch.h</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
