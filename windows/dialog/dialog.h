@@ -74,6 +74,7 @@ private:
   QString m_streamRawReply;
   QString m_streamDisplayedChinese;
   bool m_streamVitsEnabled = false;
+  bool m_streamVitsSentenceSplitEnabled = true;
   int m_streamSynthCursor = 0;
   QStringList m_vitsPendingTexts;
   QList<QTemporaryFile *> m_vitsReadyFiles;

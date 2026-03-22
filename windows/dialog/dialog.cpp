@@ -182,7 +182,8 @@ Dialog::Dialog(QWidget *parent) : QWidget(parent), ui(new Ui::Dialog) {
     }
 
     /*第二个分隔符处理*/
-    if (m_streamVitsEnabled && secondSep >= 0) {
+    if (m_streamVitsEnabled && m_streamVitsSentenceSplitEnabled &&
+      secondSep >= 0) {
       const QString japanesePartial =
           m_streamRawReply.mid(secondSep + 1); // 提取日语的全部内容
       if (!japanesePartial.isEmpty()) {
@@ -220,13 +221,19 @@ Dialog::Dialog(QWidget *parent) : QWidget(parent), ui(new Ui::Dialog) {
     // 界面更新
     ui->pushButton_next->show();
     ui->textEdit->setText(chineseReply); // 提取中文内容并显示
-    // 语音合成补漏
+    // 语音合成补漏或收尾生成
     if (m_streamVitsEnabled) {
-      // 若最后一段不足一句（无句末标点），在结束回包时补一次合成。
-      const QString remainJapanese =
-          japaneseReply.mid(qMax(0, m_streamSynthCursor)).trimmed();
-      if (!remainJapanese.isEmpty())
-        VitsGetAndPlay(remainJapanese);
+      if (m_streamVitsSentenceSplitEnabled) {
+        // 若最后一段不足一句（无句末标点），在结束回包时补一次合成。
+        const QString remainJapanese =
+            japaneseReply.mid(qMax(0, m_streamSynthCursor)).trimmed();
+        if (!remainJapanese.isEmpty())
+          VitsGetAndPlay(remainJapanese);
+      } else {
+        // 关闭切分后，仅在完整日语输出后一次性生成语音。
+        if (!japaneseReply.isEmpty())
+          VitsGetAndPlay(japaneseReply);
+      }
     }
     emit requestSetCharTachie(mood); // 提取心情并发出信号
 
@@ -327,8 +334,11 @@ void Dialog::keyReleaseEvent(QKeyEvent *event) {
 
       /*一些东西的初始化*/
       m_lastUserInput = userInput;
-      ZcJsonLib charConfig(ReadCharacterUserConfigPath());
-      m_streamVitsEnabled = charConfig.value("vitsEnable").toBool();
+        ZcJsonLib charConfig(ReadCharacterUserConfigPath());
+        m_streamVitsEnabled = charConfig.value("vitsEnable").toBool();
+        ZcJsonLib config(JsonSettingPath);
+        m_streamVitsSentenceSplitEnabled =
+          config.value("vits/SentenceSplit", true).toBool();
       m_streamRawReply.clear();
       m_streamDisplayedChinese.clear();
       m_streamSynthCursor = 0;
