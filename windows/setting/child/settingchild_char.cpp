@@ -41,9 +41,11 @@ SettingChild_Char::SettingChild_Char(QWidget *parent)
 
 SettingChild_Char::~SettingChild_Char() { delete ui; }
 
+/*加载角色配置*/
 void SettingChild_Char::LoadCurrentCharConfig() {
   QString charName = ui->comboBox_CharList->currentText();
-  if (charName.isEmpty() || charName == "未选择") {
+  if (charName.isEmpty() ||
+      charName == "未选择") { // 如果没有选择角色，清空配置项显示
     ui->plainTextEdit_CharPrompt->clear();
     ui->spinBox_TachieSize->setValue(0);
     ui->comboBox_ModelSelect->clear();
@@ -54,27 +56,28 @@ void SettingChild_Char::LoadCurrentCharConfig() {
     return;
   }
 
+  // 角色提示词
   ZcJsonLib charConfig(CharacterAssestPath + "/" + charName + "/config.json");
   QString charPrompt = charConfig.value("prompt").toString();
   ui->plainTextEdit_CharPrompt->setPlainText(charPrompt);
-
+  // 立绘大小
   ZcJsonLib charUserConfig(CharacterUserConfigPath + "/" + charName +
                            "/config.json");
   QString tachieSize = charUserConfig.value("tachieSize").toString();
   ui->spinBox_TachieSize->setValue(tachieSize.toInt());
-
+  // 服务商和模型选择
   QString serverSelect = charUserConfig.value("serverSelect").toString();
   ui->comboBox_ServerSelect->setCurrentText(serverSelect);
   RefreshModelList();
-
+  // 模型选择
   QString modelSelect = charUserConfig.value("modelSelect").toString();
   ui->comboBox_ModelSelect->setCurrentText(modelSelect);
-
+  // Vits语音合成选择
   bool vitsEnable = charUserConfig.value("vitsEnable").toBool();
   ui->ToggleSwitch_VitsEnable->setIsToggled(vitsEnable);
   ui->comboBox_Vits_MASSelect->setEnabled(vitsEnable);
   ui->comboBox_Vits_ServerSelect->setEnabled(vitsEnable);
-
+  // Vits模型选择
   ZcJsonLib config(JsonSettingPath);
   QJsonArray arr = config.value("vits/ModelAndSpeakerList").toArray();
   QStringList vitsMasList;
@@ -82,16 +85,17 @@ void SettingChild_Char::LoadCurrentCharConfig() {
     vitsMasList.append(val.toString());
   ui->comboBox_Vits_MASSelect->clear();
   ui->comboBox_Vits_MASSelect->addItems(vitsMasList);
-
+  // 读取当前选择的Vits模型
   QString vitsMasSelect = charUserConfig.value("vitsMasSelect").toString();
   ui->comboBox_Vits_MASSelect->setCurrentText(vitsMasSelect);
 }
 
+/*刷新角色列表按钮*/
 void SettingChild_Char::on_pushButton_RefreshCharList_clicked() {
   RefreshCharList();
 }
 
-// 刷新角色列表
+/*设置立绘大小*/
 void SettingChild_Char::RefreshCharList() {
   // 获取所有角色文件夹并添加到combox
   QDir charDir(CharacterAssestPath);
@@ -101,7 +105,7 @@ void SettingChild_Char::RefreshCharList() {
   ui->comboBox_CharList->addItems(charFolders);
 }
 
-// 修改选中角色
+/*修改选中角色*/
 void SettingChild_Char::on_comboBox_CharList_currentTextChanged(
     const QString &arg1) {
   if (!isAlreadyLoading)
@@ -119,7 +123,7 @@ void SettingChild_Char::on_comboBox_CharList_currentTextChanged(
   emit requestReloadAIConfig();
 }
 
-// 修改角色提示词
+/*修改角色提示词*/
 void SettingChild_Char::on_plainTextEdit_CharPrompt_textChanged() {
   if (!isAlreadyLoading)
     return;
@@ -130,7 +134,7 @@ void SettingChild_Char::on_plainTextEdit_CharPrompt_textChanged() {
   charConfig.setValue("prompt", charPrompt);
 }
 
-// 修改立绘大小
+/*修改立绘大小*/
 void SettingChild_Char::on_spinBox_TachieSize_textChanged(const QString &arg1) {
   if (!isAlreadyLoading)
     return;
@@ -142,7 +146,7 @@ void SettingChild_Char::on_spinBox_TachieSize_textChanged(const QString &arg1) {
   emit requestSetTachieSize(arg1.toInt());
 }
 
-// 切换服务商选择
+/*切换服务商选择*/
 void SettingChild_Char::on_comboBox_ServerSelect_currentTextChanged(
     const QString &arg1) {
   if (!isAlreadyLoading)
@@ -156,7 +160,7 @@ void SettingChild_Char::on_comboBox_ServerSelect_currentTextChanged(
   emit requestReloadAIConfig();
 }
 
-// 刷新模型列表
+/*刷新模型列表*/
 void SettingChild_Char::RefreshModelList() {
   QString serverSelect = ui->comboBox_ServerSelect->currentText();
   ZcJsonLib config(JsonSettingPath);
@@ -170,7 +174,7 @@ void SettingChild_Char::RefreshModelList() {
   ui->comboBox_ModelSelect->addItems(modelList);
 }
 
-// 切换模型选择
+/*切换模型选择*/
 void SettingChild_Char::on_comboBox_ModelSelect_currentTextChanged(
     const QString &arg1) {
   if (!isAlreadyLoading)
@@ -183,12 +187,12 @@ void SettingChild_Char::on_comboBox_ModelSelect_currentTextChanged(
   emit requestReloadAIConfig();
 }
 
-// 重置立绘位置
+/*重置立绘位置*/
 void SettingChild_Char::on_pushButton_ResetTachieLoc_clicked() {
   emit requestResetTachieLoc();
 }
 
-// 切换语音合成模型选择
+/*切换语音合成模型选择*/
 void SettingChild_Char::on_comboBox_Vits_MASSelect_currentTextChanged(
     const QString &arg1) {
   if (!isAlreadyLoading)
@@ -200,7 +204,7 @@ void SettingChild_Char::on_comboBox_Vits_MASSelect_currentTextChanged(
   charConfig.setValue("vitsMasSelect", vitsMasSelect);
 }
 
-// 切换是否启用Vits
+/*切换是否启用Vits*/
 void SettingChild_Char::on_ToggleSwitch_VitsEnable_toggled(bool checked) {
   if (!isAlreadyLoading)
     return;
@@ -212,21 +216,22 @@ void SettingChild_Char::on_ToggleSwitch_VitsEnable_toggled(bool checked) {
   ui->comboBox_Vits_ServerSelect->setEnabled(checked);
 }
 
-// 导入角色压缩包
+/*导入角色压缩包*/
 void SettingChild_Char::on_pushButton_InputChar_clicked() {
+  // 选择角色压缩包
   QString zipFilePath = QFileDialog::getOpenFileName(
       this, "选择角色压缩包",
       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
       "Zip Files (*.zip)");
 
-  if (zipFilePath.isEmpty()) {
+  if (zipFilePath.isEmpty())
     return;
-  }
 
   QFileInfo zipInfo(zipFilePath);
   QString charName = zipInfo.completeBaseName();
   QString targetCharPath = QDir(CharacterAssestPath).filePath(charName);
 
+  // 如果目标角色文件夹已存在，询问用户是否覆盖
   if (QDir(targetCharPath).exists()) {
     ElaContentDialog overwriteDialog(this);
     overwriteDialog.setLeftButtonText("取消");
@@ -245,16 +250,9 @@ void SettingChild_Char::on_pushButton_InputChar_clicked() {
     if (overwriteDialog.exec() != QDialog::Accepted) {
       return;
     }
-
-    if (!QDir(targetCharPath).removeRecursively()) {
-      ElaMessageBar::error(ElaMessageBarType::TopRight, "导入失败",
-                           "无法覆盖已有角色目录", 5000, this);
-      return;
-    }
   }
-
   QProcess process;
-
+// 使用系统命令解压（跨平台支持）
 #ifdef Q_OS_WIN
   QString command =
       QString("Expand-Archive -LiteralPath '%1' -DestinationPath '%2' -Force")
@@ -291,7 +289,7 @@ void SettingChild_Char::on_pushButton_InputChar_clicked() {
                          QString("角色 %1 已导入").arg(charName), 4000, this);
 }
 
-// 导出选中的角色
+/*导出选中的角色*/
 void SettingChild_Char::on_pushButton_OutputChar_clicked() {
   // 获取选中的角色名称
   QString charName = ui->comboBox_CharList->currentText();
