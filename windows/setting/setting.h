@@ -25,4 +25,4 @@ class MainWindow : public ElaWindow
   private:
     Ui::MainWindow *ui;
 };
-#endif // SETTING_H
+#endif //SETTING_H

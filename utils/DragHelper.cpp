@@ -1,4 +1,4 @@
-// DragHelper.cpp
+//DragHelper.cpp
 #include "DragHelper.h"
 
 DragHelper::DragHelper(QWidget *parent)
@@ -9,14 +9,15 @@ DragHelper::DragHelper(QWidget *parent)
 
 bool DragHelper::eventFilter(QObject *watched, QEvent *event)
 {
-    if(watched != m_widget) return false;
+    if (watched != m_widget)
+        return false;
 
-    switch(event->type())
+    switch (event->type())
     {
     case QEvent::MouseButtonPress:
     {
-        QMouseEvent *e = static_cast<QMouseEvent*>(event);
-        if(e->button() == Qt::LeftButton)
+        QMouseEvent *e = static_cast<QMouseEvent *>(event);
+        if (e->button() == Qt::LeftButton)
         {
             isLeftPressDown = true;
             m_movePoint = e->globalPosition().toPoint() - m_widget->frameGeometry().topLeft();
@@ -27,9 +28,9 @@ bool DragHelper::eventFilter(QObject *watched, QEvent *event)
     }
     case QEvent::MouseMove:
     {
-        if(isLeftPressDown)
+        if (isLeftPressDown)
         {
-            QMouseEvent *e = static_cast<QMouseEvent*>(event);
+            QMouseEvent *e = static_cast<QMouseEvent *>(event);
             m_widget->move(e->globalPosition().toPoint() - m_movePoint);
             return true;
         }
@@ -37,8 +38,8 @@ bool DragHelper::eventFilter(QObject *watched, QEvent *event)
     }
     case QEvent::MouseButtonRelease:
     {
-        QMouseEvent *e = static_cast<QMouseEvent*>(event);
-        if(e->button() == Qt::LeftButton)
+        QMouseEvent *e = static_cast<QMouseEvent *>(event);
+        if (e->button() == Qt::LeftButton)
         {
             isLeftPressDown = false;
             m_widget->releaseMouse();

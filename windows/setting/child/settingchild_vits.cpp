@@ -71,46 +71,48 @@ void SettingChild_Vits::on_pushButton_LoadModelAndSpeakerlList_clicked()
     QNetworkReply *reply = manager->get(request);
     connect(reply, &QNetworkReply::finished, this, [=]()
             {
-        if(reply->error() != QNetworkReply::NoError)
-        {
-            reply->deleteLater();
-            manager->deleteLater();
-            return;
-        }
-        QByteArray data = reply->readAll();
-        QJsonDocument doc = QJsonDocument::fromJson(data);
-        if(!doc.isObject())
-        {
-            reply->deleteLater();
-            manager->deleteLater();
-            return;
-        }
-        QStringList list;
-        QJsonObject rootObj = doc.object();
-        for(auto it = rootObj.begin(); it != rootObj.end(); ++it)
-        {
-            QString modelType = it.key();
-            QJsonArray arr = it.value().toArray();
+                if (reply->error() != QNetworkReply::NoError)
+                {
+                    reply->deleteLater();
+                    manager->deleteLater();
+                    return;
+                }
+                QByteArray data = reply->readAll();
+                QJsonDocument doc = QJsonDocument::fromJson(data);
+                if (!doc.isObject())
+                {
+                    reply->deleteLater();
+                    manager->deleteLater();
+                    return;
+                }
+                QStringList list;
+                QJsonObject rootObj = doc.object();
+                for (auto it = rootObj.begin(); it != rootObj.end(); ++it)
+                {
+                    QString modelType = it.key();
+                    QJsonArray arr = it.value().toArray();
 
-            for(const QJsonValue& val : arr)
-            {
-                QJsonObject obj = val.toObject();
-                QString name = obj.value("name").toString();
-                int id = obj.value("id").toInt();
+                    for (const QJsonValue &val : arr)
+                    {
+                        QJsonObject obj = val.toObject();
+                        QString name = obj.value("name").toString();
+                        int id = obj.value("id").toInt();
 
-                QString displayText = modelType + " - " + QString::number(id) + " - " + name;
-                list.append(displayText);
-            }
-        }
-        QStringListModel* model = new QStringListModel(list,ui->listView_ModelAndSpeakerlList);
-        ui->listView_ModelAndSpeakerlList->setModel(model);
-        reply->deleteLater();
-        manager->deleteLater();
-        //保存
-        ZcJsonLib config(JsonSettingPath);
-        QJsonArray arr;
-        for(const QString& s : list)    arr.append(s);
-        config.setValue("vits/ModelAndSpeakerList", arr); });
+                        QString displayText = modelType + " - " + QString::number(id) + " - " + name;
+                        list.append(displayText);
+                    }
+                }
+                QStringListModel *model = new QStringListModel(list, ui->listView_ModelAndSpeakerlList);
+                ui->listView_ModelAndSpeakerlList->setModel(model);
+                reply->deleteLater();
+                manager->deleteLater();
+                //保存
+                ZcJsonLib config(JsonSettingPath);
+                QJsonArray arr;
+                for (const QString &s : list)
+                    arr.append(s);
+                config.setValue("vits/ModelAndSpeakerList", arr);
+            });
 }
 
 void SettingChild_Vits::on_ToggleSwitch_VitsSentenceSplit_toggled(bool checked)

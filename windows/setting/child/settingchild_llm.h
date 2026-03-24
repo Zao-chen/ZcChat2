@@ -32,4 +32,4 @@ class SettingChild_LLM : public QWidget
     QStringListModel *modelListModel;
 };
 
-#endif // SETTINGCHILD_LLM_H
+#endif //SETTINGCHILD_LLM_H

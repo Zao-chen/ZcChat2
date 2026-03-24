@@ -21,7 +21,9 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
 
     //错误处理
     connect(ai, &AiProvider::errorOccurred, [=](const QString &error)
-            { qWarning() << error; });
+            {
+                qWarning() << error;
+            });
 }
 
 SettingChild_LLM::~SettingChild_LLM()
@@ -85,23 +87,25 @@ void SettingChild_LLM::on_pushButton_LoadModelList_clicked()
     /*接收模型列表*/
     connect(ai, &AiProvider::modelsReceived, this, [=](const QList<AiProvider::ModelInfo> &models)
             {
-        QStringList list;
-        for (const auto &model : models)
-        {
-            QString displayText = model.id;
-            if (!model.ownedBy.isEmpty()) displayText += QString(" (%1)").arg(model.ownedBy);
-            list << displayText;
-        }
-        modelListModel->setStringList(list);
+                QStringList list;
+                for (const auto &model : models)
+                {
+                    QString displayText = model.id;
+                    if (!model.ownedBy.isEmpty())
+                        displayText += QString(" (%1)").arg(model.ownedBy);
+                    list << displayText;
+                }
+                modelListModel->setStringList(list);
 
-        //保存列表
-        ZcJsonLib config(JsonSettingPath);
-        QJsonArray modelIds;
-        for(const auto &model : models)
-        {
-            modelIds.append(model.id);
-        }
-        config.setValue("llm/" + NowSelectServer + "/ModelList", QJsonValue(modelIds)); });
+                //保存列表
+                ZcJsonLib config(JsonSettingPath);
+                QJsonArray modelIds;
+                for (const auto &model : models)
+                {
+                    modelIds.append(model.id);
+                }
+                config.setValue("llm/" + NowSelectServer + "/ModelList", QJsonValue(modelIds));
+            });
 }
 
 /*配置修改*/

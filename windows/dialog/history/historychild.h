@@ -3,20 +3,22 @@
 
 #include <QWidget>
 
-namespace Ui {
+namespace Ui
+{
 class historychild;
 }
 
-class historychild : public QWidget {
-  Q_OBJECT
+class historychild : public QWidget
+{
+    Q_OBJECT
 
-public:
-  explicit historychild(const QString &name, const QString &msg,
-                        QWidget *parent = nullptr);
-  ~historychild();
+  public:
+    explicit historychild(const QString &name, const QString &msg,
+                          QWidget *parent = nullptr);
+    ~historychild();
 
-private:
-  Ui::historychild *ui;
+  private:
+    Ui::historychild *ui;
 };
 
-#endif // HISTORYCHILD_H
+#endif //HISTORYCHILD_H

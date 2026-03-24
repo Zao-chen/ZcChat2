@@ -1,19 +1,19 @@
-// DragHelper.h
+//DragHelper.h
 #pragma once
+#include <QMouseEvent>
 #include <QObject>
 #include <QWidget>
-#include <QMouseEvent>
 
 class DragHelper : public QObject
 {
     Q_OBJECT
-public:
+  public:
     explicit DragHelper(QWidget *parent);
 
-protected:
+  protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
-private:
+  private:
     QWidget *m_widget;
     bool isLeftPressDown = false;
     QPoint m_movePoint;

@@ -35,7 +35,7 @@ class Tachie : public QWidget
         emit requestToggleVisible(); //发出信号
     }
 
-    void mousePressEvent(QMouseEvent *event) override;  //为了实现鼠标穿透
+    void mousePressEvent(QMouseEvent *event) override; //为了实现鼠标穿透
 };
 
-#endif // TACHIE_H
+#endif //TACHIE_H

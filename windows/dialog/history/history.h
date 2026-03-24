@@ -3,22 +3,24 @@
 
 #include <QWidget>
 
-namespace Ui {
+namespace Ui
+{
 class history;
 }
 
-class history : public QWidget {
-  Q_OBJECT
+class history : public QWidget
+{
+    Q_OBJECT
 
-public:
-  explicit history(QWidget *parent = nullptr);
-  void addChildWindow(const QString &name, const QString &msg);
-  void clearHistory();
-  ~history();
+  public:
+    explicit history(QWidget *parent = nullptr);
+    void addChildWindow(const QString &name, const QString &msg);
+    void clearHistory();
+    ~history();
 
-private:
-  Ui::history *ui;
-  virtual void paintEvent(QPaintEvent *event) override;
+  private:
+    Ui::history *ui;
+    virtual void paintEvent(QPaintEvent *event) override;
 };
 
-#endif // HISTORY_H
+#endif //HISTORY_H
