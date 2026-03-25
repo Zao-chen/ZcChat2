@@ -70,6 +70,38 @@
            </widget>
           </item>
           <item>
+           <widget class="ElaText" name="label_Openai_Status">
+            <property name="visible">
+             <bool>false</bool>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: #2EAD4B;</string>
+            </property>
+            <property name="text">
+             <string>√</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_Openai">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
            <widget class="ElaPushButton" name="pushButton_Openai_Set">
             <property name="text">
              <string>配置</string>
@@ -105,6 +137,38 @@
              <string>DeepSeek</string>
             </property>
            </widget>
+          </item>
+          <item>
+           <widget class="ElaText" name="label_Deepseek_Status">
+            <property name="visible">
+             <bool>false</bool>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: #2EAD4B;</string>
+            </property>
+            <property name="text">
+             <string>√</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_Deepseek">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
           <item>
            <widget class="ElaPushButton" name="pushButton_Deepseek_Set">
