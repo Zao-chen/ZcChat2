@@ -82,6 +82,7 @@ ZcChat2是一个开源项目。参与ZcChat2项目的方法有很多！
 
 ## 🔗 相关链接
 
+- [Zao-chen/ZcChat2ForMobile: 一个模仿 Galgame 演出效果的AI桌宠ZcChat2的移动端版本](https://github.com/Zao-chen/ZcChat2ForMobile)
 - [Zao-chen/ZcChat: 一个模仿Galgame效果的AI桌宠 | An AI desktop pet that mimics the effects of a Galgame](https://github.com/Zao-chen/ZcChat)
 - [Liniyous/ElaWidgetTools: Fluent-UI For QT-Widget](https://github.com/Liniyous/ElaWidgetTools)
 - [Zao-chen/ZcAILib: High-performance AI Request Library for Qt](https://github.com/Zao-chen/ZcAILib)
