@@ -44,7 +44,7 @@
        </property>
        <item>
         <widget class="ElaScrollPageArea" name="widget" native="true">
-         <layout class="QHBoxLayout" name="horizontalLayout">
+         <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,1">
           <property name="leftMargin">
            <number>15</number>
           </property>
@@ -59,6 +59,12 @@
           </property>
           <item>
            <widget class="ElaText" name="label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <pointsize>12</pointsize>
@@ -89,20 +95,13 @@
            </widget>
           </item>
           <item>
-           <spacer name="horizontalSpacer_Openai">
-            <property name="orientation">
-             <enum>Qt::Orientation::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
            <widget class="ElaPushButton" name="pushButton_Openai_Set">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>配置</string>
             </property>
@@ -113,7 +112,7 @@
        </item>
        <item>
         <widget class="ElaScrollPageArea" name="widget_2" native="true">
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,0,1">
           <property name="leftMargin">
            <number>15</number>
           </property>
@@ -128,6 +127,12 @@
           </property>
           <item>
            <widget class="ElaText" name="label_6">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <pointsize>12</pointsize>
@@ -158,20 +163,13 @@
            </widget>
           </item>
           <item>
-           <spacer name="horizontalSpacer_Deepseek">
-            <property name="orientation">
-             <enum>Qt::Orientation::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
            <widget class="ElaPushButton" name="pushButton_Deepseek_Set">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>配置</string>
             </property>
