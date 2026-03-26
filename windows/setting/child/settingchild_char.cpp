@@ -109,26 +109,6 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
         return;
     }
 
-    // 弹出确认对话框
-    ElaContentDialog deleteDialog(this);
-    deleteDialog.setLeftButtonText("取消");
-    deleteDialog.setRightButtonText("删除");
-
-    QLabel *messageLabel = new QLabel(
-        QString("确定要删除角色 %1 吗？\n此操作无法撤销。").arg(charName), &deleteDialog);
-    messageLabel->setWordWrap(true);
-    deleteDialog.setCentralWidget(messageLabel);
-
-    QObject::connect(&deleteDialog, &ElaContentDialog::leftButtonClicked,
-                     &deleteDialog, &QDialog::reject);
-    QObject::connect(&deleteDialog, &ElaContentDialog::rightButtonClicked,
-                     &deleteDialog, &QDialog::accept);
-
-    if (deleteDialog.exec() != QDialog::Accepted)
-    {
-        return;
-    }
-
     // 删除角色文件夹
     QString charPath = QDir(CharacterAssestPath).filePath(charName);
     QDir charDir(charPath);
