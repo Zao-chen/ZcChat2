@@ -100,7 +100,7 @@ void SettingChild_Char::LoadCurrentCharConfig()
 void SettingChild_Char::on_pushButton_DeleteChar_clicked()
 {
     QString charName = ui->comboBox_CharList->currentText();
-    
+
     // 检查是否选择了角色
     if (charName.isEmpty() || charName == "未选择")
     {
@@ -132,7 +132,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
     // 删除角色文件夹
     QString charPath = QDir(CharacterAssestPath).filePath(charName);
     QDir charDir(charPath);
-    
+
     if (!charDir.exists())
     {
         ElaMessageBar::warning(ElaMessageBarType::TopRight, "删除失败",
@@ -150,7 +150,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
 
     // 刷新角色列表
     RefreshCharList();
-    
+
     // 清空配置显示
     ui->plainTextEdit_CharPrompt->clear();
     ui->spinBox_TachieSize->setValue(0);
