@@ -2,23 +2,27 @@
 
 🌟一个模仿 Galgame 演出效果的AI桌宠，[ZcChat](https://github.com/Zao-chen/ZcChat)的重制版。🌟
 
+> [!NOTE]
+> 📱 [移动端版本](https://github.com/Zao-chen/ZcChat2ForMobile) 已上线：
+> 👉 为竖屏设备设计的版本，和 Galgame 角色在手机上对话！
+
 <img width="1045" height="593" alt="SnowShot_2026-03-21_18-54-38" src="https://github.com/user-attachments/assets/49439b92-308f-4ecd-b8cc-a1538153752c" />
 
-# 🎯 项目介绍
+## 🎯 项目介绍
 
-## ✨ 核心特性
+### ✨ 核心特性
 
-* 😊 **立绘表情与动作**采用 Galgame 立绘的演出方式，支持多表情、多动作组合
-* 🎬 **立绘演出**支持立绘动画（如颤抖、靠近等）和粒子（如生气气泡等）
-* 🎙 **语音交互**语音输入、唤醒、直接对话和打断
-* 🔊 **语音合成**支持各种语音引擎，还原角色的声音
-* 💻**操作电脑**通过系统级API给予桌宠操作电脑的能力，与她深度互动
-* 🧠 **长期记忆系统**
+* 😊 **立绘表情与动作：** 采用 Galgame 立绘的演出方式，支持多表情、多动作组合
+* 🎬 **立绘演出：** 支持立绘动画（如颤抖、靠近等）和粒子（如生气气泡等）
+* 🎙 **语音交互：** 语音输入、唤醒、直接对话和打断
+* 🔊 **语音合成：** 支持各种语音引擎，还原角色的声音
+* 💻**操作电脑：** 通过系统级API给予桌宠操作电脑的能力，与她深度互动
+* 🧠 **长期记忆系统：**
   支持记忆存储与压缩，实现长期记忆能力以及性格成长
 
 本项目正在早期开发阶段，会逐步将ZcChat的功能升级并重写，同时采用了规范的项目管理，欢迎参与开发。
 
-## 🎗️相比于ZcChat的新特性：
+### 🎗️相比于ZcChat的新特性：
 
 - 更轻量级——后台内存占用40MB->8MB
 - 更流程体验——大模型和语言合成采用流式方式，响应速度更快
@@ -78,8 +82,10 @@ ZcChat2是一个开源项目。参与ZcChat2项目的方法有很多！
 
 ## 🔗 相关链接
 
+- [Zao-chen/ZcChat2ForMobile: 一个模仿 Galgame 演出效果的AI桌宠ZcChat2的移动端版本](https://github.com/Zao-chen/ZcChat2ForMobile)
 - [Zao-chen/ZcChat: 一个模仿Galgame效果的AI桌宠 | An AI desktop pet that mimics the effects of a Galgame](https://github.com/Zao-chen/ZcChat)
 - [Liniyous/ElaWidgetTools: Fluent-UI For QT-Widget](https://github.com/Liniyous/ElaWidgetTools)
 - [Zao-chen/ZcAILib: High-performance AI Request Library for Qt](https://github.com/Zao-chen/ZcAILib)
 - [Zao-chen/ZcWidgetTools: Extension for ElaWidgetTools adding missing Qt widgets](https://github.com/Zao-chen/ZcWidgetTools)
 - [Zao-chen/ZcJsonLib: Lightweight JSON key/value library for Qt, QSettings-style.](https://github.com/Zao-chen/ZcJsonLib)
+- [Qt | Tools for Each Stage of Software Development Lifecycle](https://www.qt.io/)
