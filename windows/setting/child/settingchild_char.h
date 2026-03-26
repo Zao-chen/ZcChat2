@@ -17,7 +17,7 @@ class SettingChild_Char : public QWidget
     ~SettingChild_Char();
 
   private slots:
-    void on_pushButton_RefreshCharList_clicked();
+    void on_pushButton_DeleteChar_clicked();
     void on_comboBox_CharList_currentTextChanged(const QString &arg1);
     void on_plainTextEdit_CharPrompt_textChanged();
     void on_spinBox_TachieSize_textChanged(const QString &arg1);

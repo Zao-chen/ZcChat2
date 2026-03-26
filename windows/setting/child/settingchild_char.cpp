@@ -96,10 +96,71 @@ void SettingChild_Char::LoadCurrentCharConfig()
     ui->comboBox_Vits_MASSelect->setCurrentText(vitsMasSelect);
 }
 
-/*刷新角色列表按钮*/
-void SettingChild_Char::on_pushButton_RefreshCharList_clicked()
+/*删除选中角色按钮*/
+void SettingChild_Char::on_pushButton_DeleteChar_clicked()
 {
+    QString charName = ui->comboBox_CharList->currentText();
+    
+    // 检查是否选择了角色
+    if (charName.isEmpty() || charName == "未选择")
+    {
+        ElaMessageBar::warning(ElaMessageBarType::TopRight, "删除失败",
+                               "请先选择一个角色", 3000, this);
+        return;
+    }
+
+    // 弹出确认对话框
+    ElaContentDialog deleteDialog(this);
+    deleteDialog.setLeftButtonText("取消");
+    deleteDialog.setRightButtonText("删除");
+
+    QLabel *messageLabel = new QLabel(
+        QString("确定要删除角色 %1 吗？\n此操作无法撤销。").arg(charName), &deleteDialog);
+    messageLabel->setWordWrap(true);
+    deleteDialog.setCentralWidget(messageLabel);
+
+    QObject::connect(&deleteDialog, &ElaContentDialog::leftButtonClicked,
+                     &deleteDialog, &QDialog::reject);
+    QObject::connect(&deleteDialog, &ElaContentDialog::rightButtonClicked,
+                     &deleteDialog, &QDialog::accept);
+
+    if (deleteDialog.exec() != QDialog::Accepted)
+    {
+        return;
+    }
+
+    // 删除角色文件夹
+    QString charPath = QDir(CharacterAssestPath).filePath(charName);
+    QDir charDir(charPath);
+    
+    if (!charDir.exists())
+    {
+        ElaMessageBar::warning(ElaMessageBarType::TopRight, "删除失败",
+                               "角色文件夹不存在", 3000, this);
+        return;
+    }
+
+    // 递归删除文件夹
+    if (!charDir.removeRecursively())
+    {
+        ElaMessageBar::error(ElaMessageBarType::TopRight, "删除失败",
+                             "无法删除角色文件夹，请检查权限", 5000, this);
+        return;
+    }
+
+    // 刷新角色列表
     RefreshCharList();
+    
+    // 清空配置显示
+    ui->plainTextEdit_CharPrompt->clear();
+    ui->spinBox_TachieSize->setValue(0);
+    ui->comboBox_ModelSelect->clear();
+    ui->ToggleSwitch_VitsEnable->setIsToggled(false);
+    ui->comboBox_Vits_MASSelect->clear();
+    ui->comboBox_Vits_ServerSelect->clear();
+
+    ElaMessageBar::success(ElaMessageBarType::TopRight, "删除成功",
+                           QString("角色 %1 已删除").arg(charName), 4000, this);
 }
 
 /*设置立绘大小*/
