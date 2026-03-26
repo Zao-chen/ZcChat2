@@ -104,7 +104,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
     // 检查是否选择了角色
     if (charName.isEmpty() || charName == "未选择")
     {
-        ElaMessageBar::warning(ElaMessageBarType::TopRight, "删除失败",
+        ElaMessageBar::warning(ElaMessageBarType::BottomRight, "删除失败",
                                "请先选择一个角色", 3000, this);
         return;
     }
@@ -115,7 +115,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
 
     if (!charDir.exists())
     {
-        ElaMessageBar::warning(ElaMessageBarType::TopRight, "删除失败",
+        ElaMessageBar::warning(ElaMessageBarType::BottomRight, "删除失败",
                                "角色文件夹不存在", 3000, this);
         return;
     }
@@ -123,7 +123,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
     // 递归删除文件夹
     if (!charDir.removeRecursively())
     {
-        ElaMessageBar::error(ElaMessageBarType::TopRight, "删除失败",
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, "删除失败",
                              "无法删除角色文件夹，请检查权限", 5000, this);
         return;
     }
@@ -139,7 +139,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
     ui->comboBox_Vits_MASSelect->clear();
     ui->comboBox_Vits_ServerSelect->clear();
 
-    ElaMessageBar::success(ElaMessageBarType::TopRight, "删除成功",
+    ElaMessageBar::success(ElaMessageBarType::BottomRight, "删除成功",
                            QString("角色 %1 已删除").arg(charName), 4000, this);
 }
 
@@ -331,7 +331,7 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
     if (!process.waitForFinished(60000))
     {
         process.kill();
-        ElaMessageBar::error(ElaMessageBarType::TopRight, "导入失败",
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, "导入失败",
                              "解压过程超时", 5000, this);
         return;
     }
@@ -339,7 +339,7 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
     if (process.exitCode() != 0)
     {
         QString error = process.readAllStandardError();
-        ElaMessageBar::error(ElaMessageBarType::TopRight, "导入失败",
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, "导入失败",
                              QString("解压失败: %1").arg(error), 5000, this);
         return;
     }
@@ -361,7 +361,7 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
     QString charName = ui->comboBox_CharList->currentText();
     if (charName.isEmpty() || charName == "未选择")
     {
-        ElaMessageBar::warning(ElaMessageBarType::TopRight, "导出失败",
+        ElaMessageBar::warning(ElaMessageBarType::BottomRight, "导出失败",
                                "请先选择一个角色", 3000, this);
         return;
     }
@@ -370,7 +370,7 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
     QString charPath = QDir(CharacterAssestPath).filePath(charName);
     if (!QDir(charPath).exists())
     {
-        ElaMessageBar::warning(ElaMessageBarType::TopRight, "导出失败",
+        ElaMessageBar::warning(ElaMessageBarType::BottomRight, "导出失败",
                                "角色文件夹不存在", 3000, this);
         return;
     }
@@ -438,7 +438,7 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
     process.start();
     if (!process.waitForFinished(60000)) //等待最多60秒
     {
-        ElaMessageBar::error(ElaMessageBarType::TopRight, "导出失败",
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, "导出失败",
                              "压缩过程超时", 5000, this);
         process.kill();
         return;
@@ -447,13 +447,13 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
     if (process.exitCode() != 0)
     {
         QString error = process.readAllStandardError();
-        ElaMessageBar::error(ElaMessageBarType::TopRight, "导出失败",
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, "导出失败",
                              QString("压缩失败: %1").arg(error), 5000, this);
         return;
     }
 
     ElaMessageBar::success(
-        ElaMessageBarType::TopRight, "导出成功",
+        ElaMessageBarType::BottomRight, "导出成功",
         QString("角色 %1 已成功导出到:\n%2").arg(charName, zipFilePath), 4000,
         this);
 }
