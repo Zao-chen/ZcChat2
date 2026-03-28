@@ -115,9 +115,9 @@ QScrollBar:vertical:disabled {
        </widget>
       </item>
       <item>
-       <widget class="ElaPushButton" name="pushButton_RefreshCharList">
+       <widget class="ElaPushButton" name="pushButton_DeleteChar">
         <property name="text">
-         <string>刷新</string>
+         <string>删除</string>
         </property>
        </widget>
       </item>

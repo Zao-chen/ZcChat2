@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(ZcChat2 VERSION 0.1 LANGUAGES CXX)
+project(ZcChat2 VERSION 1.1.0 LANGUAGES CXX)
+
+# 配置版本头文件，传递版本号到代码
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Version.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/Version.h"
+)
+
+# 配置 .iss 安装脚本，传递版本号
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/installer/ZcChat2.iss.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/ZcChat2.iss"
+)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -83,6 +95,7 @@ endif()
 # 1. 统一的头文件路径 (合并原本分散在两处的路径)
 target_include_directories(ZcChat2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
     ${ZCAILIB_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/include
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/include

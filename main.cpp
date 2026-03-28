@@ -5,6 +5,8 @@
 #include "ElaApplication.h"
 #include "ElaMenu.h"
 
+#include "Version.h"
+
 #include <QApplication>
 #include <QSystemTrayIcon>
 
@@ -15,6 +17,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     QCoreApplication::setApplicationName("ZcChat2");
+    QCoreApplication::setApplicationVersion(APP_VERSION);
     QCoreApplication::setOrganizationName("MyOrganization");
     qInfo() << "Debugging Output";
 
@@ -52,8 +55,7 @@ int main(int argc, char *argv[])
                          }
                          settings->show();
                          settings->raise();
-                         settings->activateWindow();
-                     });
+                         settings->activateWindow(); });
     //退出程序
     QObject::connect(actionQuit, &QAction::triggered, &a, &QApplication::quit);
 
