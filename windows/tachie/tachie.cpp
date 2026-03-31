@@ -33,9 +33,7 @@ Tachie::Tachie(QWidget *parent)
 
     //延迟加载立绘
     QTimer::singleShot(0, this, [this]()
-                       {
-                           SetTachieImg("default");
-                       });
+                       { SetTachieImg("default"); });
 }
 
 Tachie::~Tachie()
@@ -113,7 +111,9 @@ void Tachie::SetTachieImg(QString TachieName)
     //读取立绘大小
     ZcJsonLib charUserConfig(ReadCharacterUserConfigPath());
     SetTachieSize(charUserConfig.value("tachieSize").toString().toInt());
+    RestoreTachieLoc();
 }
+
 //设置窗口大小并重载立绘
 void Tachie::SetTachieSize(int size)
 {
@@ -179,15 +179,13 @@ void Tachie::SetTachieSize(int size)
 #endif
 }
 
-//2. 添加 mousePressEvent
+//鼠标按下
 void Tachie::mousePressEvent(QMouseEvent *event)
 {
-    if (!_scaledImg.isNull() && event->pos().x() >= 0 &&
-        event->pos().x() < _scaledImg.width() && event->pos().y() >= 0 &&
-        event->pos().y() < _scaledImg.height())
+    const QPoint pos = event->pos();
+    if (!_scaledImg.isNull() && QRect(QPoint(0, 0), _scaledImg.size()).contains(pos))
     {
-        //使用pixelColor兼容性更好
-        int alpha = _scaledImg.pixelColor(event->pos()).alpha();
+        const int alpha = _scaledImg.pixelColor(pos).alpha();
 
         if (alpha < 10)
         {
@@ -199,8 +197,58 @@ void Tachie::mousePressEvent(QMouseEvent *event)
     QWidget::mousePressEvent(event);
 }
 
+//鼠标抬起
+void Tachie::mouseReleaseEvent(QMouseEvent *event)
+{
+    QWidget::mouseReleaseEvent(event);
+
+    //仅在初始化恢复完成后，且左键释放时保存一次位置。
+    if (!_tachiePosRestoreDone || event->button() != Qt::LeftButton)
+        return;
+
+    SaveTachieLoc(); //保存立绘位置
+}
+
 //重置立绘位置
 void Tachie::ResetTachieLoc()
 {
     this->move(0, 0);
+    SaveTachieLoc(); //保存立绘位置
+}
+
+//保存立绘位置
+void Tachie::SaveTachieLoc()
+{
+    const QString charName = ReadNowSelectChar();
+    if (charName.isEmpty() || charName == "未选择")
+        return;
+
+    QSettings settings(IniSettingPath, QSettings::IniFormat);
+    settings.setValue(QString("tachie/%1/posX").arg(charName), this->x());
+    settings.setValue(QString("tachie/%1/posY").arg(charName), this->y());
+}
+//读取设置立绘位置
+void Tachie::RestoreTachieLoc()
+{
+    const QString charName = ReadNowSelectChar();
+    if (charName.isEmpty() || charName == "未选择")
+    {
+        _tachiePosRestoreDone = false;
+        return;
+    }
+
+    QSettings settings(IniSettingPath, QSettings::IniFormat);
+    const QString keyX = QString("tachie/%1/posX").arg(charName);
+    const QString keyY = QString("tachie/%1/posY").arg(charName);
+
+    if (!settings.contains(keyX) || !settings.contains(keyY))
+    {
+        //没有历史位置时标记恢复完成，后续用户拖动可直接保存。
+        _tachiePosRestoreDone = true;
+        return;
+    }
+
+    //恢复阶段不触发 mouseReleaseEvent 保存，直接移动即可。
+    this->move(settings.value(keyX).toInt(), settings.value(keyY).toInt());
+    _tachiePosRestoreDone = true;
 }
