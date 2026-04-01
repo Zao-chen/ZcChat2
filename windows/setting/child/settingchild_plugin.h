@@ -26,13 +26,13 @@ class SettingChild_Plugin : public QWidget
 
   private:
     void RefreshAnimePluginList();
-    void OpenPluginDetail(const QString &pluginId);
-    void DeletePlugin(const QString &pluginId);
+    void OpenPluginDetail(const QString &pluginName);
+    void DeletePlugin(const QString &pluginName);
 
   private:
     Ui::SettingChild_Plugin *ui;
     AnimePluginManager m_pluginManager;
-    QString m_currentPluginId;
+    QString m_currentPluginName;
 };
 
 #endif //SETTINGCHILD_PLUGIN_H

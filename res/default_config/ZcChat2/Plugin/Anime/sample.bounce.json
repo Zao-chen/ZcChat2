@@ -1,12 +1,10 @@
 {
-  "schema": "zcchat2.anime-plugin/v1",
-  "pluginId": "sample.bounce",
   "name": "基础动作包",
+  "version": "1.0.0",
   "author": "ZcChat2",
   "link": "https://example.com/zcchat2/plugins/sample-bounce",
   "animations": [
     {
-      "id": "bounce_up_down",
       "name": "上抬下落",
       "steps": [
         {
@@ -24,7 +22,6 @@
       ]
     },
     {
-      "id": "fade_hint",
       "name": "轻微淡入淡出",
       "steps": [
         {
@@ -42,7 +39,6 @@
       ]
     },
     {
-      "id": "scale_pulse",
       "name": "轻微放大缩小",
       "steps": [
         {

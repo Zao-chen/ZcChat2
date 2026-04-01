@@ -31,7 +31,6 @@ struct AnimePluginStep
 
 struct AnimePluginAnimation
 {
-    QString id;
     QString name;
     QList<AnimePluginStep> steps;
 
@@ -40,18 +39,17 @@ struct AnimePluginAnimation
         return pluginName + "_" + name;
     }
 
-    QString BuildUniqueKey(const QString &pluginId) const
+    QString BuildUniqueKey(const QString &pluginName) const
     {
-        return pluginId + ":" + id;
+        return pluginName + "_" + name;
     }
 };
 
 struct AnimePluginDefinition
 {
     QString filePath;
-    QString schema;
-    QString pluginId;
     QString name;
+    QString version;
     QString author;
     QString link;
     QList<AnimePluginAnimation> animations;

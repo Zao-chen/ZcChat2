@@ -5,7 +5,6 @@
 
 #include "../../utils/DragHelper.h"
 #include "ZcJsonLib.h"
-#include <memory>
 #include <QAbstractAnimation>
 #include <QBitmap>
 #include <QColor>
@@ -19,6 +18,8 @@
 #include <QSequentialAnimationGroup>
 #include <QTimer>
 #include <QVariantAnimation>
+#include <memory>
+
 
 #ifdef Q_OS_LINUX
 #include <X11/Xlib.h>
@@ -178,7 +179,8 @@ void Tachie::TryPlayAnimationForAction(const QString &actionName)
 
     QSequentialAnimationGroup *seq = new QSequentialAnimationGroup(this);
 
-    struct ScaleSequenceState {
+    struct ScaleSequenceState
+    {
         QRect baseImageRect;
         bool initialized = false;
     };
@@ -199,7 +201,8 @@ void Tachie::TryPlayAnimationForAction(const QString &actionName)
 
         if (step.type == AnimePluginStep::Type::Move)
         {
-            struct MoveState {
+            struct MoveState
+            {
                 QPoint basePos;
                 bool initialized = false;
             };

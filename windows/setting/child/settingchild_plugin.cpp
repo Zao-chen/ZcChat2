@@ -14,6 +14,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLayoutItem>
+#include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStringListModel>
 #include <QVBoxLayout>
@@ -81,15 +82,7 @@ void SettingChild_Plugin::on_pushButton_ImportAnimePlugin_clicked()
     const QList<AnimePluginDefinition> plugins = m_pluginManager.Plugins();
     for (const AnimePluginDefinition &existPlugin : plugins)
     {
-        //导入阶段直接拒绝重复pluginId和重复名称
-        if (existPlugin.pluginId == plugin.pluginId)
-        {
-            ElaMessageBar::warning(ElaMessageBarType::TopRight, "导入失败",
-                                   QString("pluginId重复: %1")
-                                       .arg(plugin.pluginId),
-                                   5000, this);
-            return;
-        }
+        //导入阶段直接拒绝重复插件名称，名称也是插件唯一标识
         if (existPlugin.name == plugin.name)
         {
             ElaMessageBar::warning(ElaMessageBarType::TopRight, "导入失败",
@@ -106,9 +99,11 @@ void SettingChild_Plugin::on_pushButton_ImportAnimePlugin_clicked()
         return;
     }
 
-    //统一落盘为pluginId.json，避免同插件多文件名造成混淆
+    //统一落盘为插件名.json，避免同插件多文件名造成混淆
+    QString fileSafePluginName = plugin.name;
+    fileSafePluginName.replace(QRegularExpression("[\\\\/:*?\"<>|]"), "_");
     const QString targetPath =
-        QDir(AnimePluginPath).filePath(plugin.pluginId + ".json");
+        QDir(AnimePluginPath).filePath(fileSafePluginName + ".json");
     if (QFile::exists(targetPath))
     {
         ElaMessageBar::warning(ElaMessageBarType::TopRight, "导入失败",
@@ -177,7 +172,8 @@ void SettingChild_Plugin::RefreshAnimePluginList()
         QFont authorFont = authorText->font();
         authorFont.setPointSize(10);
         authorText->setFont(authorFont);
-        authorText->setText(QString("作者:%1").arg(plugin.author));
+        authorText->setText(
+            QString("版本:%1  作者:%2").arg(plugin.version, plugin.author));
 
         textLayout->addWidget(nameText);
         textLayout->addWidget(authorText);
@@ -190,10 +186,10 @@ void SettingChild_Plugin::RefreshAnimePluginList()
 
         connect(openDetailButton, &QPushButton::clicked, this,
                 [this, plugin]()
-                { OpenPluginDetail(plugin.pluginId); });
+                { OpenPluginDetail(plugin.name); });
         connect(deletePluginButton, &QPushButton::clicked, this,
                 [this, plugin]()
-                { DeletePlugin(plugin.pluginId); });
+                { DeletePlugin(plugin.name); });
 
         QWidget *buttonArea = new QWidget(pluginCard);
         QHBoxLayout *buttonLayout = new QHBoxLayout(buttonArea);
@@ -228,15 +224,15 @@ void SettingChild_Plugin::RefreshAnimePluginList()
 }
 
 /* 打开插件详情 */
-void SettingChild_Plugin::OpenPluginDetail(const QString &pluginId)
+void SettingChild_Plugin::OpenPluginDetail(const QString &pluginName)
 {
     const QList<AnimePluginDefinition> plugins = m_pluginManager.Plugins();
     for (const AnimePluginDefinition &plugin : plugins)
     {
-        if (plugin.pluginId != pluginId)
+        if (plugin.name != pluginName)
             continue;
 
-        m_currentPluginId = pluginId;
+        m_currentPluginName = pluginName;
         ui->label_CurrentPlugin->setText(QString("动画列表 - %1").arg(plugin.name));
 
         QStringList animationList;
@@ -259,12 +255,12 @@ void SettingChild_Plugin::OpenPluginDetail(const QString &pluginId)
 }
 
 /*删除插件*/
-void SettingChild_Plugin::DeletePlugin(const QString &pluginId)
+void SettingChild_Plugin::DeletePlugin(const QString &pluginName)
 {
     const QList<AnimePluginDefinition> plugins = m_pluginManager.Plugins();
     for (const AnimePluginDefinition &plugin : plugins)
     {
-        if (plugin.pluginId != pluginId)
+        if (plugin.name != pluginName)
             continue;
 
         if (!QFile::remove(plugin.filePath))
@@ -274,9 +270,9 @@ void SettingChild_Plugin::DeletePlugin(const QString &pluginId)
             return;
         }
 
-        if (m_currentPluginId == pluginId)
+        if (m_currentPluginName == pluginName)
         {
-            m_currentPluginId.clear();
+            m_currentPluginName.clear();
             ui->stackedWidget->setCurrentIndex(1);
         }
 

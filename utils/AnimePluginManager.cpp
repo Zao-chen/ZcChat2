@@ -27,7 +27,6 @@ bool AnimePluginManager::Reload()
     const QFileInfoList pluginFiles =
         pluginDir.entryInfoList(QStringList() << "*.json", QDir::Files, QDir::Name);
 
-    QSet<QString> pluginIdSet;
     QSet<QString> pluginNameSet;
     for (const QFileInfo &pluginFile : pluginFiles)
     {
@@ -37,15 +36,6 @@ bool AnimePluginManager::Reload()
         {
             m_lastErrors.append(
                 QString("插件加载失败[%1]: %2").arg(pluginFile.fileName()).arg(error));
-            continue;
-        }
-
-        //拒绝重复pluginId，避免同源插件冲突
-        if (pluginIdSet.contains(plugin.pluginId))
-        {
-            m_lastErrors.append(QString("插件冲突[%1]: pluginId重复(%2)")
-                                    .arg(pluginFile.fileName())
-                                    .arg(plugin.pluginId));
             continue;
         }
 
@@ -60,7 +50,6 @@ bool AnimePluginManager::Reload()
 
         const int pluginIndex = m_plugins.size();
         m_plugins.append(plugin);
-        pluginIdSet.insert(plugin.pluginId);
         pluginNameSet.insert(plugin.name);
 
         //建立动画展示名与唯一键索引，供设置页和反查使用
@@ -68,8 +57,16 @@ bool AnimePluginManager::Reload()
         for (int i = 0; i < loadedPlugin.animations.size(); ++i)
         {
             const AnimePluginAnimation &animation = loadedPlugin.animations.at(i);
-            const QString uniqueKey = animation.BuildUniqueKey(loadedPlugin.pluginId);
+            const QString uniqueKey = animation.BuildUniqueKey(loadedPlugin.name);
             const QString displayName = animation.BuildDisplayName(loadedPlugin.name);
+
+            if (m_animationIndexByUniqueKey.contains(uniqueKey))
+            {
+                m_lastErrors.append(QString("动画唯一键冲突[%1]: %2")
+                                        .arg(pluginFile.fileName())
+                                        .arg(uniqueKey));
+                continue;
+            }
 
             m_animationUniqueKeys.append(uniqueKey);
             m_animationDisplayNames.append(displayName);

@@ -7,9 +7,6 @@
 
 namespace
 {
-//当前仅支持的插件schema版本
-constexpr const char *kSchemaV1 = "zcchat2.anime-plugin/v1";
-
 bool ParseStep(const QJsonObject &stepObj, AnimePluginStep &outStep,
                QString &outError)
 {
@@ -77,18 +74,17 @@ bool ParseStep(const QJsonObject &stepObj, AnimePluginStep &outStep,
 bool ParseAnimation(const QJsonObject &animationObj,
                     AnimePluginAnimation &outAnimation, QString &outError)
 {
-    outAnimation.id = animationObj.value("id").toString().trimmed();
     outAnimation.name = animationObj.value("name").toString().trimmed();
-    if (outAnimation.id.isEmpty() || outAnimation.name.isEmpty())
+    if (outAnimation.name.isEmpty())
     {
-        outError = "动画缺少 id 或 name";
+        outError = "动画缺少 name";
         return false;
     }
 
     const QJsonArray steps = animationObj.value("steps").toArray();
     if (steps.isEmpty())
     {
-        outError = QString("动画 %1 的 steps 不能为空").arg(outAnimation.id);
+        outError = QString("动画 %1 的 steps 不能为空").arg(outAnimation.name);
         return false;
     }
 
@@ -100,7 +96,7 @@ bool ParseAnimation(const QJsonObject &animationObj,
         {
             outError =
                 QString("动画 %1 的第 %2 个步骤不是对象")
-                    .arg(outAnimation.id)
+                    .arg(outAnimation.name)
                     .arg(i + 1);
             return false;
         }
@@ -110,7 +106,7 @@ bool ParseAnimation(const QJsonObject &animationObj,
         {
             outError =
                 QString("动画 %1 的第 %2 个步骤无效: %3")
-                    .arg(outAnimation.id)
+                    .arg(outAnimation.name)
                     .arg(i + 1)
                     .arg(outError);
             return false;
@@ -135,23 +131,16 @@ bool AnimePluginLoader::LoadFromFile(const QString &filePath,
 
     outPlugin = AnimePluginDefinition();
     outPlugin.filePath = filePath;
-    outPlugin.schema = pluginConfig.value("schema").toString().trimmed();
-    outPlugin.pluginId = pluginConfig.value("pluginId").toString().trimmed();
     outPlugin.name = pluginConfig.value("name").toString().trimmed();
+    outPlugin.version = pluginConfig.value("version").toString().trimmed();
     outPlugin.author = pluginConfig.value("author").toString().trimmed();
     outPlugin.link = pluginConfig.value("link").toString().trimmed();
 
-    if (outPlugin.schema != kSchemaV1)
-    {
-        outError = QString("schema 不匹配，当前仅支持 %1").arg(kSchemaV1);
-        return false;
-    }
-
     //插件元信息必须完整，供后续导入展示与索引使用
-    if (outPlugin.pluginId.isEmpty() || outPlugin.name.isEmpty() ||
+    if (outPlugin.name.isEmpty() || outPlugin.version.isEmpty() ||
         outPlugin.author.isEmpty() || outPlugin.link.isEmpty())
     {
-        outError = "插件必须包含 pluginId/name/author/link";
+        outError = "插件必须包含 name/version/author/link";
         return false;
     }
 
@@ -162,7 +151,7 @@ bool AnimePluginLoader::LoadFromFile(const QString &filePath,
         return false;
     }
 
-    QSet<QString> animationIdSet;
+    QSet<QString> animationNameSet;
     outPlugin.animations.reserve(animations.size());
     for (int i = 0; i < animations.size(); ++i)
     {
@@ -176,14 +165,14 @@ bool AnimePluginLoader::LoadFromFile(const QString &filePath,
         if (!ParseAnimation(animations.at(i).toObject(), animation, outError))
             return false;
 
-        //同一插件内动画id必须唯一
-        if (animationIdSet.contains(animation.id))
+        //同一插件内动画name必须唯一
+        if (animationNameSet.contains(animation.name))
         {
-            outError = QString("动画 id 重复: %1").arg(animation.id);
+            outError = QString("动画 name 重复: %1").arg(animation.name);
             return false;
         }
 
-        animationIdSet.insert(animation.id);
+        animationNameSet.insert(animation.name);
         outPlugin.animations.append(animation);
     }
 

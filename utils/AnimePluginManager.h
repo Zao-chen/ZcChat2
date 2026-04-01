@@ -28,7 +28,7 @@ class AnimePluginManager
         int animationIndex = -1;
     };
 
-    //key:pluginId:animationId,value:插件和动画在列表中的索引
+    //key:pluginName_animationName,value:插件和动画在列表中的索引
     QHash<QString, AnimationIndex> m_animationIndexByUniqueKey;
 
     QList<AnimePluginDefinition> m_plugins;
