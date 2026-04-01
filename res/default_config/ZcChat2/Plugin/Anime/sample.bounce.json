@@ -1,0 +1,63 @@
+{
+  "schema": "zcchat2.anime-plugin/v1",
+  "pluginId": "sample.bounce",
+  "name": "基础动作包",
+  "author": "ZcChat2",
+  "link": "https://example.com/zcchat2/plugins/sample-bounce",
+  "animations": [
+    {
+      "id": "bounce_up_down",
+      "name": "上抬下落",
+      "steps": [
+        {
+          "type": "move",
+          "duration": 0.5,
+          "x": 0,
+          "y": -10
+        },
+        {
+          "type": "move",
+          "duration": 0.5,
+          "x": 0,
+          "y": 10
+        }
+      ]
+    },
+    {
+      "id": "fade_hint",
+      "name": "轻微淡入淡出",
+      "steps": [
+        {
+          "type": "opacity",
+          "duration": 0.2,
+          "from": 1.0,
+          "to": 0.85
+        },
+        {
+          "type": "opacity",
+          "duration": 0.2,
+          "from": 0.85,
+          "to": 1.0
+        }
+      ]
+    },
+    {
+      "id": "scale_pulse",
+      "name": "轻微放大缩小",
+      "steps": [
+        {
+          "type": "scale",
+          "duration": 0.25,
+          "from": 1.0,
+          "to": 1.08
+        },
+        {
+          "type": "scale",
+          "duration": 0.25,
+          "from": 1.08,
+          "to": 1.0
+        }
+      ]
+    }
+  ]
+}
