@@ -5,25 +5,34 @@
 
 #include "ZcJsonLib.h"
 
+#include "ElaComboBox.h"
 #include "ElaContentDialog.h"
 #include "ElaMessageBar.h"
+#include "ElaScrollPageArea.h"
+#include "ElaText.h"
 
+#include <QComboBox>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QHBoxLayout>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QLabel>
 #include <QProcess>
 #include <QSettings>
 #include <QStandardPaths>
-#include <qdebug.h>
-#include <qlogging.h>
+#include <QVBoxLayout>
+#include <Qdebug>
 
 SettingChild_Char::SettingChild_Char(QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingChild_Char)
 {
     ui->setupUi(this);
+    //初始化动画管理器
+    m_pluginManager.Reload();
+
     RefreshCharList();
     ui->BreadcrumbBar->appendBreadcrumb("角色设置");
     ui->BreadcrumbBar->setTextPixelSize(25);
@@ -49,11 +58,12 @@ SettingChild_Char::~SettingChild_Char()
 void SettingChild_Char::LoadCurrentCharConfig()
 {
     QString charName = ui->comboBox_CharList->currentText();
-    if (charName.isEmpty() ||
-        charName == "未选择")
-    { //如果没有选择角色，清空配置项显示
+    if (charName.isEmpty() || charName == "未选择")
+    {
+        //如果没有选择角色，清空配置项显示
         ui->plainTextEdit_CharPrompt->clear();
         ui->spinBox_TachieSize->setValue(0);
+        ClearTachieBindingRows();
         ui->comboBox_ModelSelect->clear();
         ui->ToggleSwitch_VitsEnable->setIsToggled(false);
         ui->comboBox_Vits_MASSelect->clear();
@@ -71,6 +81,8 @@ void SettingChild_Char::LoadCurrentCharConfig()
                              "/config.json");
     QString tachieSize = charUserConfig.value("tachieSize").toString();
     ui->spinBox_TachieSize->setValue(tachieSize.toInt());
+    //立绘动作和动画绑定
+    RefreshTachieActionList();
     //服务商和模型选择
     QString serverSelect = charUserConfig.value("serverSelect").toString();
     ui->comboBox_ServerSelect->setCurrentText(serverSelect);
@@ -101,7 +113,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
 {
     QString charName = ui->comboBox_CharList->currentText();
 
-    // 检查是否选择了角色
+    //检查是否选择了角色
     if (charName.isEmpty() || charName == "未选择")
     {
         ElaMessageBar::warning(ElaMessageBarType::BottomRight, "删除失败",
@@ -109,7 +121,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
         return;
     }
 
-    // 删除角色文件夹
+    //删除角色文件夹
     QString charPath = QDir(CharacterAssestPath).filePath(charName);
     QDir charDir(charPath);
 
@@ -120,7 +132,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
         return;
     }
 
-    // 递归删除文件夹
+    //递归删除文件夹
     if (!charDir.removeRecursively())
     {
         ElaMessageBar::error(ElaMessageBarType::BottomRight, "删除失败",
@@ -128,10 +140,10 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
         return;
     }
 
-    // 刷新角色列表
+    //刷新角色列表
     RefreshCharList();
 
-    // 清空配置显示
+    //清空配置显示
     ui->plainTextEdit_CharPrompt->clear();
     ui->spinBox_TachieSize->setValue(0);
     ui->comboBox_ModelSelect->clear();
@@ -143,7 +155,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
                            QString("角色 %1 已删除").arg(charName), 4000, this);
 }
 
-/*设置立绘大小*/
+/*刷新角色列表*/
 void SettingChild_Char::RefreshCharList()
 {
     //获取所有角色文件夹并添加到combox
@@ -191,7 +203,6 @@ void SettingChild_Char::on_spinBox_TachieSize_textChanged(const QString &arg1)
     if (!isAlreadyLoading)
         return;
     //保存到角色配置位置下的config.json
-    QString charName = ui->comboBox_CharList->currentText();
     QString tachieSize = ui->spinBox_TachieSize->text();
     ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("tachieSize", tachieSize);
@@ -204,8 +215,8 @@ void SettingChild_Char::on_comboBox_ServerSelect_currentTextChanged(
 {
     if (!isAlreadyLoading)
         return;
+    Q_UNUSED(arg1)
     //保存到角色配置位置下的config.json
-    QString charName = ui->comboBox_CharList->currentText();
     QString serverSelect = ui->comboBox_ServerSelect->currentText();
     ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("serverSelect", serverSelect);
@@ -235,8 +246,8 @@ void SettingChild_Char::on_comboBox_ModelSelect_currentTextChanged(
 {
     if (!isAlreadyLoading)
         return;
+    Q_UNUSED(arg1)
     //保存到角色配置位置下的config.json
-    QString charName = ui->comboBox_CharList->currentText();
     QString modelSelect = ui->comboBox_ModelSelect->currentText();
     ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("modelSelect", modelSelect);
@@ -255,8 +266,8 @@ void SettingChild_Char::on_comboBox_Vits_MASSelect_currentTextChanged(
 {
     if (!isAlreadyLoading)
         return;
+    Q_UNUSED(arg1)
     //保存到角色配置位置下的config.json
-    QString charName = ui->comboBox_CharList->currentText();
     QString vitsMasSelect = ui->comboBox_Vits_MASSelect->currentText();
     ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("vitsMasSelect", vitsMasSelect);
@@ -268,7 +279,6 @@ void SettingChild_Char::on_ToggleSwitch_VitsEnable_toggled(bool checked)
     if (!isAlreadyLoading)
         return;
     //保存到角色配置位置下的config.json
-    QString charName = ui->comboBox_CharList->currentText();
     ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("vitsEnable", checked);
     ui->comboBox_Vits_MASSelect->setEnabled(checked);
@@ -309,9 +319,7 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
                          &overwriteDialog, &QDialog::accept);
 
         if (overwriteDialog.exec() != QDialog::Accepted)
-        {
             return;
-        }
     }
     QProcess process;
 //使用系统命令解压（跨平台支持）
@@ -346,9 +354,7 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
 
     RefreshCharList();
     if (ui->comboBox_CharList->findText(charName) >= 0)
-    {
         ui->comboBox_CharList->setCurrentText(charName);
-    }
 
     ElaMessageBar::success(ElaMessageBarType::TopRight, "导入成功",
                            QString("角色 %1 已导入").arg(charName), 4000, this);
@@ -381,10 +387,8 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
         QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
         QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
-    if (exportDir.isEmpty())
-    {
-        return; //用户取消了
-    }
+    if (exportDir.isEmpty()) //用户取消了
+        return;
 
     //构建目标压缩包路径
     QString zipFileName = charName + ".zip";
@@ -409,9 +413,7 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
                          &overwriteDialog, &QDialog::accept);
 
         if (overwriteDialog.exec() != QDialog::Accepted)
-        {
             return;
-        }
         QFile::remove(zipFilePath);
     }
 
@@ -456,4 +458,133 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
         ElaMessageBarType::BottomRight, "导出成功",
         QString("角色 %1 已成功导出到:\n%2").arg(charName, zipFilePath), 4000,
         this);
+}
+
+/*刷新立绘动画列表*/
+void SettingChild_Char::RefreshTachieAnimationList()
+{
+    //兼容旧调用：现在动画绑定随动作行一起刷新
+    RefreshTachieActionList();
+}
+
+/*清理动态创建的动作绑定行*/
+void SettingChild_Char::ClearTachieBindingRows()
+{
+    for (QWidget *row : m_tachieBindingRows)
+    {
+        if (row)
+            row->deleteLater();
+    }
+    m_tachieBindingRows.clear();
+}
+
+/*刷新立绘动作列表*/
+void SettingChild_Char::RefreshTachieActionList()
+{
+    QString charName = ui->comboBox_CharList->currentText();
+    ClearTachieBindingRows();
+    if (charName.isEmpty() || charName == "未选择")
+        return;
+
+    QDir tachieDir(CharacterAssestPath + "/" + charName + "/Tachie");
+    QStringList nameFilters;
+    nameFilters << "*.png" << "*.jpg" << "*.jpeg";
+    QStringList fileNames = tachieDir.entryList(nameFilters, QDir::Files);
+
+    QStringList actionList;
+    for (const QString &fileName : fileNames)
+    {
+        QString actionName = QFileInfo(fileName).completeBaseName();
+        if (!actionName.isEmpty() && !actionList.contains(actionName))
+            actionList.append(actionName);
+    }
+    if (actionList.isEmpty())
+        actionList.append("default");
+
+    //动画候选列表
+    QStringList animationList;
+    animationList.append("无动画");
+    animationList.append(m_pluginManager.AnimationDisplayNames());
+
+    ZcJsonLib charUserConfig(CharacterAssestPath + "/" + charName +
+                             "/config.json");
+    QJsonObject animationMap =
+        charUserConfig.value("tachieAnimations", QJsonObject()).toObject();
+    const QString fallbackAnimation =
+        charUserConfig.value("tachieAnimation", "无动画").toString();
+
+    //逐动作创建横排行：左侧动作名称，右侧绑定下拉
+    QVBoxLayout *layout = ui->verticalLayout_TachieBindingList;
+    const int insertIndex = qMax(0, layout->count() - 1); //在底部弹簧前插入
+
+    for (const QString &actionName : actionList)
+    {
+        ElaScrollPageArea *row =
+            new ElaScrollPageArea(ui->widget_TachieBindingContainer);
+        QHBoxLayout *rowLayout = new QHBoxLayout(row);
+        rowLayout->setContentsMargins(15, 0, 15, 0);
+
+        ElaText *label = new ElaText(row);
+        QFont font = label->font();
+        font.setPointSize(12);
+        label->setFont(font);
+        label->setText(actionName);
+
+        ElaComboBox *combo = new ElaComboBox(row);
+        combo->setStyleSheet(ui->comboBox_CharList->styleSheet());
+        combo->addItems(animationList);
+
+        QString boundAnimation = animationMap.value(actionName).toString();
+        if (boundAnimation.isEmpty())
+            boundAnimation = fallbackAnimation.isEmpty() ? "无动画" : fallbackAnimation;
+
+        combo->blockSignals(true);
+        combo->setCurrentText(boundAnimation);
+        combo->blockSignals(false);
+
+        QObject::connect(combo, &QComboBox::currentTextChanged, this,
+                         [this, actionName](const QString &selectedAnimation)
+                         {
+                             if (!isAlreadyLoading)
+                                 return;
+
+                             QString currentCharName =
+                                 ui->comboBox_CharList->currentText();
+                             ZcJsonLib charConfig(CharacterAssestPath + "/" +
+                                                  currentCharName +
+                                                  "/config.json");
+                             QJsonObject map =
+                                 charConfig.value("tachieAnimations", QJsonObject())
+                                     .toObject();
+                             if (selectedAnimation == "无动画")
+                                 map.remove(actionName);
+                             else
+                                 map.insert(actionName, selectedAnimation);
+
+                             charConfig.setValue("tachieAnimations", map);
+                         });
+
+        rowLayout->addWidget(label, 3);
+        rowLayout->addWidget(combo, 2);
+        layout->insertWidget(insertIndex + m_tachieBindingRows.size(), row);
+        m_tachieBindingRows.append(row);
+    }
+}
+
+//进入立绘设置二级菜单
+void SettingChild_Char::on_pushButton_Tachie_Set_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+    ui->BreadcrumbBar->appendBreadcrumb("立绘设置");
+}
+
+//面包屑导航：返回上级
+void SettingChild_Char::on_BreadcrumbBar_breadcrumbClicked(
+    QString breadcrumb, QStringList lastBreadcrumbList)
+{
+    Q_UNUSED(lastBreadcrumbList)
+    if (breadcrumb == "角色设置")
+    {
+        ui->stackedWidget->setCurrentIndex(0);
+    }
 }
