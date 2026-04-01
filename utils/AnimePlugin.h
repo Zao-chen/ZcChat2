@@ -37,7 +37,7 @@ struct AnimePluginAnimation
 
     QString BuildDisplayName(const QString &pluginName) const
     {
-        return pluginName + "+" + name;
+        return pluginName + "_" + name;
     }
 
     QString BuildUniqueKey(const QString &pluginId) const

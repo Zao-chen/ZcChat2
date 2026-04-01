@@ -12,6 +12,7 @@
 #include "ElaText.h"
 
 #include <QComboBox>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
@@ -24,7 +25,6 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QVBoxLayout>
-#include <Qdebug>
 
 SettingChild_Char::SettingChild_Char(QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingChild_Char)
@@ -501,17 +501,15 @@ void SettingChild_Char::RefreshTachieActionList()
     if (actionList.isEmpty())
         actionList.append("default");
 
-    //动画候选列表
-    QStringList animationList;
-    animationList.append("无动画");
-    animationList.append(m_pluginManager.AnimationDisplayNames());
+    //动画候选列表：显示名与唯一键分离保存
+    const QStringList animationDisplayNames = m_pluginManager.AnimationDisplayNames();
+    const QStringList animationUniqueKeys = m_pluginManager.AnimationUniqueKeys();
+    const int pairCount = qMin(animationDisplayNames.size(), animationUniqueKeys.size());
 
     ZcJsonLib charUserConfig(CharacterAssestPath + "/" + charName +
                              "/config.json");
     QJsonObject animationMap =
         charUserConfig.value("tachieAnimations", QJsonObject()).toObject();
-    const QString fallbackAnimation =
-        charUserConfig.value("tachieAnimation", "无动画").toString();
 
     //逐动作创建横排行：左侧动作名称，右侧绑定下拉
     QVBoxLayout *layout = ui->verticalLayout_TachieBindingList;
@@ -532,19 +530,28 @@ void SettingChild_Char::RefreshTachieActionList()
 
         ElaComboBox *combo = new ElaComboBox(row);
         combo->setStyleSheet(ui->comboBox_CharList->styleSheet());
-        combo->addItems(animationList);
+        combo->addItem("无动画", "");
+        for (int i = 0; i < pairCount; ++i)
+        {
+            combo->addItem(animationDisplayNames.at(i), animationUniqueKeys.at(i));
+        }
 
         QString boundAnimation = animationMap.value(actionName).toString();
-        if (boundAnimation.isEmpty())
-            boundAnimation = fallbackAnimation.isEmpty() ? "无动画" : fallbackAnimation;
 
         combo->blockSignals(true);
-        combo->setCurrentText(boundAnimation);
+        const int keyIndex = combo->findData(boundAnimation);
+        if (keyIndex >= 0)
+            combo->setCurrentIndex(keyIndex);
+        else
+            combo->setCurrentIndex(0);
         combo->blockSignals(false);
 
-        QObject::connect(combo, &QComboBox::currentTextChanged, this,
-                         [this, actionName](const QString &selectedAnimation)
+        QObject::connect(combo,
+                         QOverload<int>::of(&QComboBox::currentIndexChanged),
+                         this,
+                         [this, actionName, combo](int index)
                          {
+                             Q_UNUSED(index)
                              if (!isAlreadyLoading)
                                  return;
 
@@ -556,10 +563,12 @@ void SettingChild_Char::RefreshTachieActionList()
                              QJsonObject map =
                                  charConfig.value("tachieAnimations", QJsonObject())
                                      .toObject();
-                             if (selectedAnimation == "无动画")
+                             const QString selectedUniqueKey =
+                                 combo->currentData().toString();
+                             if (selectedUniqueKey.isEmpty())
                                  map.remove(actionName);
                              else
-                                 map.insert(actionName, selectedAnimation);
+                                 map.insert(actionName, selectedUniqueKey);
 
                              charConfig.setValue("tachieAnimations", map);
                          });
