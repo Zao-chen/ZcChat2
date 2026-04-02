@@ -486,6 +486,7 @@ void SettingChild_Char::RefreshTachieActionList()
     if (charName.isEmpty() || charName == "未选择")
         return;
 
+    //扫描角色立绘文件夹，获取所有动作名称
     QDir tachieDir(CharacterAssestPath + "/" + charName + "/Tachie");
     QStringList nameFilters;
     nameFilters << "*.png" << "*.jpg" << "*.jpeg";
@@ -501,17 +502,15 @@ void SettingChild_Char::RefreshTachieActionList()
     if (actionList.isEmpty())
         actionList.append("default");
 
-    //动画候选列表：显示名与唯一键分离保存
-    const QStringList animationDisplayNames = m_pluginManager.AnimationDisplayNames();
+    //动画候选列表：统一使用唯一键（插件名_动画名）
     const QStringList animationUniqueKeys = m_pluginManager.AnimationUniqueKeys();
-    const int pairCount = qMin(animationDisplayNames.size(), animationUniqueKeys.size());
 
     ZcJsonLib charUserConfig(CharacterAssestPath + "/" + charName +
                              "/config.json");
     QJsonObject animationMap =
         charUserConfig.value("tachieAnimations", QJsonObject()).toObject();
 
-    //逐动作创建横排行：左侧动作名称，右侧绑定下拉
+    //创建横排行：左侧动作名称，右侧绑定下拉
     QVBoxLayout *layout = ui->verticalLayout_TachieBindingList;
     const int insertIndex = qMax(0, layout->count() - 1); //在底部弹簧前插入
 
@@ -531,9 +530,9 @@ void SettingChild_Char::RefreshTachieActionList()
         ElaComboBox *combo = new ElaComboBox(row);
         combo->setStyleSheet(ui->comboBox_CharList->styleSheet());
         combo->addItem("无动画", "");
-        for (int i = 0; i < pairCount; ++i)
+        for (const QString &uniqueKey : animationUniqueKeys)
         {
-            combo->addItem(animationDisplayNames.at(i), animationUniqueKeys.at(i));
+            combo->addItem(uniqueKey, uniqueKey);
         }
 
         QString boundAnimation = animationMap.value(actionName).toString();

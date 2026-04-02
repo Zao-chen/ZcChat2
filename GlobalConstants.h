@@ -69,12 +69,3 @@ inline QString ReadCharacterContextPath()
     return QDir(CharacterUserConfigPath)
         .filePath(ReadNowSelectChar() + "/context.json");
 }
-
-//确认插件文件夹存在
-inline bool EnsureAnimePluginDir()
-{
-    QDir animeDir(AnimePluginPath);
-    if (animeDir.exists())
-        return true;
-    return QDir().mkpath(AnimePluginPath);
-}

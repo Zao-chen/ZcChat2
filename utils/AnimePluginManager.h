@@ -13,7 +13,6 @@ class AnimePluginManager
     bool Reload();
 
     const QList<AnimePluginDefinition> &Plugins() const;
-    const QStringList &AnimationDisplayNames() const;
     const QStringList &AnimationUniqueKeys() const;
     const QStringList &LastErrors() const;
 
@@ -22,17 +21,16 @@ class AnimePluginManager
                                     AnimePluginAnimation &outAnimation) const;
 
   private:
-    struct AnimationIndex
+    struct PluginAndAnimationIndex
     {
-        int pluginIndex = -1;
-        int animationIndex = -1;
+      int pluginIndex = -1;
+      int animationIndex = -1;
     };
 
     //key:pluginName_animationName,value:插件和动画在列表中的索引
-    QHash<QString, AnimationIndex> m_animationIndexByUniqueKey;
+    QHash<QString, PluginAndAnimationIndex> m_animationIndexByUniqueKey;
 
     QList<AnimePluginDefinition> m_plugins;
-    QStringList m_animationDisplayNames;
     QStringList m_animationUniqueKeys;
     QStringList m_lastErrors;
 };

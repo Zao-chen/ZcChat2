@@ -7,20 +7,14 @@
 #include <QFileInfoList>
 #include <QSet>
 
+/*重载插件*/
 bool AnimePluginManager::Reload()
 {
     //每次重载都清空缓存，避免旧索引残留
     m_plugins.clear();
-    m_animationDisplayNames.clear();
     m_animationUniqueKeys.clear();
     m_animationIndexByUniqueKey.clear();
     m_lastErrors.clear();
-
-    if (!EnsureAnimePluginDir())
-    {
-        m_lastErrors.append(QString("无法创建动画插件目录: %1").arg(AnimePluginPath));
-        return false;
-    }
 
     QDir pluginDir(AnimePluginPath);
     //按文件名排序，保证列表与UI展示稳定
@@ -28,11 +22,15 @@ bool AnimePluginManager::Reload()
         pluginDir.entryInfoList(QStringList() << "*.json", QDir::Files, QDir::Name);
 
     QSet<QString> pluginNameSet;
+
+    //逐个加载插件文件
     for (const QFileInfo &pluginFile : pluginFiles)
     {
         AnimePluginDefinition plugin;
         QString error;
-        if (!AnimePluginLoader::LoadFromFile(pluginFile.filePath(), plugin, error))
+
+        //加载插件
+        if (!LoadAnimePluginFromFile(pluginFile.filePath(), plugin, error))
         {
             m_lastErrors.append(
                 QString("插件加载失败[%1]: %2").arg(pluginFile.fileName()).arg(error));
@@ -52,13 +50,13 @@ bool AnimePluginManager::Reload()
         m_plugins.append(plugin);
         pluginNameSet.insert(plugin.name);
 
-        //建立动画展示名与唯一键索引，供设置页和反查使用
+        //建立动画唯一键索引，即 插件名_动画名
         const AnimePluginDefinition &loadedPlugin = m_plugins.at(pluginIndex);
+        //加载所有动画
         for (int i = 0; i < loadedPlugin.animations.size(); ++i)
         {
             const AnimePluginAnimation &animation = loadedPlugin.animations.at(i);
             const QString uniqueKey = animation.BuildUniqueKey(loadedPlugin.name);
-            const QString displayName = animation.BuildDisplayName(loadedPlugin.name);
 
             if (m_animationIndexByUniqueKey.contains(uniqueKey))
             {
@@ -69,8 +67,7 @@ bool AnimePluginManager::Reload()
             }
 
             m_animationUniqueKeys.append(uniqueKey);
-            m_animationDisplayNames.append(displayName);
-            m_animationIndexByUniqueKey.insert(uniqueKey, AnimationIndex{pluginIndex, i});
+            m_animationIndexByUniqueKey.insert(uniqueKey, PluginAndAnimationIndex{pluginIndex, i});
         }
     }
 
@@ -78,26 +75,25 @@ bool AnimePluginManager::Reload()
     return !m_plugins.isEmpty();
 }
 
+/*获取插件列表*/
 const QList<AnimePluginDefinition> &AnimePluginManager::Plugins() const
 {
     return m_plugins;
 }
 
-const QStringList &AnimePluginManager::AnimationDisplayNames() const
-{
-    return m_animationDisplayNames;
-}
-
+/*获取所有动画唯一键列表，格式为 插件名_动画名*/
 const QStringList &AnimePluginManager::AnimationUniqueKeys() const
 {
     return m_animationUniqueKeys;
 }
 
+/*获取上次加载插件的错误列表*/
 const QStringList &AnimePluginManager::LastErrors() const
 {
     return m_lastErrors;
 }
 
+/*根据唯一键获取动画*/
 bool AnimePluginManager::TryGetAnimationByUniqueKey(
     const QString &uniqueKey, AnimePluginDefinition &outPlugin,
     AnimePluginAnimation &outAnimation) const
@@ -106,7 +102,7 @@ bool AnimePluginManager::TryGetAnimationByUniqueKey(
     if (!m_animationIndexByUniqueKey.contains(uniqueKey))
         return false;
 
-    const AnimationIndex index = m_animationIndexByUniqueKey.value(uniqueKey);
+    const PluginAndAnimationIndex index = m_animationIndexByUniqueKey.value(uniqueKey);
     if (index.pluginIndex < 0 || index.pluginIndex >= m_plugins.size())
         return false;
 

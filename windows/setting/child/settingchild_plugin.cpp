@@ -70,7 +70,7 @@ void SettingChild_Plugin::on_pushButton_ImportAnimePlugin_clicked()
 
     AnimePluginDefinition plugin;
     QString parseError;
-    if (!AnimePluginLoader::LoadFromFile(pluginJsonPath, plugin, parseError))
+    if (!LoadAnimePluginFromFile(pluginJsonPath, plugin, parseError))
     {
         ElaMessageBar::error(ElaMessageBarType::TopRight, "导入失败",
                              QString("插件格式无效: %1").arg(parseError), 5000,
@@ -90,13 +90,6 @@ void SettingChild_Plugin::on_pushButton_ImportAnimePlugin_clicked()
                                    5000, this);
             return;
         }
-    }
-
-    if (!EnsureAnimePluginDir())
-    {
-        ElaMessageBar::error(ElaMessageBarType::TopRight, "导入失败",
-                             "无法创建插件目录", 5000, this);
-        return;
     }
 
     //统一落盘为插件名.json，避免同插件多文件名造成混淆
@@ -237,7 +230,7 @@ void SettingChild_Plugin::OpenPluginDetail(const QString &pluginName)
 
         QStringList animationList;
         for (const AnimePluginAnimation &animation : plugin.animations)
-            animationList.append(animation.BuildDisplayName(plugin.name));
+            animationList.append(animation.BuildUniqueKey(plugin.name));
         if (animationList.isEmpty())
             animationList.append("该插件没有可用动画");
 

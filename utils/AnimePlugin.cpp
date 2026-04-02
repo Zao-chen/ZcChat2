@@ -7,10 +7,13 @@
 
 namespace
 {
+/*解析单个动画步骤*/
 bool ParseStep(const QJsonObject &stepObj, AnimePluginStep &outStep,
                QString &outError)
 {
     const QString type = stepObj.value("type").toString().trimmed();
+
+    //水平移动
     if (type == "move")
     {
         //move为相对位移，x/y可正可负
@@ -25,7 +28,7 @@ bool ParseStep(const QJsonObject &stepObj, AnimePluginStep &outStep,
         }
         return true;
     }
-
+    //透明度
     if (type == "opacity")
     {
         //opacity限制在0~1，避免无效透明度
@@ -46,7 +49,7 @@ bool ParseStep(const QJsonObject &stepObj, AnimePluginStep &outStep,
         }
         return true;
     }
-
+    //缩放
     if (type == "scale")
     {
         //scale使用倍率，必须大于0
@@ -71,6 +74,7 @@ bool ParseStep(const QJsonObject &stepObj, AnimePluginStep &outStep,
     return false;
 }
 
+/*解析完整动画*/
 bool ParseAnimation(const QJsonObject &animationObj,
                     AnimePluginAnimation &outAnimation, QString &outError)
 {
@@ -111,16 +115,17 @@ bool ParseAnimation(const QJsonObject &animationObj,
                     .arg(outError);
             return false;
         }
-        outAnimation.steps.append(step);
+        outAnimation.steps.append(step); //写入动画步骤列表
     }
 
     return true;
 }
 } //namespace
 
-bool AnimePluginLoader::LoadFromFile(const QString &filePath,
-                                     AnimePluginDefinition &outPlugin,
-                                     QString &outError)
+/*读取插件*/
+bool LoadAnimePluginFromFile(const QString &filePath,
+                             AnimePluginDefinition &outPlugin,
+                             QString &outError)
 {
     ZcJsonLib pluginConfig(filePath);
     if (!pluginConfig.load())
@@ -129,6 +134,7 @@ bool AnimePluginLoader::LoadFromFile(const QString &filePath,
         return false;
     }
 
+    /*解析插件信息*/
     outPlugin = AnimePluginDefinition();
     outPlugin.filePath = filePath;
     outPlugin.name = pluginConfig.value("name").toString().trimmed();
@@ -144,6 +150,7 @@ bool AnimePluginLoader::LoadFromFile(const QString &filePath,
         return false;
     }
 
+    /*解析动画列表*/
     const QJsonArray animations = pluginConfig.value("animations").toArray();
     if (animations.isEmpty())
     {
@@ -177,14 +184,4 @@ bool AnimePluginLoader::LoadFromFile(const QString &filePath,
     }
 
     return true;
-}
-
-QStringList AnimePluginLoader::BuildAnimationDisplayNames(
-    const AnimePluginDefinition &plugin)
-{
-    QStringList names;
-    names.reserve(plugin.animations.size());
-    for (const AnimePluginAnimation &animation : plugin.animations)
-        names.append(animation.BuildDisplayName(plugin.name));
-    return names;
 }
