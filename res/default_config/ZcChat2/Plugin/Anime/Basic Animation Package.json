@@ -1,0 +1,59 @@
+{
+  "name": "Basic Animation Package",
+  "version": "1.0.0",
+  "author": "Zao_chen",
+  "link": "https://github.com/Zao-chen/ZcChat2/discussions/27",
+  "animations": [
+    {
+      "name": "上抬下落",
+      "steps": [
+        {
+          "type": "move",
+          "duration": 0.5,
+          "x": 0,
+          "y": -10
+        },
+        {
+          "type": "move",
+          "duration": 0.5,
+          "x": 0,
+          "y": 10
+        }
+      ]
+    },
+    {
+      "name": "轻微淡入淡出",
+      "steps": [
+        {
+          "type": "opacity",
+          "duration": 0.2,
+          "from": 1.0,
+          "to": 0.85
+        },
+        {
+          "type": "opacity",
+          "duration": 0.2,
+          "from": 0.85,
+          "to": 1.0
+        }
+      ]
+    },
+    {
+      "name": "轻微放大缩小",
+      "steps": [
+        {
+          "type": "scale",
+          "duration": 0.25,
+          "from": 1.0,
+          "to": 1.08
+        },
+        {
+          "type": "scale",
+          "duration": 0.25,
+          "from": 1.08,
+          "to": 1.0
+        }
+      ]
+    }
+  ]
+}

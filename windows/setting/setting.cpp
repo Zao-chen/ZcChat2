@@ -3,6 +3,7 @@
 
 #include "child/settingchild_char.h"
 #include "child/settingchild_llm.h"
+#include "child/settingchild_plugin.h"
 #include "child/settingchild_vits.h"
 
 MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
@@ -19,6 +20,9 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     SettingChild_Vits *settingchild_vitsWin = new SettingChild_Vits(this);
     settingchild_vitsWin->show();
     addPageNode("语音合成", settingchild_vitsWin, ElaIconType::Bullhorn);
+    SettingChild_Plugin *settingchild_pluginWin = new SettingChild_Plugin(this);
+    settingchild_pluginWin->show();
+    addPageNode("插件配置", settingchild_pluginWin, ElaIconType::PuzzlePiece);
     SettingChild_Char *settingchild_charWin = new SettingChild_Char(this);
     settingchild_charWin->show();
     addPageNode("角色设置", settingchild_charWin, ElaIconType::SquareUser);

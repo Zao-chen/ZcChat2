@@ -65,11 +65,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         GlobalConstants.h
         res.qrc
         utils/CustomScrollBinder.h utils/CustomScrollBinder.cpp
+        utils/AnimePlugin.h utils/AnimePlugin.cpp
+        utils/AnimePluginManager.h utils/AnimePluginManager.cpp
         windows/tachie/tachie.h windows/tachie/tachie.cpp windows/tachie/tachie.ui
         utils/DragHelper.h utils/DragHelper.cpp
         windows/setting/child/settingchild_llm.h windows/setting/child/settingchild_llm.cpp windows/setting/child/settingchild_llm.ui
         windows/setting/child/settingchild_char.h windows/setting/child/settingchild_char.cpp windows/setting/child/settingchild_char.ui
         windows/setting/child/settingchild_vits.h windows/setting/child/settingchild_vits.cpp windows/setting/child/settingchild_vits.ui
+        windows/setting/child/settingchild_plugin.h windows/setting/child/settingchild_plugin.cpp windows/setting/child/settingchild_plugin.ui
 
     )
 # Define target properties for Android with Qt 6 as:

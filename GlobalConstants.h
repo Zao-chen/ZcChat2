@@ -24,6 +24,11 @@ inline const QString CharacterUserConfigPath =
     QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
         .filePath("ZcChat2/Character/UserConfig");
 
+//动画插件位置
+inline const QString AnimePluginPath =
+    QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
+        .filePath("ZcChat2/Plugin/Anime");
+
 //读取当前选中的角色
 inline QString ReadNowSelectChar()
 {
