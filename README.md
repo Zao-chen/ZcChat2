@@ -1,5 +1,5 @@
 > [!NOTE]
-> 📱 ZcChat2的 [移动端版本](https://github.com/Zao-chen/ZcChat2ForMobile) 已同步上线！  
+> 📱 ZcChat2的 [移动端版本](https://github.com/Zao-chen/ZcChat2ForMobile) 已同步上线！
 > 👉 为竖屏设备设计的版本，和 Galgame 角色在手机上对话！
 
 # ZcChat2
@@ -41,7 +41,8 @@
 - [X] 一键导入角色
 - [X] 实现模型流式传输
 - [X] 语音切分流式生成
-- [ ] 立绘动画和粒子的插件方式实现
+- [X] 立绘动画和插件实现
+- [ ] 粒子特效和和插件实现
 - [ ] 构建系统级操作模块
 - [ ] 多模态的实现
 - [ ] 重构语音交互模块
