@@ -42,7 +42,7 @@
 - [X] 实现模型流式传输
 - [X] 语音切分流式生成
 - [X] 立绘动画和插件实现
-- [ ] 粒子特效和和插件实现
+- [ ] 立绘例子和插件实现
 - [ ] 构建系统级操作模块
 - [ ] 多模态的实现
 - [ ] 重构语音交互模块
@@ -57,7 +57,7 @@
 
 ### Step2: 导入角色
 
-1. 在[讨论](https://github.com/Zao-chen/ZcChat2/discussions/categories/%E8%A7%92%E8%89%B2%E5%88%86%E4%BA%AB)选择你喜欢的角色并下载角色
+1. 在[角色分享](https://github.com/Zao-chen/ZcChat2/discussions/categories/%E8%A7%92%E8%89%B2%E5%88%86%E4%BA%AB)选择你喜欢的角色并下载角色
 2. 点击托盘的ZcChat2打开设置页面
 3. 在 `角色设置 > 选中角色`中点击 `导入`，选取刚刚下载的角色
 

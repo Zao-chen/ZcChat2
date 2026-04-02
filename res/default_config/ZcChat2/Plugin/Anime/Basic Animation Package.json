@@ -1,8 +1,8 @@
 {
-  "name": "基础动作包",
+  "name": "Basic Animation Package",
   "version": "1.0.0",
-  "author": "ZcChat2",
-  "link": "https://example.com/zcchat2/plugins/sample-bounce",
+  "author": "Zao_chen",
+  "link": "https://github.com/Zao-chen/ZcChat2/discussions/27",
   "animations": [
     {
       "name": "上抬下落",
