@@ -8,7 +8,7 @@ on:
       qt_version:
         description: "Qt version"
         required: false
-        default: "6.6.0"
+        default: "6.6.3"
       build_type:
         description: "CMake build type"
         required: false
@@ -45,7 +45,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: ${{ inputs.qt_version || '6.6.0' }}
+          version: ${{ inputs.qt_version || '6.6.3' }}
           target: desktop
           arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || '' }}
           modules: 'qtmultimedia'
