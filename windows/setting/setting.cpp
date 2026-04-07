@@ -29,7 +29,8 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     addPageNode("角色设置", settingchild_charWin, ElaIconType::SquareUser);
     SettingChild_About *settingchild_aboutWin = new SettingChild_About(this);
     settingchild_aboutWin->show();
-    addPageNode("关于", settingchild_aboutWin, ElaIconType::CircleInfo);
+    QString settingchild_aboutKey = "about";
+    addFooterNode("关于", settingchild_aboutWin, settingchild_aboutKey, 0, ElaIconType::CircleInfo);
 
     //连接
     connect(settingchild_charWin, &SettingChild_Char::requestReloadCharSelect,
