@@ -1,6 +1,7 @@
 #include "setting.h"
 #include "./ui_setting.h"
 
+#include "child/settingchild_about.h"
 #include "child/settingchild_char.h"
 #include "child/settingchild_llm.h"
 #include "child/settingchild_plugin.h"
@@ -26,6 +27,9 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     SettingChild_Char *settingchild_charWin = new SettingChild_Char(this);
     settingchild_charWin->show();
     addPageNode("角色设置", settingchild_charWin, ElaIconType::SquareUser);
+    SettingChild_About *settingchild_aboutWin = new SettingChild_About(this);
+    settingchild_aboutWin->show();
+    addPageNode("关于", settingchild_aboutWin, ElaIconType::CircleInfo);
 
     //连接
     connect(settingchild_charWin, &SettingChild_Char::requestReloadCharSelect,
