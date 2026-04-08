@@ -54,6 +54,8 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
                         ui->label_Openai_Status->setVisible(true);
                     else if (fetchedServer == "DeepSeek")
                         ui->label_Deepseek_Status->setVisible(true);
+                    //发出模型列表刷新信号
+                    emit modelListRefreshed();
                 }
 
                 if (NowSelectServer == fetchedServer)
@@ -116,11 +118,18 @@ void SettingChild_LLM::on_pushButton_Deepseek_Set_clicked()
     //读取配置
     ZcJsonLib config(JsonSettingPath);
     QString apiKey = config.value("llm/" + NowSelectServer + "/ApiKey").toString();
-
     isLoadingConfig = true;
     ui->lineEdit_ApiKey->setText(apiKey);
     isLoadingConfig = false;
     modelListModel->setStringList(QStringList());
+    //模型列表
+    QJsonArray modelIds = config.value("llm/" + NowSelectServer + "/ModelList").toArray();
+    QStringList modelList;
+    for (const QJsonValue &modelId : modelIds)
+    {
+        modelList.append(modelId.toString());
+    }
+    modelListModel->setStringList(modelList);
 }
 
 /*面包屑返回上级*/

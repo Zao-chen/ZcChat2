@@ -33,6 +33,8 @@ SettingChild_About::SettingChild_About(QWidget *parent)
     ui->setupUi(this);
 
     /*初始化页面*/
+    ui->label_version->setText(" v" + m_localVersion);
+
     ui->pushButton->setUrl("https://github.com/Zao-chen/ZcChat2");
     //沿用旧版ZcChat的GitHub图标
     ui->pushButton->setCardPixmap(QPixmap(":/res/img/ico/github-mark.svg"));

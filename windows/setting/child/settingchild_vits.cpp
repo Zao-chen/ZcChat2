@@ -112,7 +112,8 @@ void SettingChild_Vits::on_pushButton_LoadModelAndSpeakerlList_clicked()
                 for (const QString &s : list)
                     arr.append(s);
                 config.setValue("vits/ModelAndSpeakerList", arr);
-            });
+                //发出模型列表刷新信号
+                emit vitsModelListRefreshed(); });
 }
 
 void SettingChild_Vits::on_ToggleSwitch_VitsSentenceSplit_toggled(bool checked)

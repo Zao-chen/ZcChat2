@@ -16,6 +16,9 @@ class SettingChild_Vits : public QWidget
     explicit SettingChild_Vits(QWidget *parent = nullptr);
     ~SettingChild_Vits();
 
+  signals:
+    void vitsModelListRefreshed(); //Vits模型列表已刷新
+
   private slots:
     void on_lineEdit_ApiUrl_textChanged(const QString &arg1);
     void on_BreadcrumbBar_breadcrumbClicked(QString breadcrumb,

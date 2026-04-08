@@ -19,6 +19,9 @@ class SettingChild_Char : public QWidget
   public:
     explicit SettingChild_Char(QWidget *parent = nullptr);
     ~SettingChild_Char();
+    //公开刷新方法供外部调用
+    void RefreshModelList();     ////刷新LLM模型列表
+    void RefreshVitsModelList(); ////刷新Vits模型列表
 
   private slots:
     void on_pushButton_DeleteChar_clicked();
@@ -49,7 +52,6 @@ class SettingChild_Char : public QWidget
     QList<QWidget *> m_tachieBindingRows;
     void LoadCurrentCharConfig();
     void RefreshCharList();
-    void RefreshModelList();
     void ClearTachieBindingRows();
     void RefreshTachieActionList();
     void RefreshTachieAnimationList();

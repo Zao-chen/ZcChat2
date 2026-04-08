@@ -18,6 +18,9 @@ class SettingChild_LLM : public QWidget
     explicit SettingChild_LLM(QWidget *parent = nullptr);
     ~SettingChild_LLM();
 
+  signals:
+    void modelListRefreshed(); //LLM模型列表已刷新
+
   private slots:
     void on_pushButton_Openai_Set_clicked();
     void on_BreadcrumbBar_breadcrumbClicked(QString breadcrumb, QStringList lastBreadcrumbList);
