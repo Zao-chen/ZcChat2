@@ -240,6 +240,18 @@ void SettingChild_Char::RefreshModelList()
     ui->comboBox_ModelSelect->addItems(modelList);
 }
 
+/*刷新Vits模型列表*/
+void SettingChild_Char::RefreshVitsModelList()
+{
+    ZcJsonLib config(JsonSettingPath);
+    QJsonArray arr = config.value("vits/ModelAndSpeakerList").toArray();
+    QStringList vitsMasList;
+    for (const QJsonValue &val : arr)
+        vitsMasList.append(val.toString());
+    ui->comboBox_Vits_MASSelect->clear();
+    ui->comboBox_Vits_MASSelect->addItems(vitsMasList);
+}
+
 /*切换模型选择*/
 void SettingChild_Char::on_comboBox_ModelSelect_currentTextChanged(
     const QString &arg1)

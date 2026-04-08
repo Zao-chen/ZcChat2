@@ -54,6 +54,8 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
                         ui->label_Openai_Status->setVisible(true);
                     else if (fetchedServer == "DeepSeek")
                         ui->label_Deepseek_Status->setVisible(true);
+                    //发出模型列表刷新信号
+                    emit modelListRefreshed();
                 }
 
                 if (NowSelectServer == fetchedServer)
