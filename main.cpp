@@ -45,6 +45,22 @@ int main(int argc, char *argv[])
     QAction *actionQuit = trayMenu.addAction("退出");
     tray.setContextMenu(&trayMenu);
     tray.show();
+    //左键点击托盘打开设置
+    QObject::connect(&tray, QOverload<QSystemTrayIcon::ActivationReason>::of(&QSystemTrayIcon::activated),
+                     [&](QSystemTrayIcon::ActivationReason reason)
+                     {
+                         if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick)
+                         {
+                             if (!settings)
+                             {
+                                 eApp->init();
+                                 settings = new MainWindow(&dialogWin, &tachieWin, &dialogWin);
+                             }
+                             settings->show();
+                             settings->raise();
+                             settings->activateWindow();
+                         }
+                     });
     //设置界面懒加载
     QObject::connect(actionSettings, &QAction::triggered, [&]()
                      {
