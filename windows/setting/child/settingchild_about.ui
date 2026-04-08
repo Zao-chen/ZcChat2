@@ -21,17 +21,58 @@
     <number>12</number>
    </property>
    <item>
-    <widget class="ElaText" name="label">
-     <property name="font">
-      <font>
-       <pointsize>20</pointsize>
-       <bold>false</bold>
-      </font>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <property name="topMargin">
+      <number>0</number>
      </property>
-     <property name="text">
-      <string>ZcChat2</string>
-     </property>
-    </widget>
+     <item>
+      <widget class="ElaText" name="label">
+       <property name="font">
+        <font>
+         <pointsize>20</pointsize>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>ZcChat2</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="ElaText" name="label_version">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>v1.0.0</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="ElaText" name="label_2">
@@ -92,7 +133,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <property name="topMargin">
-      <number>20</number>
+      <number>0</number>
      </property>
      <item>
       <widget class="ElaPushButton" name="pushButton_upDate">
