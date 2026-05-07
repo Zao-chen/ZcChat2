@@ -8,7 +8,9 @@
 #include "../../utils/DragHelper.h"
 
 #include "ZcJsonLib.h"
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QMouseEvent>
 #include <QPainter>
@@ -139,6 +141,53 @@ void Dialog::appendHistoryLine(const QString &line)
     if (line.isEmpty())
         return;
     m_contextHistory.append(line);
+}
+
+/*保存上下文历史*/
+void Dialog::saveContextHistory() const
+{
+    const QString contextPath = ReadCharacterContextPath();
+    if (contextPath.isEmpty())
+        return;
+
+    const QFileInfo fileInfo(contextPath);
+    QDir().mkpath(fileInfo.absolutePath());
+
+    QJsonArray historyArray;
+    for (const QString &line : m_contextHistory)
+        historyArray.append(line);
+
+    ZcJsonLib contextConfig(contextPath);
+    contextConfig.setValue("history", QJsonValue(historyArray));
+}
+
+/*停止当前对话的残留状态*/
+void Dialog::stopPendingConversationState()
+{
+    //清空当前轮次缓存，避免回溯后旧流式结果继续写入界面或历史
+    m_lastUserInput.clear();
+    m_streamRawReply.clear();
+    m_streamDisplayedChinese.clear();
+    m_streamVitsEnabled = false;
+    m_streamSynthCursor = 0;
+    m_vitsPendingTexts.clear();
+    m_vitsRequestInFlight = false;
+
+    for (QTemporaryFile *file : m_vitsReadyFiles)
+    {
+        if (file)
+            file->deleteLater();
+    }
+    m_vitsReadyFiles.clear();
+
+    if (m_vitsTempFile)
+    {
+        m_vitsTempFile->deleteLater();
+        m_vitsTempFile = nullptr;
+    }
+
+    if (m_vitsPlayer)
+        m_vitsPlayer->stop();
 }
 
 /*构建窗口*/
@@ -276,19 +325,7 @@ Dialog::Dialog(QWidget *parent)
                     m_lastUserInput.clear();
                 }
                 appendHistoryLine(QStringLiteral("角色：") + chineseReply);
-                const QString contextPath = ReadCharacterContextPath();
-                if (contextPath.isEmpty())
-                    return;
-
-                const QFileInfo fileInfo(contextPath);
-                QDir().mkpath(fileInfo.absolutePath());
-
-                QJsonArray historyArray;
-                for (const QString &line : m_contextHistory)
-                    historyArray.append(line);
-
-                ZcJsonLib contextConfig(contextPath);
-                contextConfig.setValue("history", QJsonValue(historyArray));
+                saveContextHistory();
 
                 //重置内容
                 m_streamRawReply.clear();
@@ -444,18 +481,23 @@ void Dialog::ReloadAIConfig()
 void Dialog::on_pushButton_history_clicked()
 {
     if (!historyWin)
+    {
         historyWin = new history(this);
+        connect(historyWin, &history::jumpToHistory, this,
+                &Dialog::rewindToHistoryIndex);
+    }
 
     //刷新历史记录内容
     historyWin->clearHistory();
-    for (const QString &line : m_contextHistory)
+    for (int i = 0; i < m_contextHistory.size(); ++i)
     {
+        const QString &line = m_contextHistory.at(i);
         if (line.startsWith(QStringLiteral("用户：")))
-            historyWin->addChildWindow(QStringLiteral("你"), line.mid(3));
+            historyWin->addChildWindow(i, QStringLiteral("你"), line.mid(3));
         else if (line.startsWith(QStringLiteral("角色：")))
-            historyWin->addChildWindow(QStringLiteral("她"), line.mid(3));
+            historyWin->addChildWindow(i, QStringLiteral("她"), line.mid(3));
         else
-            historyWin->addChildWindow(QStringLiteral("记录"), line);
+            historyWin->addChildWindow(i, QStringLiteral("记录"), line);
     }
 
     historyWin->move(this->x(), this->y() - historyWin->height());
@@ -530,6 +572,44 @@ void Dialog::on_pushButton_history_clicked()
                 &QWidget::hide);
         group->start(QAbstractAnimation::DeleteWhenStopped);
     }
+}
+
+/*回退历史*/
+void Dialog::rewindToHistoryIndex(int historyIndex)
+{
+    if (historyIndex < 0 || historyIndex >= m_contextHistory.size())
+        return;
+
+    //先停掉当前会话残留，再把历史截断到目标位置
+    stopPendingConversationState();
+    m_contextHistory = m_contextHistory.mid(0, historyIndex + 1);
+    saveContextHistory();
+
+    const QString selectedLine = m_contextHistory.at(historyIndex);
+    if (selectedLine.startsWith(QStringLiteral("用户：")))
+    {
+        ui->label_name->setText(QStringLiteral("你"));
+        ui->textEdit->setEnabled(true);
+        ui->textEdit->setText(selectedLine.mid(3));
+        ui->pushButton_next->hide();
+    }
+    else if (selectedLine.startsWith(QStringLiteral("角色：")))
+    {
+        ui->label_name->setText(QStringLiteral("她"));
+        ui->textEdit->setEnabled(false);
+        ui->textEdit->setText(selectedLine.mid(3));
+        ui->pushButton_next->show();
+    }
+    else
+    {
+        ui->label_name->setText(QStringLiteral("记录"));
+        ui->textEdit->setEnabled(false);
+        ui->textEdit->setText(selectedLine);
+        ui->pushButton_next->show();
+    }
+
+    if (historyWin && isHistoryOpen)
+        on_pushButton_history_clicked();
 }
 
 /*移动窗口*/

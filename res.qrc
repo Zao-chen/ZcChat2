@@ -4,6 +4,7 @@
         <file>res/img/ico/github-mark.svg</file>
         <file>res/img/ico/circle-dot-regular.svg</file>
         <file>res/img/ico/file-solid.svg</file>
+        <file>res/img/ico/turn-back.svg</file>
         <file>res/img/logo/logo.png</file>
     </qresource>
 </RCC>
