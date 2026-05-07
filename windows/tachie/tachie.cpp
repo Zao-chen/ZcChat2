@@ -20,7 +20,6 @@
 #include <QVariantAnimation>
 #include <memory>
 
-
 #ifdef Q_OS_LINUX
 #include <X11/Xlib.h>
 #include <X11/Xutil.h> //必须包含这个处理图像转换
@@ -39,8 +38,13 @@ Tachie::Tachie(QWidget *parent)
 
     //无边框
     setAttribute(Qt::WA_TranslucentBackground);
-    setWindowFlags(Qt::SubWindow | Qt::FramelessWindowHint |
-                   Qt::WindowStaysOnTopHint);
+    Qt::WindowFlags flags = Qt::Tool | Qt::FramelessWindowHint |
+                            Qt::WindowStaysOnTopHint;
+#ifdef Q_OS_LINUX
+    //避免窗口管理器限制拖拽范围（如屏幕边缘约束）。
+    flags |= Qt::X11BypassWindowManagerHint;
+#endif
+    setWindowFlags(flags);
     //窗口拖拽
     new DragHelper(this);
 
@@ -62,6 +66,57 @@ Tachie::~Tachie()
     }
     delete ui;
 }
+
+#ifdef Q_OS_LINUX
+void Tachie::ApplyLinuxInputShape(const QRegion &region)
+{
+    Display *display = XOpenDisplay(nullptr);
+    if (!display)
+        return;
+
+    Window window_id = static_cast<Window>(this->winId());
+
+    const int count = region.rectCount();
+    if (count <= 0)
+    {
+        XShapeCombineRectangles(display, window_id, ShapeInput, 0, 0, nullptr, 0,
+                                ShapeSet, YXBanded);
+        XCloseDisplay(display);
+        return;
+    }
+
+    auto rects = region.begin();
+    QVector<XRectangle> xrects;
+    xrects.resize(count);
+    for (int i = 0; i < count; ++i)
+    {
+        const QRect &rect = rects[i];
+        xrects[i].x = static_cast<short>(rect.x());
+        xrects[i].y = static_cast<short>(rect.y());
+        xrects[i].width = static_cast<unsigned short>(rect.width());
+        xrects[i].height = static_cast<unsigned short>(rect.height());
+    }
+
+    XShapeCombineRectangles(display, window_id, ShapeInput, 0, 0, xrects.data(),
+                            count, ShapeSet, YXBanded);
+    XCloseDisplay(display);
+}
+
+void Tachie::ApplyLinuxInputShapeFromImage()
+{
+    if (_scaledImg.isNull())
+        return;
+
+    QRegion region(QBitmap::fromImage(_scaledImg.createAlphaMask()));
+    region.translate(_scaledImgTopLeft);
+    ApplyLinuxInputShape(region);
+}
+
+void Tachie::ApplyLinuxInputShapeFullWindow()
+{
+    ApplyLinuxInputShape(QRegion(QRect(0, 0, width(), height())));
+}
+#endif
 
 //设置立绘
 void Tachie::SetTachieImg(QString TachieName)
@@ -341,40 +396,7 @@ void Tachie::SetTachieSize(int size)
     _scaledImgTopLeft = QPoint(imgX, imgY);
 
 #ifdef Q_OS_LINUX //这里是gemini3写的，我觉得在linux下的效果还不错，你可以到windows端测试一下
-    //1. 建立临时 X 链接
-    Display *display = XOpenDisplay(nullptr);
-    if (display)
-    {
-        Window window_id = static_cast<Window>(this->winId());
-
-        //2. 让 Qt 帮我们计算立绘的非透明区域矩形集合
-        //createAlphaMask 会提取所有 Alpha > 0 的像素
-        QRegion region(
-            QBitmap::fromImage(scaledPixmap.toImage().createAlphaMask()));
-        region.translate(imgX, imgY);
-
-        //3. 将 Qt 的矩形集合转换为 X11 的矩形格式
-        auto rects = region.begin(); //获取矩形数组迭代器
-        int count = region.rectCount();
-        XRectangle *xrects = new XRectangle[count];
-
-        for (int i = 0; i < count; ++i)
-        {
-            xrects[i].x = static_cast<short>(rects[i].x());
-            xrects[i].y = static_cast<short>(rects[i].y());
-            xrects[i].width = static_cast<unsigned short>(rects[i].width());
-            xrects[i].height = static_cast<unsigned short>(rects[i].height());
-        }
-
-        //4. 【核心】告诉 X Server 仅在这些矩形内拦截鼠标
-        //ShapeInput 模式保证了视觉不被裁剪（无锯齿），只有判定被裁剪
-        XShapeCombineRectangles(display, window_id, ShapeInput, 0, 0, xrects, count,
-                                ShapeSet, YXBanded);
-
-        //5. 释放资源
-        delete[] xrects;
-        XCloseDisplay(display);
-    }
+    ApplyLinuxInputShapeFromImage();
 #else
     //Windows 下不裁剪窗口形状，避免半透明边缘被硬裁切后出现“略微缩小/边缘异常”。
     this->clearMask();
@@ -400,6 +422,11 @@ void Tachie::mousePressEvent(QMouseEvent *event)
         return;
     }
 
+#ifdef Q_OS_LINUX
+    //拖动时扩大输入区域，避免鼠标离开形状区域后丢失拖拽。
+    ApplyLinuxInputShapeFullWindow();
+#endif
+
     QWidget::mousePressEvent(event);
 }
 
@@ -407,6 +434,10 @@ void Tachie::mousePressEvent(QMouseEvent *event)
 void Tachie::mouseReleaseEvent(QMouseEvent *event)
 {
     QWidget::mouseReleaseEvent(event);
+
+#ifdef Q_OS_LINUX
+    ApplyLinuxInputShapeFromImage();
+#endif
 
     //仅在初始化恢复完成后，且左键释放时保存一次位置。
     if (!_tachiePosRestoreDone || event->button() != Qt::LeftButton)
