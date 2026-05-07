@@ -1,9 +1,9 @@
 #include "historychild.h"
 #include "ui_historychild.h"
 
-historychild::historychild(const QString &name, const QString &msg,
+historychild::historychild(int historyIndex, const QString &name, const QString &msg,
                            QWidget *parent)
-    : QWidget(parent), ui(new Ui::historychild)
+    : QWidget(parent), ui(new Ui::historychild), m_historyIndex(historyIndex)
 {
     ui->setupUi(this);
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::Tool);
@@ -18,4 +18,10 @@ historychild::historychild(const QString &name, const QString &msg,
 historychild::~historychild()
 {
     delete ui;
+}
+
+/*请求回溯*/
+void historychild::on_pushButton_jump_clicked()
+{
+    emit jumpRequested(m_historyIndex);
 }

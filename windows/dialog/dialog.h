@@ -34,6 +34,7 @@ class Dialog : public QWidget
   private slots:
     void on_pushButton_next_clicked();
     void on_pushButton_history_clicked();
+    void rewindToHistoryIndex(int historyIndex);
 
   signals:
     void requestSetCharTachie(QString TachieName);
@@ -62,6 +63,7 @@ class Dialog : public QWidget
     void handleWheelDown();
     void loadContextHistory(); //加载上下文历史
     void saveContextHistory() const;
+    void stopPendingConversationState();
     bool isHistoryOpen = false;
     QStringList m_contextHistory;
 

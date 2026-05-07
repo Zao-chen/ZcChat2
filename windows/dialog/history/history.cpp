@@ -48,14 +48,15 @@ void history::clearHistory()
 }
 
 /*添加历史*/
-void history::addChildWindow(const QString &name, const QString &msg)
+void history::addChildWindow(int historyIndex, const QString &name, const QString &msg)
 {
     QVBoxLayout *layout =
         qobject_cast<QVBoxLayout *>(ui->scrollAreaWidgetContents->layout());
     if (!layout)
         return;
 
-    historychild *newChild = new historychild(name, msg, this);
+    historychild *newChild = new historychild(historyIndex, name, msg, this);
+    connect(newChild, &historychild::jumpRequested, this, &history::jumpToHistory); //向上绑定到Dialog的槽函数
     layout->addWidget(newChild);
 }
 

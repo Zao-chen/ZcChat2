@@ -14,9 +14,12 @@ class history : public QWidget
 
   public:
     explicit history(QWidget *parent = nullptr);
-    void addChildWindow(const QString &name, const QString &msg);
+    void addChildWindow(int historyIndex, const QString &name, const QString &msg);
     void clearHistory();
     ~history();
+
+  signals:
+    void jumpToHistory(int historyIndex);
 
   private:
     Ui::history *ui;
