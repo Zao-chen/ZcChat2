@@ -26,6 +26,83 @@
 #include <QStandardPaths>
 #include <QVBoxLayout>
 
+namespace //用于跨平台解压zip，Linux/Mac使用python脚本，Windows使用powershell命令
+{
+bool extractZipArchive(const QString &zipFilePath, const QString &targetDir,
+                       QString *errorMessage)
+{
+    QString pythonProgram = QStandardPaths::findExecutable("python3");
+    if (pythonProgram.isEmpty())
+        pythonProgram = QStandardPaths::findExecutable("python");
+
+    if (pythonProgram.isEmpty())
+    {
+        if (errorMessage)
+            *errorMessage = "未找到可用的 Python 解释器";
+        return false;
+    }
+
+    QProcess process;
+    process.setProgram(pythonProgram);
+    process.setArguments(QStringList()
+                         << "-c"
+                         << QStringLiteral(R"PY(
+        import os
+        import sys
+        import zipfile
+        import shutil
+
+        zip_path = sys.argv[1]
+        target_dir = sys.argv[2]
+
+        os.makedirs(target_dir, exist_ok=True)
+        target_abs = os.path.abspath(target_dir)
+
+        with zipfile.ZipFile(zip_path) as archive:
+            for member in archive.infolist():
+                # 兼容 Windows zip 中使用的反斜杠作为分隔符
+                member_name = member.filename.replace('\\', '/')
+                dest_path = os.path.abspath(os.path.join(target_dir, member_name))
+                if os.path.commonpath([target_abs, dest_path]) != target_abs:
+                    raise RuntimeError(f"非法压缩包条目: {member.filename}")
+                # 如果是目录，创建目录
+                if member_name.endswith('/'):
+                    os.makedirs(dest_path, exist_ok=True)
+                    continue
+                parent = os.path.dirname(dest_path)
+                if parent:
+                    os.makedirs(parent, exist_ok=True)
+                with archive.open(member) as source, open(dest_path, 'wb') as target:
+                    shutil.copyfileobj(source, target)
+        )PY")
+                         << zipFilePath << targetDir);
+
+    process.start();
+    if (!process.waitForFinished(60000))
+    {
+        process.kill();
+        if (errorMessage)
+            *errorMessage = "解压过程超时";
+        return false;
+    }
+
+    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0)
+    {
+        if (errorMessage)
+        {
+            QString error = process.readAllStandardError().trimmed();
+            if (error.isEmpty())
+                error = process.readAllStandardOutput().trimmed();
+            *errorMessage = error.isEmpty() ? "解压失败" : error;
+        }
+        return false;
+    }
+
+    return true;
+}
+} // namespace
+
+/*初始化窗口*/
 SettingChild_Char::SettingChild_Char(QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingChild_Char)
 {
@@ -333,20 +410,15 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
         if (overwriteDialog.exec() != QDialog::Accepted)
             return;
     }
-    QProcess process;
-//使用系统命令解压（跨平台支持）
+    QDir().mkpath(CharacterAssestPath);
+
 #ifdef Q_OS_WIN
+    QProcess process;
     QString command =
         QString("Expand-Archive -LiteralPath '%1' -DestinationPath '%2' -Force")
             .arg(zipFilePath, CharacterAssestPath);
     process.setProgram("powershell");
     process.setArguments(QStringList() << "-NoProfile" << "-Command" << command);
-#else
-    process.setProgram("unzip");
-    process.setArguments(QStringList()
-                         << "-o" << zipFilePath << "-d" << CharacterAssestPath);
-#endif
-
     process.start();
     if (!process.waitForFinished(60000))
     {
@@ -356,13 +428,24 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
         return;
     }
 
-    if (process.exitCode() != 0)
+    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0)
     {
         QString error = process.readAllStandardError();
         ElaMessageBar::error(ElaMessageBarType::BottomRight, "导入失败",
-                             QString("解压失败: %1").arg(error), 5000, this);
+                             QString("解压失败: %1").arg(error), 5000,
+                             this);
         return;
     }
+#else
+    QString errorMessage;
+    if (!extractZipArchive(zipFilePath, CharacterAssestPath, &errorMessage))
+    {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, "导入失败",
+                             QString("解压失败: %1").arg(errorMessage), 5000,
+                             this);
+        return;
+    }
+#endif
 
     RefreshCharList();
     if (ui->comboBox_CharList->findText(charName) >= 0)
