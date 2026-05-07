@@ -71,7 +71,13 @@ void Dialog::paintEvent(QPaintEvent *event)
 void Dialog::initWindow()
 {
     /*窗口初始化*/
-    setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
+    Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::Tool |
+                            Qt::WindowStaysOnTopHint;
+#ifdef Q_OS_LINUX
+    //避免窗口管理器限制拖拽范围（如屏幕边缘约束）。
+    flags |= Qt::X11BypassWindowManagerHint;
+#endif
+    setWindowFlags(flags);
     setWindowOpacity(0.95);
     setAttribute(Qt::WA_TranslucentBackground);
     /*内容初始化*/
@@ -227,8 +233,7 @@ Dialog::Dialog(QWidget *parent)
                                 m_streamSynthCursor); //继续查找下一句结束位置
                         }
                     }
-                }
-            });
+                } });
 
     //接收完整回复
     connect(ai, &AiProvider::replyReceived, [=](const QString &reply)
@@ -289,8 +294,7 @@ Dialog::Dialog(QWidget *parent)
                 m_streamRawReply.clear();
                 m_streamDisplayedChinese.clear();
                 m_streamVitsEnabled = false;
-                m_streamSynthCursor = 0;
-            });
+                m_streamSynthCursor = 0; });
     //错误处理
     connect(ai, &AiProvider::errorOccurred, [=](const QString &error)
             {
@@ -300,8 +304,7 @@ Dialog::Dialog(QWidget *parent)
                 m_streamRawReply.clear();
                 m_streamDisplayedChinese.clear();
                 m_streamVitsEnabled = false;
-                m_streamSynthCursor = 0;
-            });
+                m_streamSynthCursor = 0; });
 }
 
 /*解构窗口*/
@@ -639,8 +642,7 @@ void Dialog::tryStartNextVitsRequest()
 
                          reply->deleteLater();
                          //当前请求结束后立即尝试合成下一句，实现“合成前置”。
-                         tryStartNextVitsRequest();
-                     });
+                         tryStartNextVitsRequest(); });
 }
 
 /*启动下一个Vits播放*/
