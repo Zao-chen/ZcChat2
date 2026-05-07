@@ -281,6 +281,44 @@ QPushButton:pressed {
       <number>0</number>
      </property>
      <item>
+      <widget class="QPushButton" name="pushButton_input">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 4px 8px;
+}
+
+QPushButton:hover {
+    border: 2px solid #CCCCCC;
+}
+
+QPushButton:pressed {
+    border: 2px solid #AAAAAA;
+}
+</string>
+       </property>
+       <property name="text">
+        <string>按住说话</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../res.qrc">
+         <normaloff>:/res/img/ico/microphone-solid.svg</normaloff>:/res/img/ico/microphone-solid.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_autoInput">
+       <property name="toolTip">
+        <string>语音识别完成后将会直接发送</string>
+       </property>
+       <property name="text">
+        <string>直接发送</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Orientation::Horizontal</enum>

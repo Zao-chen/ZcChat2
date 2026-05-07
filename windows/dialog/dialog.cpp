@@ -17,8 +17,16 @@
 #include <QPainterPath>
 #include <QSettings>
 
+#include <QAudioDevice>
+#include <QAudioInput>
 #include <QAudioOutput>
+#include <QEventLoop>
 #include <QGraphicsOpacityEffect>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMediaDevices>
+#include <QMediaFormat>
 #include <QMediaPlayer>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -26,6 +34,8 @@
 #include <QParallelAnimationGroup>
 #include <QPropertyAnimation>
 #include <QTemporaryFile>
+#include <QUrlQuery>
+#include <QUuid>
 #include <QWheelEvent>
 
 /*寻找句子分割点*/
@@ -90,6 +100,9 @@ void Dialog::initWindow()
     new DragHelper(this);         //给窗口添加拖拽功能
     ui->textEdit->installEventFilter(this);
     ui->textEdit->viewport()->installEventFilter(this);
+    //初始隐藏语音输入相关控件，后续根据配置决定是否显示
+    ui->pushButton_input->hide();
+    ui->checkBox_autoInput->hide();
 }
 
 /*打开关闭历史记录*/
@@ -188,6 +201,8 @@ void Dialog::stopPendingConversationState()
 
     if (m_vitsPlayer)
         m_vitsPlayer->stop();
+
+    m_isSpeechRecognizing = false;
 }
 
 /*构建窗口*/
@@ -220,7 +235,36 @@ Dialog::Dialog(QWidget *parent)
                     tryStartNextVitsPlayback();
                 }
             });
+    /*语音输入初始化*/
+    m_speechRecorder = new QMediaRecorder(this);
+    m_speechAudioInput = new QAudioInput(this);
+    m_speechCaptureSession.setRecorder(m_speechRecorder);
+    m_speechCaptureSession.setAudioInput(m_speechAudioInput);
+    if (m_speechAudioInput)
+        m_speechAudioInput->setDevice(QMediaDevices::defaultAudioInput());
+    //录音结束后统一进入识别，再决定是否直接复用现有发送链路
+    connect(m_speechRecorder, &QMediaRecorder::recorderStateChanged, this,
+            [this](QMediaRecorder::RecorderState state)
+            {
+                if (state != QMediaRecorder::StoppedState || !m_isSpeechRecording)
+                    return;
+
+                m_isSpeechRecording = false;
+                m_isSpeechRecognizing = true;
+                const QString recognizedText =
+                    recognizeSpeechFromFile(speechRecordFilePath()).trimmed();
+                m_isSpeechRecognizing = false;
+                if (recognizedText.isEmpty())
+                    return;
+
+                ui->label_name->setText(QStringLiteral("你"));
+                ui->textEdit->setEnabled(true);
+                ui->textEdit->setText(recognizedText);
+                if (ui->checkBox_autoInput->isChecked())
+                    submitCurrentInput();
+            });
     ReloadAIConfig();
+    ReloadSpeechInputConfig();
     loadContextHistory();
 
     /*数据读取和初始化*/
@@ -337,6 +381,7 @@ Dialog::Dialog(QWidget *parent)
             {
                 ui->pushButton_next->show();
                 ui->textEdit->setText(error);
+                ui->textEdit->setEnabled(false);
                 m_lastUserInput.clear();
                 m_streamRawReply.clear();
                 m_streamDisplayedChinese.clear();
@@ -360,85 +405,7 @@ void Dialog::keyReleaseEvent(QKeyEvent *event)
     if (event->key() == Qt::Key_Return)
         /*发送对话请求*/
         if (!keys.contains(Qt::Key_Shift)) //过滤Shift换行
-        {
-            //对话框设置
-            ui->label_name->setText("她");
-            ui->textEdit->setEnabled(false);
-            ui->pushButton_next->hide();
-            //去除换行
-            QTextCursor cursor = ui->textEdit->textCursor(); //得到当前text的光标
-            if (cursor.hasSelection())
-                cursor.clearSelection();
-            cursor.deletePreviousChar(); //删除前一个字符
-            const QString userInput = ui->textEdit->toPlainText().trimmed();
-            if (userInput.isEmpty())
-            {
-                ui->textEdit->clear();
-                ui->textEdit->setEnabled(true);
-                return;
-            }
-            //读取心情列表
-            QDir dir(ReadCharacterTachiePath());
-            QStringList nameFilters;
-            nameFilters << "*.png" << "*.jpg" << "*.jpeg";
-            QStringList fileNames = dir.entryList(nameFilters, QDir::Files);
-            QString nameListStr;
-            for (const QString &fileName : fileNames)
-            {
-                nameListStr += fileName.section('.', 0, 0) + ", ";
-            }
-            ZcJsonLib roleConfig(CharacterAssestPath + "/" + ReadNowSelectChar() +
-                                 "/config.json");
-            const QString characterPrompt =
-                roleConfig.value("prompt").toString().trimmed();
-            //设置系统提示词
-            QString systemPrompt;
-            if (!characterPrompt.isEmpty())
-                systemPrompt += QStringLiteral("角色设定：") + characterPrompt +
-                                QStringLiteral("\n请始终保持该设定进行回复。\n\n");
-            systemPrompt +=
-                QStringLiteral("你是一个桌宠 AI，输出内容必须严格按照以下格式：\n"
-                               "心情|中文|日语\n\n"
-                               "要求：\n"
-                               "1. 心情必须从以下列表中选择：") +
-                nameListStr + "\n" +
-                QStringLiteral("2. 中文是桌宠此刻想表达的内容\n"
-                               "3. 日语是中文内容的对应翻译\n"
-                               "4. 输出中不能有多余内容或解释，严格用“|”分隔\n\n"
-                               "示例输出：\n"
-                               "快乐|今天的天气真好呀！|今日はいい天気ですね！\n"
-                               "生气|为什么一直打扰我！|なんでずっと邪魔するの！");
-            ai->setSystemPrompt(systemPrompt);
-
-            /*一些东西的初始化*/
-            m_lastUserInput = userInput;
-            ZcJsonLib charConfig(ReadCharacterUserConfigPath());
-            m_streamVitsEnabled = charConfig.value("vitsEnable").toBool();
-            ZcJsonLib config(JsonSettingPath);
-            m_streamVitsSentenceSplitEnabled =
-                config.value("vits/SentenceSplit", true).toBool();
-            m_streamRawReply.clear();
-            m_streamDisplayedChinese.clear();
-            m_streamSynthCursor = 0;
-            m_vitsPendingTexts.clear();
-            //删除暂存的语音文件
-            for (QTemporaryFile *file : m_vitsReadyFiles)
-            {
-                if (file)
-                    file->deleteLater();
-            }
-            m_vitsReadyFiles.clear();
-            m_vitsRequestInFlight = false;
-            if (m_vitsTempFile)
-            {
-                m_vitsTempFile->deleteLater();
-                m_vitsTempFile = nullptr;
-            }
-            if (m_vitsPlayer)
-                m_vitsPlayer->stop();
-            ai->chat(buildUserMessageWithContext(userInput));
-            ui->textEdit->setText("……");
-        }
+            submitCurrentInput();
     keys.removeAll(event->key());
 }
 
@@ -475,6 +442,23 @@ void Dialog::ReloadAIConfig()
     ai->setModel(modelSelect);
 
     loadContextHistory();
+}
+
+/*重载语音输入配置*/
+void Dialog::ReloadSpeechInputConfig()
+{
+    ZcJsonLib config(JsonSettingPath);
+    const bool speechEnabled =
+        config.value("speechInput/Enable", false).toBool();
+    const bool autoSend =
+        config.value("speechInput/AutoSend", false).toBool();
+
+    ui->pushButton_input->setVisible(speechEnabled);
+    ui->pushButton_input->setEnabled(speechEnabled);
+    ui->checkBox_autoInput->setVisible(speechEnabled);
+    ui->checkBox_autoInput->blockSignals(true);
+    ui->checkBox_autoInput->setChecked(autoSend);
+    ui->checkBox_autoInput->blockSignals(false);
 }
 
 /*显示历史记录*/
@@ -748,4 +732,254 @@ void Dialog::tryStartNextVitsPlayback()
     //播放严格串行：只有播放器空闲才取下一句。
     m_vitsPlayer->setSource(QUrl::fromLocalFile(m_vitsTempFile->fileName()));
     m_vitsPlayer->play();
+}
+
+/*提交当前输入*/
+bool Dialog::submitCurrentInput()
+{
+    ui->label_name->setText("她");
+    ui->textEdit->setEnabled(false);
+    ui->pushButton_next->hide();
+
+    QTextCursor cursor = ui->textEdit->textCursor();
+    if (cursor.hasSelection())
+        cursor.clearSelection();
+    if (ui->textEdit->toPlainText().endsWith('\n') && cursor.position() > 0)
+        cursor.deletePreviousChar();
+
+    const QString userInput = ui->textEdit->toPlainText().trimmed();
+    if (userInput.isEmpty())
+    {
+        ui->textEdit->clear();
+        ui->textEdit->setEnabled(true);
+        ui->label_name->setText(QStringLiteral("你"));
+        return false;
+    }
+
+    QDir dir(ReadCharacterTachiePath());
+    QStringList nameFilters;
+    nameFilters << "*.png" << "*.jpg" << "*.jpeg";
+    QStringList fileNames = dir.entryList(nameFilters, QDir::Files);
+    QString nameListStr;
+    for (const QString &fileName : fileNames)
+        nameListStr += fileName.section('.', 0, 0) + ", ";
+
+    ZcJsonLib roleConfig(CharacterAssestPath + "/" + ReadNowSelectChar() +
+                         "/config.json");
+    const QString characterPrompt =
+        roleConfig.value("prompt").toString().trimmed();
+    QString systemPrompt;
+    if (!characterPrompt.isEmpty())
+        systemPrompt += QStringLiteral("角色设定：") + characterPrompt +
+                        QStringLiteral("\n请始终保持该设定进行回复。\n\n");
+    systemPrompt +=
+        QStringLiteral("你是一个桌宠 AI，输出内容必须严格按照以下格式：\n"
+                       "心情|中文|日语\n\n"
+                       "要求：\n"
+                       "1. 心情必须从以下列表中选择：") +
+        nameListStr + "\n" +
+        QStringLiteral("2. 中文是桌宠此刻想表达的内容\n"
+                       "3. 日语是中文内容的对应翻译\n"
+                       "4. 输出中不能有多余内容或解释，严格用“|”分隔\n\n"
+                       "示例输出：\n"
+                       "快乐|今天的天气真好呀！|今日はいい天気ですね！\n"
+                       "生气|为什么一直打扰我！|なんでずっと邪魔するの！");
+    ai->setSystemPrompt(systemPrompt);
+
+    m_lastUserInput = userInput;
+    ZcJsonLib charConfig(ReadCharacterUserConfigPath());
+    m_streamVitsEnabled = charConfig.value("vitsEnable").toBool();
+    ZcJsonLib config(JsonSettingPath);
+    m_streamVitsSentenceSplitEnabled =
+        config.value("vits/SentenceSplit", true).toBool();
+    m_streamRawReply.clear();
+    m_streamDisplayedChinese.clear();
+    m_streamSynthCursor = 0;
+    m_vitsPendingTexts.clear();
+    for (QTemporaryFile *file : m_vitsReadyFiles)
+    {
+        if (file)
+            file->deleteLater();
+    }
+    m_vitsReadyFiles.clear();
+    m_vitsRequestInFlight = false;
+    if (m_vitsTempFile)
+    {
+        m_vitsTempFile->deleteLater();
+        m_vitsTempFile = nullptr;
+    }
+    if (m_vitsPlayer)
+        m_vitsPlayer->stop();
+    ai->chat(buildUserMessageWithContext(userInput));
+    ui->textEdit->setText("……");
+    return true;
+}
+
+/*长按语言输入相关*/
+void Dialog::on_pushButton_input_pressed()
+{
+    startSpeechRecording();
+}
+void Dialog::on_pushButton_input_released()
+{
+    stopSpeechRecording();
+}
+
+/*自动发送开关*/
+void Dialog::on_checkBox_autoInput_toggled(bool checked)
+{
+    ZcJsonLib config(JsonSettingPath);
+    config.setValue("speechInput/AutoSend", checked);
+}
+
+/*开始录音*/
+void Dialog::startSpeechRecording()
+{
+    if (!ui->pushButton_input->isVisible() || !ui->textEdit->isEnabled() ||
+        m_isSpeechRecording || m_isSpeechRecognizing || !m_speechRecorder ||
+        !m_speechAudioInput)
+        return;
+
+    if (QMediaDevices::defaultAudioInput().isNull())
+    {
+        ui->textEdit->setText(QStringLiteral("未检测到可用麦克风"));
+        return;
+    }
+
+    //录音文件统一落到临时目录，识别完成后直接读取
+    m_speechAudioInput->setDevice(QMediaDevices::defaultAudioInput());
+    QDir().mkpath(QFileInfo(speechRecordFilePath()).absolutePath());
+
+    QMediaFormat format;
+    format.setAudioCodec(QMediaFormat::AudioCodec::AAC);
+    m_speechRecorder->setMediaFormat(format);
+    m_speechRecorder->setAudioSampleRate(16000);
+    m_speechRecorder->setAudioChannelCount(1);
+    m_speechRecorder->setQuality(QMediaRecorder::HighQuality);
+    m_speechRecorder->setOutputLocation(
+        QUrl::fromLocalFile(speechRecordFilePath()));
+
+    m_isSpeechRecording = true;
+    ui->textEdit->setText(QStringLiteral("录音中……"));
+    m_speechRecorder->record();
+}
+
+/*结束录音*/
+void Dialog::stopSpeechRecording()
+{
+    if (!m_isSpeechRecording || !m_speechRecorder)
+        return;
+    ui->label_name->setText(QStringLiteral("你"));
+    m_speechRecorder->stop();
+}
+
+/*录音文件路径*/
+QString Dialog::speechRecordFilePath() const
+{
+    return QDir(QDir::tempPath()).filePath("ZcChat2/speech_input.m4a");
+}
+
+/*获取百度 Token*/
+QString Dialog::requestBaiduAccessToken(const QString &apiKey,
+                                        const QString &secretKey)
+{
+    if (apiKey.trimmed().isEmpty() || secretKey.trimmed().isEmpty())
+        return QString();
+
+    QNetworkAccessManager manager;
+    QUrl url("https://aip.baidubce.com/oauth/2.0/token");
+    QUrlQuery query;
+    query.addQueryItem("grant_type", "client_credentials");
+    query.addQueryItem("client_id", apiKey);
+    query.addQueryItem("client_secret", secretKey);
+    url.setQuery(query);
+
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QEventLoop loop;
+    QNetworkReply *reply = manager.post(request, QByteArray());
+    QString accessToken;
+    connect(reply, &QNetworkReply::finished, &loop, [&]()
+            {
+                if (reply->error() == QNetworkReply::NoError)
+                {
+                    const QJsonDocument doc =
+                        QJsonDocument::fromJson(reply->readAll());
+                    accessToken =
+                        doc.object().value("access_token").toString().trimmed();
+                }
+                reply->deleteLater();
+                loop.quit(); });
+    loop.exec();
+    return accessToken;
+}
+
+/*识别录音文件*/
+QString Dialog::recognizeSpeechFromFile(const QString &filePath)
+{
+    QFile file(filePath);
+    if (!file.exists() || file.size() <= 0)
+        return QString();
+
+    ZcJsonLib config(JsonSettingPath);
+    const QString apiKey =
+        config.value("speechInput/Baidu/ApiKey").toString().trimmed();
+    const QString secretKey =
+        config.value("speechInput/Baidu/SecretKey").toString().trimmed();
+    const QString accessToken = requestBaiduAccessToken(apiKey, secretKey);
+    if (accessToken.isEmpty())
+    {
+        ui->textEdit->setText(QStringLiteral("百度语音识别配置不完整或 Token 获取失败"));
+        return QString();
+    }
+
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        ui->textEdit->setText(QStringLiteral("无法读取录音文件"));
+        return QString();
+    }
+    const QByteArray audioData = file.readAll();
+    file.close();
+    if (audioData.isEmpty())
+        return QString();
+
+    //沿用旧项目的百度短语音识别请求格式，直接提交 m4a 的 Base64 数据
+    QJsonObject payload{
+        {"format", "m4a"},
+        {"rate", 16000},
+        {"channel", 1},
+        {"token", accessToken},
+        {"cuid", QUuid::createUuid().toString(QUuid::WithoutBraces)},
+        {"speech", QString::fromLatin1(audioData.toBase64())},
+        {"len", audioData.size()},
+    };
+
+    QNetworkAccessManager manager;
+    QNetworkRequest request(QUrl("https://vop.baidu.com/server_api"));
+    request.setRawHeader("Content-Type", "application/json");
+    request.setRawHeader("Accept", "application/json");
+
+    QEventLoop loop;
+    QNetworkReply *reply =
+        manager.post(request, QJsonDocument(payload).toJson(QJsonDocument::Compact));
+    QString recognizedText;
+    connect(reply, &QNetworkReply::finished, &loop, [&]()
+            {
+                if (reply->error() == QNetworkReply::NoError)
+                {
+                    const QJsonDocument doc =
+                        QJsonDocument::fromJson(reply->readAll());
+                    const QJsonArray result =
+                        doc.object().value("result").toArray();
+                    if (!result.isEmpty())
+                        recognizedText = result.first().toString().trimmed();
+                }
+                reply->deleteLater();
+                loop.quit(); });
+    loop.exec();
+
+    if (recognizedText.isEmpty())
+        ui->textEdit->setText(QStringLiteral("没有识别到有效语音"));
+    return recognizedText;
 }

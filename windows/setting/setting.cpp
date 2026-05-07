@@ -5,6 +5,7 @@
 #include "child/settingchild_char.h"
 #include "child/settingchild_llm.h"
 #include "child/settingchild_plugin.h"
+#include "child/settingchild_speech.h"
 #include "child/settingchild_vits.h"
 
 MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
@@ -18,9 +19,14 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     SettingChild_LLM *settingchild_llmWin = new SettingChild_LLM(this);
     settingchild_llmWin->show();
     addPageNode("对话模型", settingchild_llmWin, ElaIconType::Message);
+    SettingChild_Speech *settingchild_speechWin = new SettingChild_Speech(this);
+    settingchild_speechWin->show();
+    addPageNode("语音输入", settingchild_speechWin, ElaIconType::Microphone);
+
     SettingChild_Vits *settingchild_vitsWin = new SettingChild_Vits(this);
     settingchild_vitsWin->show();
     addPageNode("语音合成", settingchild_vitsWin, ElaIconType::Bullhorn);
+
     SettingChild_Plugin *settingchild_pluginWin = new SettingChild_Plugin(this);
     settingchild_pluginWin->show();
     addPageNode("插件配置", settingchild_pluginWin, ElaIconType::PuzzlePiece);
@@ -46,6 +52,8 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
             settingchild_charWin, &SettingChild_Char::RefreshModelList); //刷新LLM模型列表
     connect(settingchild_vitsWin, &SettingChild_Vits::vitsModelListRefreshed,
             settingchild_charWin, &SettingChild_Char::RefreshVitsModelList); //刷新Vits模型列表
+    connect(settingchild_speechWin, &SettingChild_Speech::speechConfigChanged,
+            dialog, &Dialog::ReloadSpeechInputConfig); //刷新语音输入配置
 }
 
 MainWindow::~MainWindow()
