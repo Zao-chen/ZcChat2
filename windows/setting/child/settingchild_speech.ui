@@ -140,16 +140,28 @@
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_GlobalHotkeyEnable" native="true">
-         <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,1">
+        <widget class="ElaScrollPageArea" name="widget_GlobalHotkey" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="5,0,10,7">
           <property name="leftMargin">
            <number>15</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
           </property>
           <property name="rightMargin">
            <number>15</number>
           </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
           <item>
            <widget class="ElaText" name="label_GlobalHotkeyEnable">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <pointsize>12</pointsize>
@@ -161,51 +173,32 @@
            </widget>
           </item>
           <item>
-           <widget class="ElaToggleSwitch" name="ToggleSwitch_GlobalHotkeyEnable" native="true"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="ElaScrollPageArea" name="widget_GlobalHotkey" native="true">
-         <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="1,1">
-          <property name="leftMargin">
-           <number>15</number>
-          </property>
-          <property name="rightMargin">
-           <number>15</number>
-          </property>
-          <item>
-           <widget class="ElaText" name="label_GlobalHotkey">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>录音热键</string>
+           <widget class="ElaToggleSwitch" name="ToggleSwitch_GlobalHotkeyEnable" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
            </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_GlobalHotkey">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
           <item>
            <widget class="ElaKeyBinder" name="keyBinder_GlobalHotkey"/>
           </item>
          </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="ElaText" name="label_GlobalHotkeyDescription">
-         <property name="font">
-          <font>
-           <pointsize>9</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>点击右侧按键框后，会弹出 Ela 的按键绑定窗口；按下目标按键并点击确认后才会保存。</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
         </widget>
        </item>
        <item>
@@ -374,6 +367,6 @@
    <header location="global">ElaKeyBinder.h</header>
   </customwidget>
  </customwidgets>
-  <resources/>
-  <connections/>
+ <resources/>
+ <connections/>
 </ui>
