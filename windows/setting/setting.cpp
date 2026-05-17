@@ -3,6 +3,7 @@
 
 #include "child/settingchild_about.h"
 #include "child/settingchild_char.h"
+#include "child/settingchild_general.h"
 #include "child/settingchild_llm.h"
 #include "child/settingchild_plugin.h"
 #include "child/settingchild_speech.h"
@@ -16,6 +17,9 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     setUserInfoCardVisible(false);
 
     /*创建窗口*/
+    SettingChild_General *settingchild_generalWin = new SettingChild_General(this);
+    settingchild_generalWin->show();
+    addPageNode("通用设置", settingchild_generalWin, ElaIconType::Gear);
     SettingChild_LLM *settingchild_llmWin = new SettingChild_LLM(this);
     settingchild_llmWin->show();
     addPageNode("对话模型", settingchild_llmWin, ElaIconType::Message);
@@ -54,6 +58,8 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
             settingchild_charWin, &SettingChild_Char::RefreshVitsModelList); //刷新Vits模型列表
     connect(settingchild_speechWin, &SettingChild_Speech::speechConfigChanged,
             dialog, &Dialog::ReloadSpeechInputConfig); //刷新语音输入配置
+    connect(settingchild_generalWin, &SettingChild_General::generalConfigChanged,
+            dialog, &Dialog::ReloadGeneralConfig); //刷新通用配置
 }
 
 MainWindow::~MainWindow()

@@ -46,9 +46,17 @@
 #include <X11/Xlib.h>
 #endif
 
-#ifdef Q_OS_WIN
 namespace
 {
+//对话框尺寸配置范围，避免配置文件被手动写入过小或过大的值。
+constexpr int kDefaultDialogWidth = 650;
+constexpr int kDefaultDialogHeight = 200;
+constexpr int kMinDialogWidth = 320;
+constexpr int kMinDialogHeight = 120;
+constexpr int kMaxDialogWidth = 1600;
+constexpr int kMaxDialogHeight = 900;
+
+#ifdef Q_OS_WIN
 //Windows低级键盘钩子需要静态回调，这里保存当前接收热键的Dialog实例。
 HHOOK g_speechHotkeyHook = nullptr;
 Dialog *g_speechHotkeyOwner = nullptr;
@@ -69,8 +77,8 @@ LRESULT CALLBACK SpeechHotkeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
     }
     return CallNextHookEx(g_speechHotkeyHook, nCode, wParam, lParam);
 }
-} // namespace
 #endif
+} // namespace
 
 /*寻找句子分割点*/
 static int findNextSentenceEnd(const QString &text, int start)
@@ -137,6 +145,31 @@ void Dialog::initWindow()
     //初始隐藏语音输入相关控件，后续根据配置决定是否显示
     ui->pushButton_input->hide();
     ui->checkBox_autoInput->hide();
+}
+
+/*重载通用设置*/
+void Dialog::ReloadGeneralConfig()
+{
+    QSettings settings(IniSettingPath, QSettings::IniFormat);
+    //限制读取到的尺寸，防止异常配置导致窗口不可用。
+    const int dialogWidth =
+        qBound(kMinDialogWidth,
+               settings.value("general/DialogWidth", kDefaultDialogWidth).toInt(),
+               kMaxDialogWidth);
+    const int dialogHeight = qBound(
+        kMinDialogHeight,
+        settings.value("general/DialogHeight", kDefaultDialogHeight).toInt(),
+        kMaxDialogHeight);
+
+    resize(dialogWidth, dialogHeight);
+
+    if (historyWin)
+    {
+        //历史记录框贴在对话框上方，宽度需要跟随对话框变化。
+        historyWin->resize(dialogWidth, historyWin->height());
+        if (historyWin->isVisible())
+            historyWin->move(x(), y() - historyWin->height());
+    }
 }
 
 /*打开关闭历史记录*/
@@ -298,6 +331,7 @@ Dialog::Dialog(QWidget *parent)
                     submitCurrentInput();
             });
     ReloadAIConfig();
+    ReloadGeneralConfig();
     ReloadSpeechInputConfig();
     loadContextHistory();
 
@@ -561,6 +595,8 @@ void Dialog::on_pushButton_history_clicked()
             historyWin->addChildWindow(i, QStringLiteral("记录"), line);
     }
 
+    //历史记录框宽度跟随对话框，保持上下窗口对齐。
+    historyWin->resize(width(), historyWin->height());
     historyWin->move(this->x(), this->y() - historyWin->height());
 
     if (!isHistoryOpen)

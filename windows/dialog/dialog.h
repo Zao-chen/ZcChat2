@@ -33,6 +33,7 @@ class Dialog : public QWidget
   public slots:
     void ToggleVisible();
     void VitsGetAndPlay(QString text);
+    void ReloadGeneralConfig();
     void ReloadSpeechInputConfig();
     bool handleSpeechHotkeyEvent(quint32 vkCode, bool isKeyDown, bool isKeyUp);
 
