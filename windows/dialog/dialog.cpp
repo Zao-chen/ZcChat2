@@ -301,11 +301,6 @@ Dialog::Dialog(QWidget *parent)
     ReloadSpeechInputConfig();
     loadContextHistory();
 
-    /*数据读取和初始化*/
-    ZcJsonLib config(JsonSettingPath);
-    QString apiKey = config.value("llm/DeepSeek/ApiKey").toString(); //读取ApiKey
-    ai->setApiKey(apiKey);                                           //Todo: 根据不同服务类型设置不同的Key
-
     //接收分块回复
     connect(ai, &AiProvider::replyChunkReceived, [=](const QString &chunk)
             {
@@ -471,7 +466,15 @@ void Dialog::ReloadAIConfig()
     else if (serverSelect == "OpenAI")
         ai->setServiceType(AiProvider::OpenAI);
     else
+    {
+        serverSelect = "DeepSeek";
         ai->setServiceType(AiProvider::DeepSeek);
+    }
+
+    ZcJsonLib config(JsonSettingPath);
+    QString apiKey = config.value("llm/" + serverSelect + "/ApiKey").toString();
+    ai->setApiKey(apiKey);
+
     //读取当前角色的模型选择
     QString modelSelect = CharConfig.value("modelSelect").toString();
     ai->setModel(modelSelect);
