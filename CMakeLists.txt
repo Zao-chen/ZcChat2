@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(ZcChat2 VERSION 1.2.0 LANGUAGES CXX)
+project(ZcChat2 VERSION 1.3.0 LANGUAGES CXX)
 
 # 配置版本头文件，传递版本号到代码
 configure_file(
