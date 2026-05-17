@@ -34,6 +34,7 @@ class Dialog : public QWidget
     void ToggleVisible();
     void VitsGetAndPlay(QString text);
     void ReloadSpeechInputConfig();
+    bool handleSpeechHotkeyEvent(quint32 vkCode, bool isKeyDown, bool isKeyUp);
 
   private slots:
     void on_pushButton_next_clicked();
@@ -58,6 +59,8 @@ class Dialog : public QWidget
     //鼠标
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
+    bool nativeEvent(const QByteArray &eventType, void *message,
+                     qintptr *result) override;
     void wheelEvent(QWheelEvent *event) override;
     void moveEvent(QMoveEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -86,6 +89,9 @@ class Dialog : public QWidget
     QString m_streamDisplayedChinese;
     bool m_isSpeechRecording = false;
     bool m_isSpeechRecognizing = false;
+    bool m_globalSpeechHotkeyEnabled = false; //全局录音热键是否启用
+    bool m_globalSpeechHotkeyPressed = false; //当前热键是否处于按下录音中
+    quint32 m_globalSpeechHotkeyNativeKey = 0; //Ela绑定得到的原生按键值
     bool m_streamVitsEnabled = false;
     bool m_streamVitsSentenceSplitEnabled = true;
     int m_streamSynthCursor = 0;
@@ -102,11 +108,13 @@ class Dialog : public QWidget
     void tryStartNextVitsPlayback();
     bool submitCurrentInput();
     void startSpeechRecording();
+    void startSpeechRecordingFromHotkey();
     void stopSpeechRecording();
     QString speechRecordFilePath() const;
     QString recognizeSpeechFromFile(const QString &filePath);
     QString requestBaiduAccessToken(const QString &apiKey,
                                     const QString &secretKey);
+    void releaseSpeechHotkeyResources();
 };
 
 #endif //DIALOG_H

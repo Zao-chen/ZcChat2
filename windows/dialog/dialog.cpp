@@ -38,6 +38,40 @@
 #include <QUuid>
 #include <QWheelEvent>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
+#ifdef Q_OS_LINUX
+#include <X11/Xlib.h>
+#endif
+
+#ifdef Q_OS_WIN
+namespace
+{
+//Windows低级键盘钩子需要静态回调，这里保存当前接收热键的Dialog实例。
+HHOOK g_speechHotkeyHook = nullptr;
+Dialog *g_speechHotkeyOwner = nullptr;
+
+LRESULT CALLBACK SpeechHotkeyHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if (nCode >= 0 && g_speechHotkeyOwner)
+    {
+        const KBDLLHOOKSTRUCT *info =
+            reinterpret_cast<KBDLLHOOKSTRUCT *>(lParam);
+        const bool isKeyDown =
+            (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN);
+        const bool isKeyUp = (wParam == WM_KEYUP || wParam == WM_SYSKEYUP);
+        if (info &&
+            g_speechHotkeyOwner->handleSpeechHotkeyEvent(info->vkCode, isKeyDown,
+                                                         isKeyUp))
+            return 1;
+    }
+    return CallNextHookEx(g_speechHotkeyHook, nCode, wParam, lParam);
+}
+} // namespace
+#endif
+
 /*寻找句子分割点*/
 static int findNextSentenceEnd(const QString &text, int start)
 {
@@ -392,6 +426,7 @@ Dialog::Dialog(QWidget *parent)
 /*解构窗口*/
 Dialog::~Dialog()
 {
+    releaseSpeechHotkeyResources();
     delete ui;
 }
 
@@ -452,6 +487,10 @@ void Dialog::ReloadSpeechInputConfig()
         config.value("speechInput/Enable", false).toBool();
     const bool autoSend =
         config.value("speechInput/AutoSend", false).toBool();
+    const bool globalHotkeyEnable =
+        config.value("speechInput/GlobalHotkey/Enable", false).toBool();
+    const quint32 globalHotkeyNativeKey = static_cast<quint32>(
+        config.value("speechInput/GlobalHotkey/NativeKey", 0).toInteger());
 
     ui->pushButton_input->setVisible(speechEnabled);
     ui->pushButton_input->setEnabled(speechEnabled);
@@ -459,6 +498,41 @@ void Dialog::ReloadSpeechInputConfig()
     ui->checkBox_autoInput->blockSignals(true);
     ui->checkBox_autoInput->setChecked(autoSend);
     ui->checkBox_autoInput->blockSignals(false);
+
+    //配置变化后重新安装热键，避免旧按键继续占用。
+    releaseSpeechHotkeyResources();
+    m_globalSpeechHotkeyNativeKey = globalHotkeyNativeKey;
+    m_globalSpeechHotkeyEnabled =
+        globalHotkeyEnable && globalHotkeyNativeKey != 0;
+
+#ifdef Q_OS_WIN
+    if (m_globalSpeechHotkeyEnabled)
+    {
+        //Windows全局热键用低级键盘钩子，松开按键时结束录音。
+        g_speechHotkeyOwner = this;
+        g_speechHotkeyHook =
+            SetWindowsHookExW(WH_KEYBOARD_LL, SpeechHotkeyHookProc, nullptr, 0);
+    }
+#endif
+
+#ifdef Q_OS_LINUX
+    if (m_globalSpeechHotkeyEnabled)
+    {
+        Display *display = XOpenDisplay(nullptr);
+        if (display)
+        {
+            //忽略大小写和小键盘锁定状态，避免锁定键影响热键触发。
+            const Window targetWindow = static_cast<Window>(winId());
+            const int modifiers[] = {0, LockMask, Mod2Mask, LockMask | Mod2Mask};
+            for (int modifier : modifiers)
+                XGrabKey(display, static_cast<int>(m_globalSpeechHotkeyNativeKey),
+                         modifier, targetWindow, True, GrabModeAsync,
+                         GrabModeAsync);
+            XSync(display, False);
+            XCloseDisplay(display);
+        }
+    }
+#endif
 }
 
 /*显示历史记录*/
@@ -632,6 +706,30 @@ bool Dialog::eventFilter(QObject *watched, QEvent *event)
         return true;
     }
     return QWidget::eventFilter(watched, event);
+}
+
+bool Dialog::nativeEvent(const QByteArray &eventType, void *message,
+                         qintptr *result)
+{
+#ifdef Q_OS_LINUX
+    Q_UNUSED(eventType)
+    Q_UNUSED(result)
+    if (m_globalSpeechHotkeyEnabled && message)
+    {
+        XEvent *event = static_cast<XEvent *>(message);
+        if (event->type == KeyPress &&
+            handleSpeechHotkeyEvent(event->xkey.keycode, true, false))
+            return true;
+        if (event->type == KeyRelease &&
+            handleSpeechHotkeyEvent(event->xkey.keycode, false, true))
+            return true;
+    }
+#else
+    Q_UNUSED(eventType)
+    Q_UNUSED(message)
+    Q_UNUSED(result)
+#endif
+    return QWidget::nativeEvent(eventType, message, result);
 }
 
 /*追加待合成文本*/
@@ -835,9 +933,16 @@ void Dialog::on_checkBox_autoInput_toggled(bool checked)
 /*开始录音*/
 void Dialog::startSpeechRecording()
 {
-    if (!ui->pushButton_input->isVisible() || !ui->textEdit->isEnabled() ||
-        m_isSpeechRecording || m_isSpeechRecognizing || !m_speechRecorder ||
-        !m_speechAudioInput)
+    if (!ui->pushButton_input->isVisible())
+        return;
+
+    startSpeechRecordingFromHotkey();
+}
+
+void Dialog::startSpeechRecordingFromHotkey()
+{
+    if (!ui->textEdit->isEnabled() || m_isSpeechRecording ||
+        m_isSpeechRecognizing || !m_speechRecorder || !m_speechAudioInput)
         return;
 
     if (QMediaDevices::defaultAudioInput().isNull())
@@ -982,4 +1087,71 @@ QString Dialog::recognizeSpeechFromFile(const QString &filePath)
     if (recognizedText.isEmpty())
         ui->textEdit->setText(QStringLiteral("没有识别到有效语音"));
     return recognizedText;
+}
+
+bool Dialog::handleSpeechHotkeyEvent(quint32 vkCode, bool isKeyDown, bool isKeyUp)
+{
+    if (!m_globalSpeechHotkeyEnabled || m_globalSpeechHotkeyNativeKey == 0)
+        return false;
+
+    //按下开始录音，重复KeyDown不重复启动。
+    if (isKeyDown && vkCode == m_globalSpeechHotkeyNativeKey)
+    {
+        if (!m_globalSpeechHotkeyPressed)
+        {
+            m_globalSpeechHotkeyPressed = true;
+            QMetaObject::invokeMethod(this,
+                                      [this]() { startSpeechRecordingFromHotkey(); },
+                                      Qt::QueuedConnection);
+        }
+        return true;
+    }
+
+    //松开同一个热键才停止录音，保持“长按说话”的交互。
+    if (m_globalSpeechHotkeyPressed &&
+        isKeyUp && vkCode == m_globalSpeechHotkeyNativeKey)
+    {
+        m_globalSpeechHotkeyPressed = false;
+        QMetaObject::invokeMethod(this, [this]() { stopSpeechRecording(); },
+                                  Qt::QueuedConnection);
+        return true;
+    }
+    return false;
+}
+
+void Dialog::releaseSpeechHotkeyResources()
+{
+    //释放热键时如果仍在按住录音，先走一次停止逻辑。
+    if (m_globalSpeechHotkeyPressed)
+        stopSpeechRecording();
+    m_globalSpeechHotkeyPressed = false;
+
+#ifdef Q_OS_WIN
+    if (g_speechHotkeyOwner == this)
+    {
+        if (g_speechHotkeyHook)
+        {
+            UnhookWindowsHookEx(g_speechHotkeyHook);
+            g_speechHotkeyHook = nullptr;
+        }
+        g_speechHotkeyOwner = nullptr;
+    }
+#endif
+
+#ifdef Q_OS_LINUX
+    if (m_globalSpeechHotkeyNativeKey != 0)
+    {
+        Display *display = XOpenDisplay(nullptr);
+        if (display)
+        {
+            const Window targetWindow = static_cast<Window>(winId());
+            const int modifiers[] = {0, LockMask, Mod2Mask, LockMask | Mod2Mask};
+            for (int modifier : modifiers)
+                XUngrabKey(display, static_cast<int>(m_globalSpeechHotkeyNativeKey),
+                           modifier, targetWindow);
+            XSync(display, False);
+            XCloseDisplay(display);
+        }
+    }
+#endif
 }
