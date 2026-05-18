@@ -8,9 +8,70 @@
 #include "Version.h"
 
 #include <QApplication>
+#include <QColor>
+#include <QFile>
+#include <QFileInfo>
+#include <QPalette>
+#include <QStandardPaths>
 #include <QSystemTrayIcon>
 
 #include <QDir>
+
+namespace
+{
+#ifdef Q_OS_MACOS
+struct DefaultConfigEntry
+{
+    const char *resourcePath;
+    const char *relativePath;
+};
+
+void CopyDefaultConfigIfMissing()
+{
+    const QString documentsRoot =
+        QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    if (documentsRoot.isEmpty())
+        return;
+
+    const QString targetRoot = QDir(documentsRoot).filePath("ZcChat2");
+    const QString targetIni = QDir(targetRoot).filePath("config.ini");
+    if (QFile::exists(targetIni))
+        return;
+
+    const DefaultConfigEntry entries[] = {
+        {":/default_config/ZcChat2/config.ini", "config.ini"},
+        {":/default_config/ZcChat2/Plugin/Anime/Basic Animation Package.json",
+         "Plugin/Anime/Basic Animation Package.json"},
+        {":/default_config/ZcChat2/Character/Assets/test/config.json",
+         "Character/Assets/test/config.json"},
+        {":/default_config/ZcChat2/Character/Assets/test/Tachie/default.png",
+         "Character/Assets/test/Tachie/default.png"},
+        {":/default_config/ZcChat2/Character/UserConfig/test/config.json",
+         "Character/UserConfig/test/config.json"},
+    };
+
+    for (const DefaultConfigEntry &entry : entries)
+    {
+        const QString outPath = QDir(targetRoot).filePath(entry.relativePath);
+        const QFileInfo outInfo(outPath);
+        if (!outInfo.dir().exists())
+            QDir().mkpath(outInfo.dir().absolutePath());
+        if (QFile::exists(outPath))
+            continue;
+
+        QFile inFile(QString::fromUtf8(entry.resourcePath));
+        if (!inFile.open(QIODevice::ReadOnly))
+            continue;
+
+        QFile outFile(outPath);
+        if (!outFile.open(QIODevice::WriteOnly))
+            continue;
+
+        outFile.write(inFile.readAll());
+    }
+}
+#endif
+} // namespace
 
 int main(int argc, char *argv[])
 {
@@ -18,6 +79,20 @@ int main(int argc, char *argv[])
     qputenv("QT_QPA_PLATFORM", "xcb");
 #endif
     QApplication a(argc, argv);
+#ifdef Q_OS_MACOS
+    // Keep QLabel text readable when macOS switches to dark mode.
+    QPalette labelPalette = a.palette();
+    labelPalette.setColor(QPalette::WindowText, QColor(20, 20, 20));
+    QApplication::setPalette(labelPalette, "QLabel");
+
+    // Keep QTextEdit text/placeholder readable in dark mode.
+    QPalette textEditPalette = a.palette();
+    textEditPalette.setColor(QPalette::Text, QColor(20, 20, 20));
+    textEditPalette.setColor(QPalette::PlaceholderText, QColor(120, 120, 120));
+    QApplication::setPalette(textEditPalette, "QTextEdit");
+
+    CopyDefaultConfigIfMissing();
+#endif
     a.setQuitOnLastWindowClosed(false);
 
     QCoreApplication::setApplicationName("ZcChat2");
