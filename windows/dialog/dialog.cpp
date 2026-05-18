@@ -499,6 +499,15 @@ void Dialog::ReloadAIConfig()
         ai->setServiceType(AiProvider::DeepSeek);
     else if (serverSelect == "OpenAI")
         ai->setServiceType(AiProvider::OpenAI);
+    else if (serverSelect == "Custom")
+    {
+        ai->setServiceType(AiProvider::OpenAI);
+        ZcJsonLib globalConfig(JsonSettingPath);
+        QString baseUrl = globalConfig.value("llm/Custom/BaseUrl").toString();
+        if (baseUrl.endsWith('/'))
+            baseUrl.chop(1);
+        ai->setApiUrl(baseUrl + "/chat/completions");
+    }
     else
     {
         serverSelect = "DeepSeek";

@@ -5,6 +5,8 @@
 #include <QStringListModel>
 #include <QWidget>
 
+class QNetworkAccessManager;
+
 namespace Ui
 {
 class SettingChild_LLM;
@@ -26,11 +28,16 @@ class SettingChild_LLM : public QWidget
     void on_BreadcrumbBar_breadcrumbClicked(QString breadcrumb, QStringList lastBreadcrumbList);
     void on_pushButton_LoadModelList_clicked();
     void on_pushButton_Deepseek_Set_clicked();
+    void on_pushButton_Custom_Set_clicked();
     void on_lineEdit_ApiKey_textChanged(const QString &arg1);
+    void on_lineEdit_BaseUrl_textChanged(const QString &arg1);
 
   private:
+    void fetchCustomModels(const QString &baseUrl, const QString &apiKey);
+
     Ui::SettingChild_LLM *ui;
     AiProvider *ai;          //用于AI交互
+    QNetworkAccessManager *customNetwork; //用于自定义提供商模型拉取
     QString NowSelectServer; //当前正在编辑的模型
     QString modelFetchServer;
     QStringListModel *modelListModel;

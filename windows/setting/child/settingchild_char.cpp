@@ -12,6 +12,7 @@
 #include "ElaText.h"
 
 #include <QComboBox>
+#include <QCompleter>
 #include <QDebug>
 #include <QDir>
 #include <QDirIterator>
@@ -447,6 +448,12 @@ void SettingChild_Char::RefreshModelList()
     }
     ui->comboBox_ModelSelect->clear();
     ui->comboBox_ModelSelect->addItems(modelList);
+    ui->comboBox_ModelSelect->setEditable(true);
+    ui->comboBox_ModelSelect->setInsertPolicy(QComboBox::NoInsert);
+    QCompleter *completer = new QCompleter(modelList, ui->comboBox_ModelSelect);
+    completer->setFilterMode(Qt::MatchContains);
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    ui->comboBox_ModelSelect->setCompleter(completer);
 }
 
 /*刷新Vits模型列表*/

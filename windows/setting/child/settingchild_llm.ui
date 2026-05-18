@@ -178,22 +178,90 @@
          </layout>
         </widget>
        </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="page_Set">
+        <item>
+         <widget class="ElaScrollPageArea" name="widget_3" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="1,0,1">
+           <property name="leftMargin">
+            <number>15</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>15</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="ElaText" name="label_7">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>自定义</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="ElaText" name="label_Custom_Status">
+             <property name="visible">
+              <bool>false</bool>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>16</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: #2EAD4B;</string>
+             </property>
+             <property name="text">
+              <string>√</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="ElaPushButton" name="pushButton_Custom_Set">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>配置</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page_Set">
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <property name="leftMargin">
         <number>0</number>
@@ -219,8 +287,48 @@
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="ElaScrollPageArea" name="widget_ApiKey" native="true">
+        <item>
+         <widget class="ElaScrollPageArea" name="widget_BaseUrl" native="true">
+          <property name="visible">
+           <bool>false</bool>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,2">
+           <property name="leftMargin">
+            <number>15</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>15</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="ElaText" name="label_5">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Base URL</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="ElaLineEdit" name="lineEdit_BaseUrl">
+             <property name="placeholderText">
+              <string>https://api.example.com/v1</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="ElaScrollPageArea" name="widget_ApiKey" native="true">
          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1">
           <property name="leftMargin">
            <number>15</number>
@@ -276,47 +384,51 @@
            </property>
           </widget>
          </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="ElaListView" name="listView_ModelList">
-         <property name="styleSheet">
-          <string notr="true">/* 去除滚动条的边框和背景 */
-QScrollBar:vertical {
-    border: none;              /* 去除边框 */
-    background: transparent;   /* 背景透明 */
-    width: 8px;                /* 设置滚动条的宽度 */
+         </layout>
+        </item>
+        <item>
+         <widget class="ElaListView" name="listView_ModelList">
+          <property name="styleSheet">
+           <string notr="true">QListView {
+    background: transparent;
+    border: none;
 }
 
-QScrollBar::handle:vertical {
-    background: rgba(136, 136, 136, 0.5);
+QListView::item {
+    padding: 4px 8px;
     border-radius: 4px;
 }
 
+QListView::item:hover {
+    background: rgba(128, 128, 128, 0.15);
+}
 
-/* 滑块悬停时的颜色变化 */
+/* 滚动条 */
+QScrollBar:vertical {
+    border: none;
+    background: transparent;
+    width: 8px;
+}
+
+QScrollBar::handle:vertical {
+    background: rgba(128, 128, 128, 0.4);
+    border-radius: 4px;
+}
+
 QScrollBar::handle:vertical:hover {
-    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
+    background: rgba(128, 128, 128, 0.7);
 }
 
-/* 去除滚动条上下箭头按钮 */
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    background: transparent; /* 去除上下箭头 */
-    border: none;             /* 去除箭头边框 */
-    height: 0px;              /* 强制去除箭头按钮 */
+    background: transparent;
+    border: none;
+    height: 0px;
 }
 
-/* 滚动条轨道样式 */
 QScrollBar::groove:vertical {
-    background: transparent;   /* 设置轨道背景为透明 */
-    border: none;               /* 去除轨道的边框 */
-    width: 8px;                 /* 设置轨道的宽度 */
-}
-
-/* 设置滚动条范围变化时的显示效果 */
-QScrollBar:vertical:disabled {
-    background: transparent;  /* 禁用时的背景色透明 */
-    border: none;              /* 禁用时的边框 */
+    background: transparent;
+    border: none;
+    width: 8px;
 }
 </string>
          </property>
