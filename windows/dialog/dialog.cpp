@@ -552,6 +552,14 @@ void Dialog::ReloadSpeechInputConfig()
     }
 #endif
 
+#ifdef Q_OS_MACOS
+    if (m_globalSpeechHotkeyEnabled)
+    {
+        qWarning() << "Global speech hotkey is not supported on macOS yet";
+        m_globalSpeechHotkeyEnabled = false;
+    }
+#endif
+
 #ifdef Q_OS_LINUX
     if (m_globalSpeechHotkeyEnabled)
     {

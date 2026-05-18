@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.16)
 
 project(ZcChat2 VERSION 1.3.0 LANGUAGES CXX)
 
+if(APPLE)
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Build universal binaries")
+    list(APPEND CMAKE_FRAMEWORK_PATH "/System/Library/Frameworks")
+    add_link_options("-F/System/Library/Frameworks")
+endif()
+
 # 配置版本头文件，传递版本号到代码
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/Version.h.in"
@@ -29,6 +35,42 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Multimedia Svg)
 set(QT_VERSION_MAJOR 6)
 
+if(APPLE)
+    foreach(qt_target Qt6::Widgets Qt6::Gui Qt6::Core)
+        if(TARGET ${qt_target})
+            foreach(qt_prop INTERFACE_LINK_LIBRARIES INTERFACE_LINK_OPTIONS)
+                get_target_property(qt_values ${qt_target} ${qt_prop})
+                if(qt_values)
+                    list(FILTER qt_values EXCLUDE REGEX "AGL")
+                    set_property(TARGET ${qt_target} PROPERTY ${qt_prop} "${qt_values}")
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+
+    foreach(gl_target OpenGL::OpenGL OpenGL::GL OpenGL::GLU)
+        if(TARGET ${gl_target})
+            foreach(gl_prop INTERFACE_LINK_LIBRARIES INTERFACE_LINK_OPTIONS)
+                get_target_property(gl_values ${gl_target} ${gl_prop})
+                if(gl_values)
+                    list(FILTER gl_values EXCLUDE REGEX "AGL")
+                    set_property(TARGET ${gl_target} PROPERTY ${gl_prop} "${gl_values}")
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+
+    if(TARGET WrapOpenGL::WrapOpenGL)
+        foreach(wrap_prop INTERFACE_LINK_LIBRARIES INTERFACE_LINK_OPTIONS)
+            get_target_property(wrap_values WrapOpenGL::WrapOpenGL ${wrap_prop})
+            if(wrap_values)
+                list(FILTER wrap_values EXCLUDE REGEX "AGL")
+                set_property(TARGET WrapOpenGL::WrapOpenGL PROPERTY ${wrap_prop} "${wrap_values}")
+            endif()
+        endforeach()
+    endif()
+endif()
+
 # 优先使用外部 ZcAILib 最新构建产物；若不存在则回退到 3rdparty。
 set(ZCAILIB_EXTERNAL_ROOT "P:/Qt/Project/ZcAILib")
 set(ZCAILIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/include")
@@ -45,6 +87,31 @@ if(EXISTS "${ZCAILIB_EXTERNAL_ROOT}/build-stream/Release/ZcAiLib.lib" AND EXISTS
 elseif(EXISTS "${ZCAILIB_EXTERNAL_ROOT}/build/Release/ZcAiLib.lib" AND EXISTS "${ZCAILIB_EXTERNAL_ROOT}/build/Release/ZcAiLib.dll")
     set(ZCAILIB_WIN_LIB "${ZCAILIB_EXTERNAL_ROOT}/build/Release/ZcAiLib.lib")
     set(ZCAILIB_WIN_DLL "${ZCAILIB_EXTERNAL_ROOT}/build/Release/ZcAiLib.dll")
+endif()
+
+if(APPLE)
+    function(zcchat2_pick_mac_lib out_var dylib_path static_path)
+        if(EXISTS "${dylib_path}")
+            set(${out_var} "${dylib_path}" PARENT_SCOPE)
+        elseif(EXISTS "${static_path}")
+            set(${out_var} "${static_path}" PARENT_SCOPE)
+        else()
+            message(FATAL_ERROR "macOS build requires prebuilt lib: ${dylib_path} or ${static_path}")
+        endif()
+    endfunction()
+
+    zcchat2_pick_mac_lib(ZCAILIB_MAC_LIB
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/libZcAiLib.dylib"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcAILib/lib/libZcAiLib.a")
+    zcchat2_pick_mac_lib(ZCJSONLIB_MAC_LIB
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/libZcJsonLib.dylib"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/lib/libZcJsonLib.a")
+    zcchat2_pick_mac_lib(ZCWIDGETTOOLS_MAC_LIB
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/libZcWidgetTools.dylib"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/lib/libZcWidgetTools.a")
+    zcchat2_pick_mac_lib(ELAWIDGETTOOLS_MAC_LIB
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/lib/libElaWidgetTools.dylib"
+        "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/lib/libElaWidgetTools.a")
 endif()
 
 
@@ -117,6 +184,43 @@ target_link_libraries(ZcChat2 PRIVATE
     Qt${QT_VERSION_MAJOR}::Gui
     Qt${QT_VERSION_MAJOR}::Svg
 )
+
+if(APPLE)
+    target_link_libraries(ZcChat2 PRIVATE
+        "${ZCAILIB_MAC_LIB}"
+        "${ZCJSONLIB_MAC_LIB}"
+        "${ZCWIDGETTOOLS_MAC_LIB}"
+        "${ELAWIDGETTOOLS_MAC_LIB}"
+        "-framework Cocoa"
+        "-framework CoreServices"
+    )
+
+    set_target_properties(ZcChat2 PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "ZcChat2"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.zaochen.zcchat2"
+        BUILD_RPATH "@executable_path/../Frameworks"
+        INSTALL_RPATH "@executable_path/../Frameworks"
+    )
+
+    set(ZCCHAT2_MAC_DYLIBS "")
+    foreach(mac_lib ${ZCAILIB_MAC_LIB} ${ZCJSONLIB_MAC_LIB} ${ZCWIDGETTOOLS_MAC_LIB} ${ELAWIDGETTOOLS_MAC_LIB})
+        if(mac_lib MATCHES "\\.dylib$")
+            list(APPEND ZCCHAT2_MAC_DYLIBS "${mac_lib}")
+        endif()
+    endforeach()
+
+    if(ZCCHAT2_MAC_DYLIBS)
+        add_custom_command(TARGET ZcChat2 POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_BUNDLE_DIR:ZcChat2>/Contents/Frameworks"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${ZCCHAT2_MAC_DYLIBS}
+                "$<TARGET_BUNDLE_DIR:ZcChat2>/Contents/Frameworks"
+            VERBATIM
+        )
+    endif()
+endif()
 
 # 3. Windows 专用链接
 if(WIN32)

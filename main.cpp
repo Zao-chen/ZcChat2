@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     qputenv("QT_QPA_PLATFORM", "xcb");
 #endif
     QApplication a(argc, argv);
+    a.setQuitOnLastWindowClosed(false);
 
     QCoreApplication::setApplicationName("ZcChat2");
     QCoreApplication::setApplicationVersion(APP_VERSION);

@@ -67,9 +67,10 @@ Tachie::~Tachie()
     delete ui;
 }
 
-#ifdef Q_OS_LINUX
-void Tachie::ApplyLinuxInputShape(const QRegion &region)
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+void Tachie::ApplyInteractiveRegion(const QRegion &region)
 {
+#ifdef Q_OS_LINUX
     Display *display = XOpenDisplay(nullptr);
     if (!display)
         return;
@@ -100,21 +101,24 @@ void Tachie::ApplyLinuxInputShape(const QRegion &region)
     XShapeCombineRectangles(display, window_id, ShapeInput, 0, 0, xrects.data(),
                             count, ShapeSet, YXBanded);
     XCloseDisplay(display);
+#else
+    setMask(region);
+#endif
 }
 
-void Tachie::ApplyLinuxInputShapeFromImage()
+void Tachie::ApplyInteractiveRegionFromImage()
 {
     if (_scaledImg.isNull())
         return;
 
     QRegion region(QBitmap::fromImage(_scaledImg.createAlphaMask()));
     region.translate(_scaledImgTopLeft);
-    ApplyLinuxInputShape(region);
+    ApplyInteractiveRegion(region);
 }
 
-void Tachie::ApplyLinuxInputShapeFullWindow()
+void Tachie::ApplyInteractiveRegionFullWindow()
 {
-    ApplyLinuxInputShape(QRegion(QRect(0, 0, width(), height())));
+    ApplyInteractiveRegion(QRegion(QRect(0, 0, width(), height())));
 }
 #endif
 
@@ -395,8 +399,8 @@ void Tachie::SetTachieSize(int size)
     _scaledImg = scaledPixmap.toImage();
     _scaledImgTopLeft = QPoint(imgX, imgY);
 
-#ifdef Q_OS_LINUX //这里是gemini3写的，我觉得在linux下的效果还不错，你可以到windows端测试一下
-    ApplyLinuxInputShapeFromImage();
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS) //这里保留透明输入区域逻辑，macOS 也沿用同一套 region 处理
+    ApplyInteractiveRegionFromImage();
 #else
     //Windows 下不裁剪窗口形状，避免半透明边缘被硬裁切后出现“略微缩小/边缘异常”。
     this->clearMask();
@@ -422,9 +426,9 @@ void Tachie::mousePressEvent(QMouseEvent *event)
         return;
     }
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
     //拖动时扩大输入区域，避免鼠标离开形状区域后丢失拖拽。
-    ApplyLinuxInputShapeFullWindow();
+    ApplyInteractiveRegionFullWindow();
 #endif
 
     QWidget::mousePressEvent(event);
@@ -435,8 +439,8 @@ void Tachie::mouseReleaseEvent(QMouseEvent *event)
 {
     QWidget::mouseReleaseEvent(event);
 
-#ifdef Q_OS_LINUX
-    ApplyLinuxInputShapeFromImage();
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+    ApplyInteractiveRegionFromImage();
 #endif
 
     //仅在初始化恢复完成后，且左键释放时保存一次位置。

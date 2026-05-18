@@ -1,4 +1,4 @@
-name: Qt6 CMake (Windows + Linux)
+name: Qt6 CMake (Windows + Linux + macOS)
 
 on:
   push:
@@ -19,7 +19,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            qt_arch: win64_msvc2019_64
+          - os: ubuntu-latest
+            qt_arch: gcc_64
+          - os: macos-latest
+            qt_arch: clang_64
 
     runs-on: ${{ matrix.os }}
 
@@ -32,6 +38,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build libgl1-mesa-dev libx11-dev libxext-dev
+
+      - name: Install Ninja (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install ninja
 
       #Windows装Ninja+MSVC环境
       - name: Setup Ninja (Windows)
@@ -47,7 +57,7 @@ jobs:
         with:
           version: ${{ inputs.qt_version || '6.6.3' }}
           target: desktop
-          arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || '' }}
+          arch: ${{ matrix.qt_arch }}
           modules: 'qtmultimedia'
           cache: true
 

@@ -14,6 +14,7 @@
 #include <QComboBox>
 #include <QDebug>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -26,8 +27,97 @@
 #include <QStandardPaths>
 #include <QVBoxLayout>
 
-namespace //用于跨平台解压zip，Linux/Mac使用python脚本，Windows使用powershell命令
+namespace //用于跨平台解压zip，Linux/Mac优先用python，失败则回退到系统解压工具
 {
+bool runProcess(const QString &program, const QStringList &arguments,
+                int timeoutMs, QString *errorMessage)
+{
+    QProcess process;
+    process.setProgram(program);
+    process.setArguments(arguments);
+    process.start();
+    if (!process.waitForFinished(timeoutMs))
+    {
+        process.kill();
+        if (errorMessage)
+            *errorMessage = QString("%1 运行超时").arg(program);
+        return false;
+    }
+
+    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0)
+    {
+        if (errorMessage)
+        {
+            QString error = process.readAllStandardError().trimmed();
+            if (error.isEmpty())
+                error = process.readAllStandardOutput().trimmed();
+            *errorMessage = error.isEmpty() ? QString("%1 解压失败").arg(program)
+                                             : error;
+        }
+        return false;
+    }
+    return true;
+}
+
+bool normalizeBackslashEntries(const QString &targetDir, QString *errorMessage)
+{
+    QStringList pending;
+    QDirIterator iterator(targetDir,
+                          QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot,
+                          QDirIterator::Subdirectories);
+    while (iterator.hasNext())
+    {
+        iterator.next();
+        if (iterator.fileName().contains('\\'))
+            pending.append(iterator.filePath());
+    }
+
+    if (pending.isEmpty())
+        return true;
+
+    std::sort(pending.begin(), pending.end(),
+              [](const QString &a, const QString &b)
+              { return a.size() > b.size(); });
+
+    QDir rootDir(targetDir);
+    QStringList failed;
+    for (const QString &sourcePath : pending)
+    {
+        const QString relativePath = rootDir.relativeFilePath(sourcePath);
+        QString normalized = relativePath;
+        normalized.replace('\\', '/');
+        const QString targetPath = rootDir.filePath(normalized);
+        const QFileInfo sourceInfo(sourcePath);
+        const QFileInfo targetInfo(targetPath);
+
+        QDir().mkpath(targetInfo.path());
+
+        if (sourceInfo.isDir())
+        {
+            if (QDir(targetPath).exists())
+                continue;
+            if (!QDir().rename(sourcePath, targetPath))
+                failed.append(relativePath);
+            continue;
+        }
+
+        if (QFile::exists(targetPath))
+            QFile::remove(targetPath);
+        if (!QFile::rename(sourcePath, targetPath))
+            failed.append(relativePath);
+    }
+
+    if (!failed.isEmpty())
+    {
+        if (errorMessage)
+            *errorMessage = QString("部分文件名包含反斜杠，重命名失败: %1")
+                                .arg(failed.join(", "));
+        return false;
+    }
+
+    return true;
+}
+
 bool extractZipArchive(const QString &zipFilePath, const QString &targetDir,
                        QString *errorMessage)
 {
@@ -35,18 +125,15 @@ bool extractZipArchive(const QString &zipFilePath, const QString &targetDir,
     if (pythonProgram.isEmpty())
         pythonProgram = QStandardPaths::findExecutable("python");
 
-    if (pythonProgram.isEmpty())
-    {
-        if (errorMessage)
-            *errorMessage = "未找到可用的 Python 解释器";
-        return false;
-    }
+    QStringList errors;
 
-    QProcess process;
-    process.setProgram(pythonProgram);
-    process.setArguments(QStringList()
-                         << "-c"
-                         << QStringLiteral(R"PY(
+    if (!pythonProgram.isEmpty())
+    {
+        QProcess process;
+        process.setProgram(pythonProgram);
+        process.setArguments(QStringList()
+                             << "-c"
+                             << QStringLiteral(R"PY(
         import os
         import sys
         import zipfile
@@ -75,30 +162,75 @@ bool extractZipArchive(const QString &zipFilePath, const QString &targetDir,
                 with archive.open(member) as source, open(dest_path, 'wb') as target:
                     shutil.copyfileobj(source, target)
         )PY")
-                         << zipFilePath << targetDir);
+                             << zipFilePath << targetDir);
 
-    process.start();
-    if (!process.waitForFinished(60000))
-    {
-        process.kill();
-        if (errorMessage)
-            *errorMessage = "解压过程超时";
-        return false;
-    }
-
-    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0)
-    {
-        if (errorMessage)
+        process.start();
+        if (process.waitForFinished(60000) && process.exitStatus() == QProcess::NormalExit &&
+            process.exitCode() == 0)
         {
-            QString error = process.readAllStandardError().trimmed();
-            if (error.isEmpty())
-                error = process.readAllStandardOutput().trimmed();
-            *errorMessage = error.isEmpty() ? "解压失败" : error;
+            QString normalizeError;
+            if (!normalizeBackslashEntries(targetDir, &normalizeError))
+            {
+                if (errorMessage)
+                    *errorMessage = normalizeError;
+                return false;
+            }
+            return true;
         }
-        return false;
+
+        QString pythonError = process.readAllStandardError().trimmed();
+        if (pythonError.isEmpty())
+            pythonError = process.readAllStandardOutput().trimmed();
+        errors << (pythonError.isEmpty() ? "python 解压失败" : pythonError);
+    }
+    else
+    {
+        errors << "未找到可用的 Python 解释器";
     }
 
-    return true;
+    const QString dittoProgram = QStandardPaths::findExecutable("ditto");
+    if (!dittoProgram.isEmpty())
+    {
+        QString dittoError;
+        if (runProcess(dittoProgram, QStringList() << "-x" << "-k" << zipFilePath
+                                                   << targetDir,
+                       60000, &dittoError))
+        {
+            QString normalizeError;
+            if (!normalizeBackslashEntries(targetDir, &normalizeError))
+            {
+                if (errorMessage)
+                    *errorMessage = normalizeError;
+                return false;
+            }
+            return true;
+        }
+        errors << (dittoError.isEmpty() ? "ditto 解压失败" : dittoError);
+    }
+
+    const QString unzipProgram = QStandardPaths::findExecutable("unzip");
+    if (!unzipProgram.isEmpty())
+    {
+        QString unzipError;
+        if (runProcess(unzipProgram,
+                       QStringList() << "-q" << zipFilePath << "-d" << targetDir,
+                       60000, &unzipError))
+        {
+            QString normalizeError;
+            if (!normalizeBackslashEntries(targetDir, &normalizeError))
+            {
+                if (errorMessage)
+                    *errorMessage = normalizeError;
+                return false;
+            }
+            return true;
+        }
+        errors << (unzipError.isEmpty() ? "unzip 解压失败" : unzipError);
+    }
+
+    if (errorMessage)
+        *errorMessage = errors.join(" | ");
+    return false;
 }
 } // namespace
 

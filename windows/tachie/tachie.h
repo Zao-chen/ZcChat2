@@ -39,11 +39,9 @@ class Tachie : public QWidget
     void SaveTachieLoc();    //将当前立绘位置写入 config.ini（按角色）
     void RestoreTachieLoc(); //从 config.ini 读取并恢复立绘位置
     void TryPlayAnimationForAction(const QString &actionName);
-#ifdef Q_OS_LINUX
-    void ApplyLinuxInputShape(const QRegion &region);
-    void ApplyLinuxInputShapeFromImage();
-    void ApplyLinuxInputShapeFullWindow();
-#endif
+    void ApplyInteractiveRegion(const QRegion &region);
+    void ApplyInteractiveRegionFromImage();
+    void ApplyInteractiveRegionFullWindow();
 
   protected:
     void contextMenuEvent(QContextMenuEvent *event) override
