@@ -378,17 +378,22 @@ QScrollBar:vertical:disabled {
 }
 </string>
             </property>
-            <item>
-             <property name="text">
-              <string>OpenAI</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>DeepSeek</string>
-             </property>
-            </item>
-           </widget>
+             <item>
+              <property name="text">
+               <string>OpenAI</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>DeepSeek</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Custom</string>
+              </property>
+             </item>
+            </widget>
           </item>
           <item>
            <widget class="ElaComboBox" name="comboBox_ModelSelect">
