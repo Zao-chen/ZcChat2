@@ -97,6 +97,14 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} `
             -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
 
+      - name: Configure (macOS)
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} \
+            -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
+
       - name: Build
         run: cmake --build build
 
