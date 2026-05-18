@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-22.04]
+        os: [windows-latest, ubuntu-22.04, macos-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -50,6 +50,11 @@ jobs:
             libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
             libxcb-randr0 libxcb-xinerama0 libxcb-xfixes0 libxcb-shape0
 
+        - name: Install Ninja (macOS)
+          if: matrix.os == 'macos-latest'
+          shell: bash
+          run: brew install ninja
+
       #========================
       # Windows工具链
       #========================
@@ -69,7 +74,7 @@ jobs:
         with:
           version: ${{ inputs.qt_version }}
           target: desktop
-          arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || 'gcc_64' }}
+          arch: ${{ matrix.os == 'windows-latest' && 'win64_msvc2019_64' || matrix.os == 'macos-latest' && 'clang_64' || 'gcc_64' }}
           modules: qtmultimedia
           cache: true
 
@@ -94,6 +99,46 @@ jobs:
 
       - name: Build
         run: cmake --build build
+
+      #========================================================
+      # macOS：macdeployqt + dmg
+      #========================================================
+      - name: Package macOS (dmg)
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          if [ ! -d "build/ZcChat2.app" ]; then
+            echo "Not found: build/ZcChat2.app"
+            exit 1
+          fi
+
+          rm -rf dist || true
+          mkdir -p dist
+
+          QT_ROOT="$(cd "${Qt6_DIR}/../../.." && pwd)"
+          MACDEPLOYQT="$QT_ROOT/bin/macdeployqt"
+          if [ ! -x "$MACDEPLOYQT" ]; then
+            echo "macdeployqt not found: $MACDEPLOYQT"
+            exit 1
+          fi
+
+          "$MACDEPLOYQT" "build/ZcChat2.app" -dmg
+
+          if [ ! -f "build/ZcChat2.dmg" ]; then
+            echo "Not found: build/ZcChat2.dmg"
+            exit 1
+          fi
+
+          mv "build/ZcChat2.dmg" "dist/ZcChat2-${{ inputs.tag_name }}-macos.dmg"
+
+      - name: Upload artifacts (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-macos
+          path: dist/ZcChat2-${{ inputs.tag_name }}-macos.dmg
 
       #========================================================
       # Windows：windeployqt + 3rdparty dll + 默认配置复制 + Inno Setup
