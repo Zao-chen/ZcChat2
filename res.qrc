@@ -8,4 +8,11 @@
         <file>res/img/ico/turn-back.svg</file>
         <file>res/img/logo/logo.png</file>
     </qresource>
+    <qresource prefix="/default_config">
+        <file alias="ZcChat2/config.ini">res/default_config/ZcChat2/config.ini</file>
+        <file alias="ZcChat2/Plugin/Anime/Basic Animation Package.json">res/default_config/ZcChat2/Plugin/Anime/Basic Animation Package.json</file>
+        <file alias="ZcChat2/Character/Assets/test/config.json">res/default_config/ZcChat2/Character/Assets/test/config.json</file>
+        <file alias="ZcChat2/Character/Assets/test/Tachie/default.png">res/default_config/ZcChat2/Character/Assets/test/Tachie/default.png</file>
+        <file alias="ZcChat2/Character/UserConfig/test/config.json">res/default_config/ZcChat2/Character/UserConfig/test/config.json</file>
+    </qresource>
 </RCC>
