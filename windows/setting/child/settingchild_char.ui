@@ -388,6 +388,11 @@ QScrollBar:vertical:disabled {
               <string>DeepSeek</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>Custom</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item>

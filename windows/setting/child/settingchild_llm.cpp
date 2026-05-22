@@ -54,6 +54,8 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
                         ui->label_Openai_Status->setVisible(true);
                     else if (fetchedServer == "DeepSeek")
                         ui->label_Deepseek_Status->setVisible(true);
+                    else if (fetchedServer == "Custom")
+                        ui->label_Custom_Status->setVisible(true);
                     //发出模型列表刷新信号
                     emit modelListRefreshed();
                 }
@@ -76,6 +78,16 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
         config.value("llm/DeepSeek/ModelList").toArray();
     ui->label_Deepseek_Status->setVisible(
         !deepSeekApiKey.isEmpty() && !deepSeekModelIds.isEmpty());
+
+    QString customApiKey =
+        config.value("llm/Custom/ApiKey").toString().trimmed();
+    QString customBaseUrl =
+        config.value("llm/Custom/BaseUrl").toString().trimmed();
+    QJsonArray customModelIds =
+        config.value("llm/Custom/ModelList").toArray();
+    ui->label_Custom_Status->setVisible(
+        !customApiKey.isEmpty() && !customBaseUrl.isEmpty() &&
+        !customModelIds.isEmpty());
 }
 
 SettingChild_LLM::~SettingChild_LLM()
@@ -90,6 +102,7 @@ void SettingChild_LLM::on_pushButton_Openai_Set_clicked()
     ui->stackedWidget->setCurrentIndex(1);
     NowSelectServer = "OpenAI";
     ui->BreadcrumbBar->appendBreadcrumb(NowSelectServer);
+    ui->widget_BaseUrl->setVisible(false);
 
     /*读取配置*/
     //apikey
@@ -114,12 +127,40 @@ void SettingChild_LLM::on_pushButton_Deepseek_Set_clicked()
     ui->stackedWidget->setCurrentIndex(1);
     NowSelectServer = "DeepSeek";
     ui->BreadcrumbBar->appendBreadcrumb(NowSelectServer);
+    ui->widget_BaseUrl->setVisible(false);
 
     //读取配置
     ZcJsonLib config(JsonSettingPath);
     QString apiKey = config.value("llm/" + NowSelectServer + "/ApiKey").toString();
     isLoadingConfig = true;
     ui->lineEdit_ApiKey->setText(apiKey);
+    isLoadingConfig = false;
+    modelListModel->setStringList(QStringList());
+    //模型列表
+    QJsonArray modelIds = config.value("llm/" + NowSelectServer + "/ModelList").toArray();
+    QStringList modelList;
+    for (const QJsonValue &modelId : modelIds)
+    {
+        modelList.append(modelId.toString());
+    }
+    modelListModel->setStringList(modelList);
+}
+
+//Custom
+void SettingChild_LLM::on_pushButton_Custom_Set_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+    NowSelectServer = "Custom";
+    ui->BreadcrumbBar->appendBreadcrumb(NowSelectServer);
+    ui->widget_BaseUrl->setVisible(true);
+
+    //读取配置
+    ZcJsonLib config(JsonSettingPath);
+    QString apiKey = config.value("llm/" + NowSelectServer + "/ApiKey").toString();
+    QString baseUrl = config.value("llm/" + NowSelectServer + "/BaseUrl").toString();
+    isLoadingConfig = true;
+    ui->lineEdit_ApiKey->setText(apiKey);
+    ui->lineEdit_BaseUrl->setText(baseUrl);
     isLoadingConfig = false;
     modelListModel->setStringList(QStringList());
     //模型列表
@@ -156,6 +197,16 @@ void SettingChild_LLM::on_BreadcrumbBar_breadcrumbClicked(
         config.value("llm/DeepSeek/ModelList").toArray();
     ui->label_Deepseek_Status->setVisible(
         !deepSeekApiKey.isEmpty() && !deepSeekModelIds.isEmpty());
+
+    QString customApiKey =
+        config.value("llm/Custom/ApiKey").toString().trimmed();
+    QString customBaseUrl =
+        config.value("llm/Custom/BaseUrl").toString().trimmed();
+    QJsonArray customModelIds =
+        config.value("llm/Custom/ModelList").toArray();
+    ui->label_Custom_Status->setVisible(
+        !customApiKey.isEmpty() && !customBaseUrl.isEmpty() &&
+        !customModelIds.isEmpty());
 }
 
 /*读取模型列表*/
@@ -165,6 +216,12 @@ void SettingChild_LLM::on_pushButton_LoadModelList_clicked()
         ai->setServiceType(AiProvider::OpenAI);
     else if (NowSelectServer == "DeepSeek")
         ai->setServiceType(AiProvider::DeepSeek);
+    else if (NowSelectServer == "Custom")
+    {
+        ai->setServiceType(AiProvider::Custom);
+        QString baseUrl = ui->lineEdit_BaseUrl->text().trimmed();
+        ai->setBaseUrl(baseUrl);
+    }
 
     ai->setApiKey(ui->lineEdit_ApiKey->text());
     modelFetchServer = NowSelectServer;
@@ -191,4 +248,23 @@ void SettingChild_LLM::on_lineEdit_ApiKey_textChanged(const QString &arg1)
         ui->label_Openai_Status->setVisible(false);
     else if (NowSelectServer == "DeepSeek")
         ui->label_Deepseek_Status->setVisible(false);
+    else if (NowSelectServer == "Custom")
+        ui->label_Custom_Status->setVisible(false);
+}
+
+//修改Baseurl
+void SettingChild_LLM::on_lineEdit_BaseUrl_textChanged(const QString &arg1)
+{
+    if (NowSelectServer != "Custom")
+        return;
+
+    ZcJsonLib config(JsonSettingPath);
+    config.setValue("llm/Custom/BaseUrl", arg1);
+
+    if (isLoadingConfig)
+        return;
+
+    config.setValue("llm/Custom/ModelList", QJsonArray());
+    modelListModel->setStringList(QStringList());
+    ui->label_Custom_Status->setVisible(false);
 }

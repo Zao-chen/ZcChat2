@@ -499,6 +499,8 @@ void Dialog::ReloadAIConfig()
         ai->setServiceType(AiProvider::DeepSeek);
     else if (serverSelect == "OpenAI")
         ai->setServiceType(AiProvider::OpenAI);
+    else if (serverSelect == "Custom")
+        ai->setServiceType(AiProvider::Custom);
     else
     {
         serverSelect = "DeepSeek";
@@ -508,6 +510,14 @@ void Dialog::ReloadAIConfig()
     ZcJsonLib config(JsonSettingPath);
     QString apiKey = config.value("llm/" + serverSelect + "/ApiKey").toString();
     ai->setApiKey(apiKey);
+    if (serverSelect == "Custom")
+    {
+        QString baseUrl = config.value("llm/Custom/BaseUrl").toString().trimmed();
+        if (baseUrl.isEmpty())
+            ai->setApiUrl(QString());
+        else
+            ai->setBaseUrl(baseUrl);
+    }
 
     //读取当前角色的模型选择
     QString modelSelect = CharConfig.value("modelSelect").toString();
