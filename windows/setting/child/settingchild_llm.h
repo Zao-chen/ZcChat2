@@ -26,7 +26,9 @@ class SettingChild_LLM : public QWidget
     void on_BreadcrumbBar_breadcrumbClicked(QString breadcrumb, QStringList lastBreadcrumbList);
     void on_pushButton_LoadModelList_clicked();
     void on_pushButton_Deepseek_Set_clicked();
+    void on_pushButton_Custom_Set_clicked();
     void on_lineEdit_ApiKey_textChanged(const QString &arg1);
+    void on_lineEdit_BaseUrl_textChanged(const QString &arg1);
 
   private:
     Ui::SettingChild_LLM *ui;
