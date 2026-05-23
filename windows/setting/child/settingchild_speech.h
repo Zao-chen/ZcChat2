@@ -34,6 +34,7 @@ class SettingChild_Speech : public QWidget
   private:
     Ui::SettingChild_Speech *ui;
     void initializeNativeGlobalHotkeyBinder(); //延迟重建Ela原生绑定框
+    void refreshBaiduStatus();
     void refreshGlobalHotkeyBinderState();
     void saveGlobalHotkeyConfig();
 };

@@ -8,6 +8,7 @@
 #include "../../utils/DragHelper.h"
 
 #include "ZcJsonLib.h"
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -32,6 +33,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QParallelAnimationGroup>
+#include <QPermissions>
 #include <QPropertyAnimation>
 #include <QTemporaryFile>
 #include <QUrlQuery>
@@ -1002,6 +1004,38 @@ void Dialog::startSpeechRecordingFromHotkey()
         m_isSpeechRecognizing || !m_speechRecorder || !m_speechAudioInput)
         return;
 
+#ifdef Q_OS_MACOS
+    auto *app = QCoreApplication::instance();
+    if (app)
+    {
+        const QMicrophonePermission microphonePermission;
+        const Qt::PermissionStatus status =
+            app->checkPermission(microphonePermission);
+
+        if (status == Qt::PermissionStatus::Denied)
+        {
+            ui->textEdit->setText(QStringLiteral("麦克风权限未开启，请在系统设置中允许 ZcChat2 使用麦克风"));
+            return;
+        }
+
+        if (status == Qt::PermissionStatus::Undetermined)
+        {
+            ui->textEdit->setText(QStringLiteral("正在请求麦克风权限……"));
+            app->requestPermission(microphonePermission, this,
+                                   [this](const QPermission &permission)
+                                   {
+                                       if (permission.status() ==
+                                           Qt::PermissionStatus::Granted)
+                                           startSpeechRecordingFromHotkey();
+                                       else
+                                           ui->textEdit->setText(QStringLiteral(
+                                               "麦克风权限未开启，请在系统设置中允许 ZcChat2 使用麦克风"));
+                                   });
+            return;
+        }
+    }
+#endif
+
     if (QMediaDevices::defaultAudioInput().isNull())
     {
         ui->textEdit->setText(QStringLiteral("未检测到可用麦克风"));
@@ -1157,9 +1191,8 @@ bool Dialog::handleSpeechHotkeyEvent(quint32 vkCode, bool isKeyDown, bool isKeyU
         if (!m_globalSpeechHotkeyPressed)
         {
             m_globalSpeechHotkeyPressed = true;
-            QMetaObject::invokeMethod(this,
-                                      [this]() { startSpeechRecordingFromHotkey(); },
-                                      Qt::QueuedConnection);
+            QMetaObject::invokeMethod(this, [this]()
+                                      { startSpeechRecordingFromHotkey(); }, Qt::QueuedConnection);
         }
         return true;
     }
@@ -1169,8 +1202,8 @@ bool Dialog::handleSpeechHotkeyEvent(quint32 vkCode, bool isKeyDown, bool isKeyU
         isKeyUp && vkCode == m_globalSpeechHotkeyNativeKey)
     {
         m_globalSpeechHotkeyPressed = false;
-        QMetaObject::invokeMethod(this, [this]() { stopSpeechRecording(); },
-                                  Qt::QueuedConnection);
+        QMetaObject::invokeMethod(this, [this]()
+                                  { stopSpeechRecording(); }, Qt::QueuedConnection);
         return true;
     }
     return false;

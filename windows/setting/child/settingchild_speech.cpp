@@ -30,6 +30,7 @@ SettingChild_Speech::SettingChild_Speech(QWidget *parent)
     ui->keyBinder_GlobalHotkey->setNativeVirtualBinderKey(
         static_cast<quint32>(
             config.value("speechInput/GlobalHotkey/NativeKey", 0).toInteger()));
+    refreshBaiduStatus();
     refreshGlobalHotkeyBinderState();
     //ElaKeyBinder构造时会用window()创建原生弹窗，延迟重建可确保父窗口已稳定。
     QTimer::singleShot(0, this,
@@ -48,6 +49,7 @@ void SettingChild_Speech::on_BreadcrumbBar_breadcrumbClicked(
     Q_UNUSED(breadcrumb)
     Q_UNUSED(lastBreadcrumbList)
     ui->stackedWidget->setCurrentIndex(0);
+    refreshBaiduStatus();
 }
 
 /*进入下一级*/
@@ -84,6 +86,7 @@ void SettingChild_Speech::on_lineEdit_BaiduApiKey_textChanged(const QString &arg
 {
     ZcJsonLib config(JsonSettingPath);
     config.setValue("speechInput/Baidu/ApiKey", arg1);
+    refreshBaiduStatus();
     emit speechConfigChanged();
 }
 
@@ -92,7 +95,20 @@ void SettingChild_Speech::on_lineEdit_BaiduSecretKey_textChanged(
 {
     ZcJsonLib config(JsonSettingPath);
     config.setValue("speechInput/Baidu/SecretKey", arg1);
+    refreshBaiduStatus();
     emit speechConfigChanged();
+}
+
+/*刷新状态*/
+void SettingChild_Speech::refreshBaiduStatus()
+{
+    ZcJsonLib config(JsonSettingPath);
+    const QString apiKey =
+        config.value("speechInput/Baidu/ApiKey").toString().trimmed();
+    const QString secretKey =
+        config.value("speechInput/Baidu/SecretKey").toString().trimmed();
+
+    ui->label_Baidu_Status->setVisible(!apiKey.isEmpty() && !secretKey.isEmpty());
 }
 
 void SettingChild_Speech::on_keyBinder_GlobalHotkey_binderKeyTextChanged(

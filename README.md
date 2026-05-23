@@ -48,6 +48,8 @@
 - [X] 实现模型流式传输
 - [X] 语音切分流式生成
 - [X] 立绘动画和插件实现
+- [X] 语音输入功能
+- [ ] 语音唤醒和连续对话
 - [ ] 立绘例子和插件实现
 - [ ] 构建系统级操作模块
 - [ ] 多模态的实现
@@ -75,9 +77,22 @@
 
 ### Step4: （可选）安装配置语音合成
 
-1. 在 `语言合成`中选择你使用的语言合成工具并填入API地址
-2. 点击 `获取`来测试可用性并查看语言合成模型和角色
-3. 打开 `角色设置 > 运行配置 > 语言合成`并选择模型
+#### 方式1：vits-simple-api
+
+1. [安装vits-simple-api](https://github.com/Artrajz/vits-simple-api/blob/main/README_zh.md) 并启动
+2. 将URL填入 `ZcChat > 语言合成 > vits-simple-api`。
+   > vits-simple-api默认地址为 `http://localhost:23456`
+   >
+3. 点击 `获取`来测试可用性并查看模型列表
+4. `ZcChat > 角色设置 > 运行配置 > 语音合成 ` 中选择角色
+
+### Step5: （可选）安装配置语音输入
+
+#### 方式1：百度语音识别
+
+1. 在[百度智能云控制台](https://console.bce.baidu.com/ai-engine/old/#/ai/speech/app/list)创建短语音识别应用
+2. 将API Key和Secret Key填入 `ZcChat > 语言输入 > 百度语音识别`
+3. 在 `语音输入`中配置相关项
 
 ## 🤗 如何贡献
 
