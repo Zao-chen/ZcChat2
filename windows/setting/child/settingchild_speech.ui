@@ -55,7 +55,10 @@
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_Interface" native="true">
+       <widget class="ElaScrollPageArea" name="widget_Interface" native="true">
+         <property name="toolTip">
+          <string>配置语音识别服务，当前支持百度语音识别</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,1">
           <property name="leftMargin">
            <number>15</number>
@@ -102,6 +105,9 @@
           </item>
           <item>
            <widget class="ElaPushButton" name="pushButton_Baidu_Set">
+            <property name="toolTip">
+             <string>填写百度语音识别的 API Key 和 Secret Key</string>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -129,7 +135,10 @@
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_SpeechEnable" native="true">
+       <widget class="ElaScrollPageArea" name="widget_SpeechEnable" native="true">
+         <property name="toolTip">
+          <string>开启后，聊天输入区可以使用语音转文字</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1">
           <property name="leftMargin">
            <number>15</number>
@@ -150,13 +159,20 @@
            </widget>
           </item>
           <item>
-           <widget class="ElaToggleSwitch" name="ToggleSwitch_SpeechInputEnable" native="true"/>
+           <widget class="ElaToggleSwitch" name="ToggleSwitch_SpeechInputEnable" native="true">
+            <property name="toolTip">
+             <string>启用或关闭语音输入功能</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_GlobalHotkey" native="true">
+       <widget class="ElaScrollPageArea" name="widget_GlobalHotkey" native="true">
+         <property name="toolTip">
+          <string>开启后可在应用外使用绑定按键触发语音录入</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="5,0,10,7">
           <property name="leftMargin">
            <number>15</number>
@@ -190,6 +206,9 @@
           </item>
           <item>
            <widget class="ElaToggleSwitch" name="ToggleSwitch_GlobalHotkeyEnable" native="true">
+            <property name="toolTip">
+             <string>启用或关闭全局语音输入热键</string>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -212,7 +231,11 @@
            </spacer>
           </item>
           <item>
-           <widget class="ElaKeyBinder" name="keyBinder_GlobalHotkey"/>
+           <widget class="ElaKeyBinder" name="keyBinder_GlobalHotkey">
+            <property name="toolTip">
+             <string>可以先绑定录音按键，启用全局热键后生效</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -247,7 +270,10 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_ApiKey" native="true">
+       <widget class="ElaScrollPageArea" name="widget_ApiKey" native="true">
+         <property name="toolTip">
+          <string>百度智能云语音识别应用的 API Key</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,1">
           <property name="leftMargin">
            <number>15</number>
@@ -268,13 +294,20 @@
            </widget>
           </item>
           <item>
-           <widget class="ElaLineEdit" name="lineEdit_BaiduApiKey"/>
+           <widget class="ElaLineEdit" name="lineEdit_BaiduApiKey">
+            <property name="toolTip">
+             <string>请输入百度语音识别 API Key</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_SecretKey" native="true">
+       <widget class="ElaScrollPageArea" name="widget_SecretKey" native="true">
+         <property name="toolTip">
+          <string>百度智能云语音识别应用的 Secret Key</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,1">
           <property name="leftMargin">
            <number>15</number>
@@ -296,6 +329,9 @@
           </item>
           <item>
            <widget class="ElaLineEdit" name="lineEdit_BaiduSecretKey">
+            <property name="toolTip">
+             <string>请输入百度语音识别 Secret Key</string>
+            </property>
             <property name="echoMode">
              <enum>QLineEdit::PasswordEchoOnEdit</enum>
             </property>

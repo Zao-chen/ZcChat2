@@ -143,6 +143,7 @@ void SettingChild_Speech::initializeNativeGlobalHotkeyBinder()
     auto *nativeBinder = new ElaKeyBinder(oldBinder->parentWidget());
     nativeBinder->setObjectName(oldBinder->objectName());
     nativeBinder->setSizePolicy(oldBinder->sizePolicy());
+    nativeBinder->setToolTip(oldBinder->toolTip());
 
     layout->replaceWidget(oldBinder, nativeBinder);
     oldBinder->deleteLater();
