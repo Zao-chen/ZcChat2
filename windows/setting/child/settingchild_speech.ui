@@ -83,14 +83,14 @@
           </item>
           <item>
            <widget class="ElaText" name="label_Baidu_Status">
-            <property name="visible">
-             <bool>false</bool>
-            </property>
             <property name="font">
              <font>
               <pointsize>16</pointsize>
               <bold>true</bold>
              </font>
+            </property>
+            <property name="visible">
+             <bool>false</bool>
             </property>
             <property name="styleSheet">
              <string notr="true">color: #2EAD4B;</string>
@@ -145,7 +145,7 @@
              </font>
             </property>
             <property name="text">
-             <string>启用长按输入</string>
+             <string>启用长按输入按钮</string>
             </property>
            </widget>
           </item>
@@ -153,21 +153,6 @@
            <widget class="ElaToggleSwitch" name="ToggleSwitch_SpeechInputEnable" native="true"/>
           </item>
          </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="ElaText" name="label_Description">
-         <property name="font">
-          <font>
-           <pointsize>9</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>启用后，对话框会出现一个麦克风按钮，长按录音并在松开后调用百度语音识别。</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
         </widget>
        </item>
        <item>
@@ -199,7 +184,7 @@
              </font>
             </property>
             <property name="text">
-             <string>启用全局热键</string>
+             <string>启用全局热键语音输入</string>
             </property>
            </widget>
           </item>

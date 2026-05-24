@@ -24,7 +24,7 @@ SettingChild_Plugin::SettingChild_Plugin(QWidget *parent)
 {
     ui->setupUi(this);
     ui->BreadcrumbBar->setTextPixelSize(25);
-    ui->BreadcrumbBar->appendBreadcrumb("插件配置");
+    ui->BreadcrumbBar->appendBreadcrumb("插件设置");
 }
 
 SettingChild_Plugin::~SettingChild_Plugin()
@@ -36,7 +36,7 @@ SettingChild_Plugin::~SettingChild_Plugin()
 void SettingChild_Plugin::on_pushButton_Anime_Set_clicked()
 {
     ui->stackedWidget->setCurrentIndex(1);
-    ui->BreadcrumbBar->appendBreadcrumb("动画设置");
+    ui->BreadcrumbBar->appendBreadcrumb("动画插件");
     RefreshAnimePluginList();
 }
 
@@ -45,12 +45,12 @@ void SettingChild_Plugin::on_BreadcrumbBar_breadcrumbClicked(
     QString breadcrumb, QStringList lastBreadcrumbList)
 {
     Q_UNUSED(lastBreadcrumbList)
-    if (breadcrumb == "插件配置")
+    if (breadcrumb == "插件设置")
     {
         ui->stackedWidget->setCurrentIndex(0);
         return;
     }
-    if (breadcrumb == "动画设置")
+    if (breadcrumb == "动画插件")
     {
         ui->stackedWidget->setCurrentIndex(1);
         return;
