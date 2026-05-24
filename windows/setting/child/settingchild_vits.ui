@@ -83,6 +83,9 @@
           </item>
           <item>
            <widget class="ElaPushButton" name="pushButton_VSA_Set">
+            <property name="toolTip">
+             <string>配置 vits-simple-api 服务地址，并读取模型和说话人列表</string>
+            </property>
             <property name="text">
              <string>配置</string>
             </property>
@@ -104,7 +107,10 @@
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_VitsSentenceSplit" native="true">
+       <widget class="ElaScrollPageArea" name="widget_VitsSentenceSplit" native="true">
+         <property name="toolTip">
+          <string>开启后会将较长回复拆成多句分别合成，减少语音合成失败概率</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="1,1">
           <property name="leftMargin">
            <number>15</number>
@@ -131,7 +137,11 @@
            </widget>
           </item>
           <item>
-           <widget class="ElaToggleSwitch" name="ToggleSwitch_VitsSentenceSplit" native="true"/>
+           <widget class="ElaToggleSwitch" name="ToggleSwitch_VitsSentenceSplit" native="true">
+            <property name="toolTip">
+             <string>启用或关闭语音合成分句</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -166,7 +176,10 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_SelectChar" native="true">
+       <widget class="ElaScrollPageArea" name="widget_SelectChar" native="true">
+         <property name="toolTip">
+          <string>填写 vits-simple-api 地址后读取可用的模型和说话人</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1">
           <property name="leftMargin">
            <number>15</number>
@@ -193,7 +206,11 @@
            </widget>
           </item>
           <item>
-           <widget class="ElaLineEdit" name="lineEdit_ApiUrl"/>
+           <widget class="ElaLineEdit" name="lineEdit_ApiUrl">
+            <property name="toolTip">
+             <string>vits-simple-api 服务地址，例如 http://127.0.0.1:23456</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -216,7 +233,10 @@
           </widget>
          </item>
          <item>
-          <widget class="ElaPushButton" name="pushButton_LoadModelAndSpeakerlList">
+         <widget class="ElaPushButton" name="pushButton_LoadModelAndSpeakerlList">
+           <property name="toolTip">
+            <string>从当前服务地址读取模型和说话人列表</string>
+           </property>
            <property name="text">
             <string>获取</string>
            </property>
@@ -225,7 +245,10 @@
         </layout>
        </item>
        <item>
-        <widget class="ElaListView" name="listView_ModelAndSpeakerlList">
+       <widget class="ElaListView" name="listView_ModelAndSpeakerlList">
+         <property name="toolTip">
+          <string>已读取的模型和说话人，可在角色设置中选择</string>
+         </property>
          <property name="styleSheet">
           <string notr="true">/* 去除滚动条的边框和背景 */
 QScrollBar:vertical {

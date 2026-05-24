@@ -49,7 +49,10 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_SelectChar" native="true">
+       <widget class="ElaScrollPageArea" name="widget_SelectChar" native="true">
+         <property name="toolTip">
+          <string>选择、导入或导出当前使用的角色配置</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="3,1,1,4,1">
           <property name="leftMargin">
            <number>15</number>
@@ -77,6 +80,9 @@
           </item>
           <item>
            <widget class="ElaPushButton" name="pushButton_InputChar">
+            <property name="toolTip">
+             <string>从 zip 压缩包导入角色</string>
+            </property>
             <property name="text">
              <string>导入</string>
             </property>
@@ -84,6 +90,9 @@
           </item>
           <item>
            <widget class="ElaPushButton" name="pushButton_OutputChar">
+            <property name="toolTip">
+             <string>将当前角色导出为 zip 压缩包</string>
+            </property>
             <property name="text">
              <string>导出</string>
             </property>
@@ -91,6 +100,9 @@
           </item>
           <item>
            <widget class="ElaComboBox" name="comboBox_CharList">
+            <property name="toolTip">
+             <string>当前启用的角色，切换后会重新加载立绘和对话配置</string>
+            </property>
             <property name="styleSheet">
              <string notr="true">/* 去除滚动条的边框和背景 */
 QScrollBar:vertical {
@@ -135,6 +147,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaPushButton" name="pushButton_DeleteChar">
+            <property name="toolTip">
+             <string>删除当前选中的角色文件</string>
+            </property>
             <property name="text">
              <string>删除</string>
             </property>
@@ -156,7 +171,10 @@ QScrollBar:vertical:disabled {
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_CharPrompt" native="true">
+       <widget class="ElaScrollPageArea" name="widget_CharPrompt" native="true">
+         <property name="toolTip">
+          <string>角色提示词会影响模型回复时的性格、背景和行为方式</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,1">
           <property name="leftMargin">
            <number>15</number>
@@ -184,6 +202,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaPlainTextEdit" name="plainTextEdit_CharPrompt">
+            <property name="toolTip">
+             <string>编辑当前角色的提示词，内容会自动保存</string>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
               <horstretch>0</horstretch>
@@ -248,7 +269,10 @@ QScrollBar:vertical:disabled {
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_ApiKey_2" native="true">
+       <widget class="ElaScrollPageArea" name="widget_ApiKey_2" native="true">
+         <property name="toolTip">
+          <string>调整立绘窗口大小或将立绘移回默认位置</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="3,1,2,0">
           <property name="leftMargin">
            <number>15</number>
@@ -276,6 +300,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaPushButton" name="pushButton_ResetTachieLoc">
+            <property name="toolTip">
+             <string>将当前角色立绘窗口重置到默认位置</string>
+            </property>
             <property name="text">
              <string>重置位置</string>
             </property>
@@ -283,6 +310,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaSpinBox" name="spinBox_TachieSize">
+            <property name="toolTip">
+             <string>立绘显示缩放比例，单位为百分比</string>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -310,7 +340,10 @@ QScrollBar:vertical:disabled {
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_Run_LLM" native="true">
+       <widget class="ElaScrollPageArea" name="widget_Run_LLM" native="true">
+         <property name="toolTip">
+          <string>为当前角色选择对话服务商和模型</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,1,2">
           <property name="leftMargin">
            <number>15</number>
@@ -338,6 +371,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaComboBox" name="comboBox_ServerSelect">
+            <property name="toolTip">
+             <string>选择角色使用的对话模型服务商</string>
+            </property>
             <property name="styleSheet">
              <string notr="true">/* 去除滚动条的边框和背景 */
 QScrollBar:vertical {
@@ -397,6 +433,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaComboBox" name="comboBox_ModelSelect">
+            <property name="toolTip">
+             <string>选择角色使用的具体对话模型；列表来自对话模型设置页</string>
+            </property>
             <property name="styleSheet">
              <string notr="true">/* 去除滚动条的边框和背景 */
 QScrollBar:vertical {
@@ -443,7 +482,10 @@ QScrollBar:vertical:disabled {
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_Run_Vits" native="true">
+       <widget class="ElaScrollPageArea" name="widget_Run_Vits" native="true">
+         <property name="toolTip">
+          <string>为当前角色配置语音合成开关、服务和说话人</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="5,0,10,2,5">
           <property name="leftMargin">
            <number>15</number>
@@ -477,6 +519,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaToggleSwitch" name="ToggleSwitch_VitsEnable" native="true">
+            <property name="toolTip">
+             <string>启用或关闭当前角色的语音合成</string>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -500,6 +545,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaComboBox" name="comboBox_Vits_ServerSelect">
+            <property name="toolTip">
+             <string>选择语音合成服务商</string>
+            </property>
             <property name="styleSheet">
              <string notr="true">/* 去除滚动条的边框和背景 */
 QScrollBar:vertical {
@@ -549,6 +597,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaComboBox" name="comboBox_Vits_MASSelect">
+            <property name="toolTip">
+             <string>选择当前角色使用的 VITS 模型和说话人</string>
+            </property>
             <property name="styleSheet">
              <string notr="true">/* 去除滚动条的边框和背景 */
 QScrollBar:vertical {
@@ -595,7 +646,10 @@ QScrollBar:vertical:disabled {
         </widget>
        </item>
        <item>
-        <widget class="ElaScrollPageArea" name="widget_Tachie_Set" native="true">
+       <widget class="ElaScrollPageArea" name="widget_Tachie_Set" native="true">
+         <property name="toolTip">
+          <string>配置立绘动作和动画的绑定关系</string>
+         </property>
          <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="1,1,0">
           <property name="leftMargin">
            <number>15</number>
@@ -623,6 +677,9 @@ QScrollBar:vertical:disabled {
           </item>
           <item>
            <widget class="ElaPushButton" name="pushButton_Tachie_Set">
+            <property name="toolTip">
+             <string>进入立绘动作绑定设置</string>
+            </property>
             <property name="text">
              <string>配置动画</string>
             </property>
