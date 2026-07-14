@@ -33,6 +33,9 @@ class SettingChild_Char : public QWidget
     void on_pushButton_ResetTachieLoc_clicked();
     void on_comboBox_Vits_MASSelect_currentTextChanged(const QString &arg1);
     void on_ToggleSwitch_VitsEnable_toggled(bool checked);
+    //角色关键词使用 | 分隔编辑，保存时转换为 JSON 数组。
+    void on_lineEdit_SpeechWakeWords_textChanged(const QString &text);
+    void on_lineEdit_SpeechEndWords_textChanged(const QString &text);
     void on_pushButton_InputChar_clicked();
     void on_pushButton_OutputChar_clicked();
     void on_pushButton_Tachie_Set_clicked();
@@ -44,6 +47,8 @@ class SettingChild_Char : public QWidget
     void requestSetTachieSize(int size);
     void requestResetTachieLoc();
     void requestReloadAIConfig();
+    //角色关键词修改后通知主对话框立即刷新语音控制器。
+    void requestReloadSpeechConfig();
 
   private:
     Ui::SettingChild_Char *ui;

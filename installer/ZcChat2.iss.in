@@ -19,6 +19,7 @@ Name: "chinesesimp"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "{#MyAppPath}\ZcChat2.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyAppPath}\THIRD_PARTY_NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
 
 ;dist根目录dll
 Source: "{#MyAppPath}\*.dll"; DestDir: "{app}"; Flags: ignoreversion

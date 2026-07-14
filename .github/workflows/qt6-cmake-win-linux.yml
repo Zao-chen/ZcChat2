@@ -70,6 +70,28 @@ jobs:
       - name: Build
         run: cmake --build build
 
-      #如果你有测试就打开
-      # - name: Test
-      #   run: ctest --test-dir build --output-on-failure
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Check ONNX Runtime (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          if(!(Test-Path "build\onnxruntime.dll")){ throw "build\onnxruntime.dll missing" }
+
+      - name: Check ONNX Runtime (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          test -n "$(find build -maxdepth 1 -type f -name 'libonnxruntime.so.*' -print -quit)"
+          test -n "$(find build -maxdepth 1 -type l -name 'libonnxruntime.so.*' -print -quit)"
+
+      - name: Check ONNX Runtime (macOS)
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          test -n "$(find build/ZcChat2.app/Contents/Frameworks -maxdepth 1 -type f -name 'libonnxruntime.*.dylib' -print -quit)"
+          test -f build/ZcChat2.app/Contents/Info.plist
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' build/ZcChat2.app/Contents/Info.plist)" = "com.zaochen.zcchat2"
+          /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' build/ZcChat2.app/Contents/Info.plist
+          codesign --verify --deep --strict build/ZcChat2.app

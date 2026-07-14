@@ -297,6 +297,24 @@ QPushButton:hover {
 QPushButton:pressed {
     border: 2px solid #AAAAAA;
 }
+
+QPushButton[speechState="1"],
+QPushButton[speechState="5"] {
+    background-color: rgba(76, 175, 80, 35);
+    border: 1px solid rgba(76, 175, 80, 120);
+}
+
+QPushButton[speechState="2"] {
+    background-color: rgba(33, 150, 243, 45);
+    border: 1px solid rgba(33, 150, 243, 140);
+}
+
+QPushButton[speechState="3"],
+QPushButton[speechState="4"],
+QPushButton[speechState="6"] {
+    background-color: rgba(128, 128, 128, 25);
+    border: 1px solid rgba(128, 128, 128, 80);
+}
 </string>
        </property>
        <property name="text">

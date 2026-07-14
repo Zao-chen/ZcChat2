@@ -2,14 +2,12 @@
 #define DIALOG_H
 
 #include "AiProvider.h"
+#include "SpeechInteractionController.h"
 #include <QEvent>
-#include <QMediaCaptureSession>
-#include <QMediaRecorder>
 #include <QMoveEvent>
 #include <QStringList>
 #include <QWidget>
 
-class QAudioInput;
 class QAudioOutput;
 class QMediaPlayer;
 class QNetworkAccessManager;
@@ -88,8 +86,7 @@ class Dialog : public QWidget
     QString m_lastUserInput;
     QString m_streamRawReply;
     QString m_streamDisplayedChinese;
-    bool m_isSpeechRecording = false;
-    bool m_isSpeechRecognizing = false;
+    bool m_speechInputEnabled = false; //语音输入总开关，用于控制按钮可用性。
     bool m_globalSpeechHotkeyEnabled = false; //全局录音热键是否启用
     bool m_globalSpeechHotkeyPressed = false; //当前热键是否处于按下录音中
     quint32 m_globalSpeechHotkeyNativeKey = 0; //Ela绑定得到的原生按键值
@@ -99,22 +96,21 @@ class Dialog : public QWidget
     QStringList m_vitsPendingTexts;
     QList<QTemporaryFile *> m_vitsReadyFiles;
     bool m_vitsRequestInFlight = false;
+    bool m_llmReplyInFlight = false; //当前是否有未完成的 LLM 回复。
     QNetworkAccessManager *m_vitsManager = nullptr;
     QMediaPlayer *m_vitsPlayer = nullptr;
     QAudioOutput *m_vitsAudioOutput = nullptr;
     QTemporaryFile *m_vitsTempFile = nullptr;
-    QMediaRecorder *m_speechRecorder = nullptr;
-    QMediaCaptureSession m_speechCaptureSession;
-    QAudioInput *m_speechAudioInput = nullptr;
+    SpeechInteractionController *m_speechController = nullptr; //共享语音控制器。
+    //回复链路空闲后恢复自动监听，并刷新麦克风按钮状态。
     void tryStartNextVitsPlayback();
+    bool isConversationOutputBusy() const;
+    void maybeFinishConversationOutput();
+    void updateSpeechButtonState(SpeechInteractionController::State state);
     bool submitCurrentInput();
     void startSpeechRecording();
     void startSpeechRecordingFromHotkey();
     void stopSpeechRecording();
-    QString speechRecordFilePath() const;
-    QString recognizeSpeechFromFile(const QString &filePath);
-    QString requestBaiduAccessToken(const QString &apiKey,
-                                    const QString &secretKey);
     void releaseSpeechHotkeyResources();
 };
 

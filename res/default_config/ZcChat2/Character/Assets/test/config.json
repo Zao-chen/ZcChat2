@@ -1,3 +1,11 @@
 {
-    "prompt": ""
+    "prompt": "",
+    "speechInput": {
+        "wakeWords": [
+            "test"
+        ],
+        "endWords": [
+            "结束对话"
+        ]
+    }
 }

@@ -20,7 +20,7 @@
 
 * 😊 **立绘表情与动作：** 采用 Galgame 立绘的演出方式，支持多表情、多动作组合
 * 🎬 **立绘演出：** 支持立绘动画（如颤抖、靠近等）和粒子（如生气气泡等）
-* 🎙 **语音交互：** 语音输入、唤醒、直接对话和打断
+* 🎙 **语音交互：** 语音输入、语音唤醒和连续对话
 * 🔊 **语音合成：** 支持各种语音引擎，还原角色的声音
 * 💻**操作电脑：** 通过系统级API给予桌宠操作电脑的能力，与她深度互动
 * 🧠 **长期记忆系统：**
@@ -49,11 +49,11 @@
 - [X] 语音切分流式生成
 - [X] 立绘动画和插件实现
 - [X] 语音输入功能
-- [ ] 语音唤醒和连续对话
+- [X] 语音唤醒和连续对话
 - [ ] 立绘例子和插件实现
 - [ ] 构建系统级操作模块
 - [ ] 多模态的实现
-- [ ] 重构语音交互模块
+- [X] 重构语音交互模块
 - [ ] 实现长期记忆压缩机制
 
 ## 🚀 快速入门
@@ -107,6 +107,7 @@ ZcChat2是一个开源项目。参与ZcChat2项目的方法有很多！
 - [Zao-chen/ZcChat2ForMobile: 一个模仿 Galgame 演出效果的AI桌宠ZcChat2的移动端版本](https://github.com/Zao-chen/ZcChat2ForMobile)
 - [Zao-chen/ZcChat: 一个模仿Galgame效果的AI桌宠 | An AI desktop pet that mimics the effects of a Galgame](https://github.com/Zao-chen/ZcChat)
 - [Liniyous/ElaWidgetTools: Fluent-UI For QT-Widget](https://github.com/Liniyous/ElaWidgetTools)
+- [snakers4/silero-vad v6.2.1: 语音活动检测](https://github.com/snakers4/silero-vad/tree/v6.2.1)
 - [Zao-chen/ZcAILib: High-performance AI Request Library for Qt](https://github.com/Zao-chen/ZcAILib)
 - [Zao-chen/ZcWidgetTools: Extension for ElaWidgetTools adding missing Qt widgets](https://github.com/Zao-chen/ZcWidgetTools)
 - [Zao-chen/ZcJsonLib: Lightweight JSON key/value library for Qt, QSettings-style.](https://github.com/Zao-chen/ZcJsonLib)

@@ -108,6 +108,9 @@ jobs:
       - name: Build
         run: cmake --build build
 
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
       #========================================================
       # macOS：macdeployqt + dmg
       #========================================================
@@ -121,6 +124,16 @@ jobs:
             echo "Not found: build/ZcChat2.app"
             exit 1
           fi
+
+          test -n "$(find build/ZcChat2.app/Contents/Frameworks -maxdepth 1 -type f -name 'libonnxruntime.*.dylib' -print -quit)"
+
+          if [ ! -f "build/ZcChat2.app/Contents/Info.plist" ]; then
+            echo "Info.plist is missing from the application bundle"
+            exit 1
+          fi
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' build/ZcChat2.app/Contents/Info.plist)" = "com.zaochen.zcchat2"
+          /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' build/ZcChat2.app/Contents/Info.plist
+          codesign --verify --deep --strict "build/ZcChat2.app"
 
           rm -rf dist || true
           mkdir -p dist
@@ -139,7 +152,8 @@ jobs:
             exit 1
           fi
 
-          "$MACDEPLOYQT" "build/ZcChat2.app" -dmg
+          "$MACDEPLOYQT" "build/ZcChat2.app" -codesign=- -dmg
+          codesign --verify --deep --strict "build/ZcChat2.app"
 
           if [ ! -f "build/ZcChat2.dmg" ]; then
             echo "Not found: build/ZcChat2.dmg"
@@ -168,6 +182,8 @@ jobs:
           New-Item -ItemType Directory -Force dist | Out-Null
 
           Copy-Item build\ZcChat2.exe dist\
+          Copy-Item build\onnxruntime.dll dist\
+          Copy-Item THIRD_PARTY_NOTICES.md dist\
 
           $qtBin = Join-Path "${{ env.Qt6_DIR }}" "bin"
           $windeploy = Join-Path $qtBin "windeployqt.exe"
@@ -201,6 +217,7 @@ jobs:
 
           #关键Qt库
           if(!(Test-Path "dist\Qt6Core.dll")){ throw "dist\Qt6Core.dll missing" }
+          if(!(Test-Path "dist\onnxruntime.dll")){ throw "dist\onnxruntime.dll missing" }
 
           #关键平台插件(没有这个基本一定打不开)
           if(!(Test-Path "dist\platforms\qwindows.dll")){ throw "dist\platforms\qwindows.dll missing (windeployqt failed?)" }
@@ -263,10 +280,20 @@ jobs:
           fi
 
           rm -rf AppDir linuxdeployqt.AppImage squashfs-root dist || true
-          mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps dist
+          mkdir -p AppDir/usr/bin AppDir/usr/lib AppDir/usr/share/doc/ZcChat2 AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps dist
 
           cp build/ZcChat2 AppDir/usr/bin/ZcChat2
+          ort_runtime="$(find build -maxdepth 1 -type f -name 'libonnxruntime.so.*' -print -quit)"
+          ort_soname="$(find build -maxdepth 1 -type l -name 'libonnxruntime.so.*' -print -quit)"
+          test -n "$ort_runtime"
+          test -n "$ort_soname"
+          cp "$ort_runtime" AppDir/usr/lib/
+          cp -a "$ort_soname" AppDir/usr/lib/
+          cp THIRD_PARTY_NOTICES.md AppDir/usr/share/doc/ZcChat2/
           chmod +x AppDir/usr/bin/ZcChat2
+
+          test -n "$(find AppDir/usr/lib -maxdepth 1 -type f -name 'libonnxruntime.so.*' -print -quit)"
+          test -n "$(find AppDir/usr/lib -maxdepth 1 -type l -name 'libonnxruntime.so.*' -print -quit)"
 
           cat > AppDir/usr/share/applications/ZcChat2.desktop <<'EOF'
           [Desktop Entry]

@@ -8,36 +8,26 @@
 #include "../../utils/DragHelper.h"
 
 #include "ZcJsonLib.h"
-#include <QCoreApplication>
 #include <QDir>
-#include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QSettings>
+#include <QStyle>
 
-#include <QAudioDevice>
-#include <QAudioInput>
 #include <QAudioOutput>
-#include <QEventLoop>
 #include <QGraphicsOpacityEffect>
 #include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QMediaDevices>
-#include <QMediaFormat>
 #include <QMediaPlayer>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QParallelAnimationGroup>
-#include <QPermissions>
 #include <QPropertyAnimation>
 #include <QTemporaryFile>
-#include <QUrlQuery>
-#include <QUuid>
+#include <QToolTip>
 #include <QWheelEvent>
 
 #ifdef Q_OS_WIN
@@ -57,6 +47,23 @@ constexpr int kMinDialogWidth = 320;
 constexpr int kMinDialogHeight = 120;
 constexpr int kMaxDialogWidth = 1600;
 constexpr int kMaxDialogHeight = 900;
+
+//读取角色配置中的关键词数组。
+QStringList speechKeywordList(const QJsonValue &value,
+                              const QStringList &fallback)
+{
+    QStringList result;
+    if (value.isArray())
+    {
+        for (const QJsonValue &item : value.toArray())
+        {
+            const QString word = item.toString().trimmed();
+            if (!word.isEmpty())
+                result.append(word);
+        }
+    }
+    return result.isEmpty() ? fallback : result;
+}
 
 #ifdef Q_OS_WIN
 //Windows低级键盘钩子需要静态回调，这里保存当前接收热键的Dialog实例。
@@ -271,7 +278,9 @@ void Dialog::stopPendingConversationState()
     if (m_vitsPlayer)
         m_vitsPlayer->stop();
 
-    m_isSpeechRecognizing = false;
+    m_llmReplyInFlight = false;
+    if (m_speechController)
+        m_speechController->setConversationBusy(false);
 }
 
 /*构建窗口*/
@@ -302,35 +311,33 @@ Dialog::Dialog(QWidget *parent)
                         m_vitsTempFile = nullptr;
                     }
                     tryStartNextVitsPlayback();
+                    maybeFinishConversationOutput();
                 }
             });
     /*语音输入初始化*/
-    m_speechRecorder = new QMediaRecorder(this);
-    m_speechAudioInput = new QAudioInput(this);
-    m_speechCaptureSession.setRecorder(m_speechRecorder);
-    m_speechCaptureSession.setAudioInput(m_speechAudioInput);
-    if (m_speechAudioInput)
-        m_speechAudioInput->setDevice(QMediaDevices::defaultAudioInput());
-    //录音结束后统一进入识别，再决定是否直接复用现有发送链路
-    connect(m_speechRecorder, &QMediaRecorder::recorderStateChanged, this,
-            [this](QMediaRecorder::RecorderState state)
+    m_speechController = new SpeechInteractionController(this);
+    connect(m_speechController,
+            &SpeechInteractionController::recognizedText, this,
+            [this](const QString &recognizedText, bool autoSubmit)
             {
-                if (state != QMediaRecorder::StoppedState || !m_isSpeechRecording)
-                    return;
-
-                m_isSpeechRecording = false;
-                m_isSpeechRecognizing = true;
-                const QString recognizedText =
-                    recognizeSpeechFromFile(speechRecordFilePath()).trimmed();
-                m_isSpeechRecognizing = false;
-                if (recognizedText.isEmpty())
-                    return;
-
                 ui->label_name->setText(QStringLiteral("你"));
                 ui->textEdit->setEnabled(true);
                 ui->textEdit->setText(recognizedText);
-                if (ui->checkBox_autoInput->isChecked())
-                    submitCurrentInput();
+                if (autoSubmit && !submitCurrentInput())
+                    m_speechController->setConversationBusy(false);
+            });
+    connect(m_speechController, &SpeechInteractionController::stateChanged,
+            this, &Dialog::updateSpeechButtonState);
+    connect(m_speechController, &SpeechInteractionController::errorOccurred,
+            this,
+            [this](const QString &error)
+            {
+                qWarning() << "Speech input:" << error;
+                ui->pushButton_input->setToolTip(error);
+                QToolTip::showText(
+                    ui->pushButton_input->mapToGlobal(
+                        QPoint(ui->pushButton_input->width() / 2, 0)),
+                    error, ui->pushButton_input, QRect(), 5000);
             });
     ReloadAIConfig();
     ReloadGeneralConfig();
@@ -396,6 +403,7 @@ Dialog::Dialog(QWidget *parent)
     //接收完整回复
     connect(ai, &AiProvider::replyReceived, [=](const QString &reply)
             {
+                m_llmReplyInFlight = false;
                 const QString finalReply = m_streamRawReply.isEmpty()
                                                ? reply
                                                : m_streamRawReply; //确保使用完整结果
@@ -440,10 +448,12 @@ Dialog::Dialog(QWidget *parent)
                 m_streamRawReply.clear();
                 m_streamDisplayedChinese.clear();
                 m_streamVitsEnabled = false;
-                m_streamSynthCursor = 0; });
+                m_streamSynthCursor = 0;
+                maybeFinishConversationOutput(); });
     //错误处理
     connect(ai, &AiProvider::errorOccurred, [=](const QString &error)
             {
+                m_llmReplyInFlight = false;
                 ui->pushButton_next->show();
                 ui->textEdit->setText(error);
                 ui->textEdit->setEnabled(false);
@@ -451,7 +461,8 @@ Dialog::Dialog(QWidget *parent)
                 m_streamRawReply.clear();
                 m_streamDisplayedChinese.clear();
                 m_streamVitsEnabled = false;
-                m_streamSynthCursor = 0; });
+                m_streamSynthCursor = 0;
+                maybeFinishConversationOutput(); });
 }
 
 /*解构窗口*/
@@ -536,13 +547,15 @@ void Dialog::ReloadSpeechInputConfig()
         config.value("speechInput/Enable", false).toBool();
     const bool autoSend =
         config.value("speechInput/AutoSend", false).toBool();
+    const bool wakeEnabled =
+        config.value("speechInput/Wake/Enable", false).toBool();
     const bool globalHotkeyEnable =
         config.value("speechInput/GlobalHotkey/Enable", false).toBool();
     const quint32 globalHotkeyNativeKey = static_cast<quint32>(
         config.value("speechInput/GlobalHotkey/NativeKey", 0).toInteger());
 
+    m_speechInputEnabled = speechEnabled;
     ui->pushButton_input->setVisible(speechEnabled);
-    ui->pushButton_input->setEnabled(speechEnabled);
     ui->checkBox_autoInput->setVisible(speechEnabled);
     ui->checkBox_autoInput->blockSignals(true);
     ui->checkBox_autoInput->setChecked(autoSend);
@@ -552,7 +565,7 @@ void Dialog::ReloadSpeechInputConfig()
     releaseSpeechHotkeyResources();
     m_globalSpeechHotkeyNativeKey = globalHotkeyNativeKey;
     m_globalSpeechHotkeyEnabled =
-        globalHotkeyEnable && globalHotkeyNativeKey != 0;
+        speechEnabled && globalHotkeyEnable && globalHotkeyNativeKey != 0;
 
 #ifdef Q_OS_WIN
     if (m_globalSpeechHotkeyEnabled)
@@ -590,6 +603,43 @@ void Dialog::ReloadSpeechInputConfig()
         }
     }
 #endif
+
+    SpeechInteractionController::Config speechConfig;
+    speechConfig.enabled = speechEnabled;
+    speechConfig.wakeEnabled = wakeEnabled;
+    speechConfig.autoSend = autoSend;
+    speechConfig.apiKey =
+        config.value("speechInput/Baidu/ApiKey").toString().trimmed();
+    speechConfig.secretKey =
+        config.value("speechInput/Baidu/SecretKey").toString().trimmed();
+
+    const QString charName = ReadNowSelectChar();
+    const QStringList defaultWakeWords =
+        charName.isEmpty() || charName == QStringLiteral("未选择")
+            ? QStringList()
+            : QStringList{charName};
+    const QStringList defaultEndWords{QStringLiteral("结束对话")};
+    if (!defaultWakeWords.isEmpty())
+    {
+        ZcJsonLib charConfig(CharacterAssestPath + "/" + charName +
+                             "/config.json");
+        speechConfig.wakeWords = speechKeywordList(
+            charConfig.value("speechInput/wakeWords"), defaultWakeWords);
+        speechConfig.endWords = speechKeywordList(
+            charConfig.value("speechInput/endWords"), defaultEndWords);
+    }
+    else
+    {
+        speechConfig.endWords = defaultEndWords;
+    }
+
+    if (m_speechController)
+    {
+        m_speechController->applyConfig(speechConfig);
+        if (isConversationOutputBusy())
+            m_speechController->setConversationBusy(true);
+        updateSpeechButtonState(m_speechController->state());
+    }
 }
 
 /*显示历史记录*/
@@ -863,7 +913,8 @@ void Dialog::tryStartNextVitsRequest()
 
                          reply->deleteLater();
                          //当前请求结束后立即尝试合成下一句，实现“合成前置”。
-                         tryStartNextVitsRequest(); });
+                         tryStartNextVitsRequest();
+                         maybeFinishConversationOutput(); });
 }
 
 /*启动下一个Vits播放*/
@@ -889,6 +940,76 @@ void Dialog::tryStartNextVitsPlayback()
     //播放严格串行：只有播放器空闲才取下一句。
     m_vitsPlayer->setSource(QUrl::fromLocalFile(m_vitsTempFile->fileName()));
     m_vitsPlayer->play();
+}
+
+/*检查 LLM、VITS 请求和播放器是否全部空闲*/
+bool Dialog::isConversationOutputBusy() const
+{
+    if (m_llmReplyInFlight || m_vitsRequestInFlight ||
+        !m_vitsPendingTexts.isEmpty() || !m_vitsReadyFiles.isEmpty())
+        return true;
+    if (m_vitsPlayer &&
+        m_vitsPlayer->playbackState() != QMediaPlayer::StoppedState)
+        return true;
+    return false;
+}
+
+/*回复链路空闲后恢复语音监听*/
+void Dialog::maybeFinishConversationOutput()
+{
+    if (isConversationOutputBusy())
+        return;
+    if (m_speechController)
+        m_speechController->setConversationBusy(false);
+}
+
+/*根据语音状态更新现有麦克风按钮*/
+void Dialog::updateSpeechButtonState(
+    SpeechInteractionController::State state)
+{
+    QString text = QStringLiteral("按住说话");
+    QString tooltip = QStringLiteral("按住按钮录入语音，松开后识别");
+    bool enabled = m_speechInputEnabled;
+
+    switch (state)
+    {
+    case SpeechInteractionController::State::Disabled:
+        break;
+    case SpeechInteractionController::State::WaitingForWake:
+        text = QStringLiteral("等待唤醒");
+        tooltip = QStringLiteral("正在本地检测语音；有效语音会发送到百度识别唤醒词");
+        break;
+    case SpeechInteractionController::State::Capturing:
+        text = QStringLiteral("聆听中…");
+        tooltip = QStringLiteral("正在收集语音");
+        break;
+    case SpeechInteractionController::State::Recognizing:
+        text = QStringLiteral("识别中…");
+        tooltip = QStringLiteral("正在调用百度语音识别");
+        enabled = false;
+        break;
+    case SpeechInteractionController::State::WaitingForReply:
+        text = QStringLiteral("回复中…");
+        tooltip = QStringLiteral("角色回复结束后将恢复监听");
+        enabled = false;
+        break;
+    case SpeechInteractionController::State::ContinuousReady:
+        text = QStringLiteral("连续对话中");
+        tooltip = QStringLiteral("无需再次说唤醒词，可以直接对话");
+        break;
+    case SpeechInteractionController::State::Ending:
+        text = QStringLiteral("即将结束…");
+        tooltip = QStringLiteral("最后一轮回复结束后退出连续对话");
+        enabled = false;
+        break;
+    }
+
+    ui->pushButton_input->setText(text);
+    ui->pushButton_input->setToolTip(tooltip);
+    ui->pushButton_input->setEnabled(enabled);
+    ui->pushButton_input->setProperty("speechState", static_cast<int>(state));
+    ui->pushButton_input->style()->unpolish(ui->pushButton_input);
+    ui->pushButton_input->style()->polish(ui->pushButton_input);
 }
 
 /*提交当前输入*/
@@ -944,6 +1065,9 @@ bool Dialog::submitCurrentInput()
     ai->setSystemPrompt(systemPrompt);
 
     m_lastUserInput = userInput;
+    m_llmReplyInFlight = true;
+    if (m_speechController)
+        m_speechController->setConversationBusy(true);
     ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     m_streamVitsEnabled = charConfig.value("vitsEnable").toBool();
     ZcJsonLib config(JsonSettingPath);
@@ -987,6 +1111,7 @@ void Dialog::on_checkBox_autoInput_toggled(bool checked)
 {
     ZcJsonLib config(JsonSettingPath);
     config.setValue("speechInput/AutoSend", checked);
+    ReloadSpeechInputConfig();
 }
 
 /*开始录音*/
@@ -1000,184 +1125,15 @@ void Dialog::startSpeechRecording()
 
 void Dialog::startSpeechRecordingFromHotkey()
 {
-    if (!ui->textEdit->isEnabled() || m_isSpeechRecording ||
-        m_isSpeechRecognizing || !m_speechRecorder || !m_speechAudioInput)
-        return;
-
-#ifdef Q_OS_MACOS
-    auto *app = QCoreApplication::instance();
-    if (app)
-    {
-        const QMicrophonePermission microphonePermission;
-        const Qt::PermissionStatus status =
-            app->checkPermission(microphonePermission);
-
-        if (status == Qt::PermissionStatus::Denied)
-        {
-            ui->textEdit->setText(QStringLiteral("麦克风权限未开启，请在系统设置中允许 ZcChat2 使用麦克风"));
-            return;
-        }
-
-        if (status == Qt::PermissionStatus::Undetermined)
-        {
-            ui->textEdit->setText(QStringLiteral("正在请求麦克风权限……"));
-            app->requestPermission(microphonePermission, this,
-                                   [this](const QPermission &permission)
-                                   {
-                                       if (permission.status() ==
-                                           Qt::PermissionStatus::Granted)
-                                           startSpeechRecordingFromHotkey();
-                                       else
-                                           ui->textEdit->setText(QStringLiteral(
-                                               "麦克风权限未开启，请在系统设置中允许 ZcChat2 使用麦克风"));
-                                   });
-            return;
-        }
-    }
-#endif
-
-    if (QMediaDevices::defaultAudioInput().isNull())
-    {
-        ui->textEdit->setText(QStringLiteral("未检测到可用麦克风"));
-        return;
-    }
-
-    //录音文件统一落到临时目录，识别完成后直接读取
-    m_speechAudioInput->setDevice(QMediaDevices::defaultAudioInput());
-    QDir().mkpath(QFileInfo(speechRecordFilePath()).absolutePath());
-
-    QMediaFormat format;
-    format.setAudioCodec(QMediaFormat::AudioCodec::AAC);
-    m_speechRecorder->setMediaFormat(format);
-    m_speechRecorder->setAudioSampleRate(16000);
-    m_speechRecorder->setAudioChannelCount(1);
-    m_speechRecorder->setQuality(QMediaRecorder::HighQuality);
-    m_speechRecorder->setOutputLocation(
-        QUrl::fromLocalFile(speechRecordFilePath()));
-
-    m_isSpeechRecording = true;
-    ui->textEdit->setText(QStringLiteral("录音中……"));
-    m_speechRecorder->record();
+    if (m_speechController)
+        m_speechController->startManualCapture();
 }
 
 /*结束录音*/
 void Dialog::stopSpeechRecording()
 {
-    if (!m_isSpeechRecording || !m_speechRecorder)
-        return;
-    ui->label_name->setText(QStringLiteral("你"));
-    m_speechRecorder->stop();
-}
-
-/*录音文件路径*/
-QString Dialog::speechRecordFilePath() const
-{
-    return QDir(QDir::tempPath()).filePath("ZcChat2/speech_input.m4a");
-}
-
-/*获取百度 Token*/
-QString Dialog::requestBaiduAccessToken(const QString &apiKey,
-                                        const QString &secretKey)
-{
-    if (apiKey.trimmed().isEmpty() || secretKey.trimmed().isEmpty())
-        return QString();
-
-    QNetworkAccessManager manager;
-    QUrl url("https://aip.baidubce.com/oauth/2.0/token");
-    QUrlQuery query;
-    query.addQueryItem("grant_type", "client_credentials");
-    query.addQueryItem("client_id", apiKey);
-    query.addQueryItem("client_secret", secretKey);
-    url.setQuery(query);
-
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-    QEventLoop loop;
-    QNetworkReply *reply = manager.post(request, QByteArray());
-    QString accessToken;
-    connect(reply, &QNetworkReply::finished, &loop, [&]()
-            {
-                if (reply->error() == QNetworkReply::NoError)
-                {
-                    const QJsonDocument doc =
-                        QJsonDocument::fromJson(reply->readAll());
-                    accessToken =
-                        doc.object().value("access_token").toString().trimmed();
-                }
-                reply->deleteLater();
-                loop.quit(); });
-    loop.exec();
-    return accessToken;
-}
-
-/*识别录音文件*/
-QString Dialog::recognizeSpeechFromFile(const QString &filePath)
-{
-    QFile file(filePath);
-    if (!file.exists() || file.size() <= 0)
-        return QString();
-
-    ZcJsonLib config(JsonSettingPath);
-    const QString apiKey =
-        config.value("speechInput/Baidu/ApiKey").toString().trimmed();
-    const QString secretKey =
-        config.value("speechInput/Baidu/SecretKey").toString().trimmed();
-    const QString accessToken = requestBaiduAccessToken(apiKey, secretKey);
-    if (accessToken.isEmpty())
-    {
-        ui->textEdit->setText(QStringLiteral("百度语音识别配置不完整或 Token 获取失败"));
-        return QString();
-    }
-
-    if (!file.open(QIODevice::ReadOnly))
-    {
-        ui->textEdit->setText(QStringLiteral("无法读取录音文件"));
-        return QString();
-    }
-    const QByteArray audioData = file.readAll();
-    file.close();
-    if (audioData.isEmpty())
-        return QString();
-
-    //沿用旧项目的百度短语音识别请求格式，直接提交 m4a 的 Base64 数据
-    QJsonObject payload{
-        {"format", "m4a"},
-        {"rate", 16000},
-        {"channel", 1},
-        {"token", accessToken},
-        {"cuid", QUuid::createUuid().toString(QUuid::WithoutBraces)},
-        {"speech", QString::fromLatin1(audioData.toBase64())},
-        {"len", audioData.size()},
-    };
-
-    QNetworkAccessManager manager;
-    QNetworkRequest request(QUrl("https://vop.baidu.com/server_api"));
-    request.setRawHeader("Content-Type", "application/json");
-    request.setRawHeader("Accept", "application/json");
-
-    QEventLoop loop;
-    QNetworkReply *reply =
-        manager.post(request, QJsonDocument(payload).toJson(QJsonDocument::Compact));
-    QString recognizedText;
-    connect(reply, &QNetworkReply::finished, &loop, [&]()
-            {
-                if (reply->error() == QNetworkReply::NoError)
-                {
-                    const QJsonDocument doc =
-                        QJsonDocument::fromJson(reply->readAll());
-                    const QJsonArray result =
-                        doc.object().value("result").toArray();
-                    if (!result.isEmpty())
-                        recognizedText = result.first().toString().trimmed();
-                }
-                reply->deleteLater();
-                loop.quit(); });
-    loop.exec();
-
-    if (recognizedText.isEmpty())
-        ui->textEdit->setText(QStringLiteral("没有识别到有效语音"));
-    return recognizedText;
+    if (m_speechController)
+        m_speechController->stopManualCapture();
 }
 
 bool Dialog::handleSpeechHotkeyEvent(quint32 vkCode, bool isKeyDown, bool isKeyUp)

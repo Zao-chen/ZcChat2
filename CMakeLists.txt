@@ -4,8 +4,30 @@ project(ZcChat2 VERSION 1.6.0 LANGUAGES CXX)
 
 if(APPLE)
     set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Build universal binaries")
+    if(NOT CMAKE_OSX_DEPLOYMENT_TARGET OR
+       CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "13.4")
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "13.4" CACHE STRING
+            "Minimum macOS version required by the speech runtime" FORCE)
+    endif()
     list(APPEND CMAKE_FRAMEWORK_PATH "/System/Library/Frameworks")
     add_link_options("-F/System/Library/Frameworks")
+
+    # Configure a complete bundle plist ourselves.  Relying on Qt's generated
+    # template left Ninja builds without Contents/Info.plist, which prevents
+    # macOS from displaying the microphone permission prompt.
+    set(MACOSX_BUNDLE_BUNDLE_NAME "ZcChat2")
+    set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.zaochen.zcchat2")
+    set(MACOSX_BUNDLE_EXECUTABLE_NAME "ZcChat2")
+    set(MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}")
+    set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}")
+    set(MACOSX_BUNDLE_COPYRIGHT "Copyright (c) ZcChat2 contributors")
+    set(MACOSX_BUNDLE_ICON_FILE "")
+    set(ZCCHAT2_MAC_INFO_PLIST
+        "${CMAKE_CURRENT_BINARY_DIR}/ZcChat2-Info.plist")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
+        "${ZCCHAT2_MAC_INFO_PLIST}"
+    )
 endif()
 
 # 配置版本头文件，传递版本号到代码
@@ -34,6 +56,41 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #这样更稳妥一点,同时支持qt5和qt6
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Multimedia Svg)
 set(QT_VERSION_MAJOR 6)
+
+# 准备 ONNX Runtime 和 Silero 模型，供语音库及测试目标复用。
+include(cmake/SpeechDependencies.cmake)
+
+# 将固定版本的 Silero 模型嵌入应用资源，运行时无需访问模型文件。
+function(zcchat2_add_silero_resource target_name)
+    qt_add_resources(${target_name} "silero_vad_model"
+        PREFIX "/models"
+        BASE "${ZCCHAT2_SILERO_MODEL_BASE}"
+        FILES "${ZCCHAT2_SILERO_MODEL}"
+    )
+endfunction()
+
+# 语音核心库不依赖界面，便于控制器和 Qt Test 共同复用。
+add_library(ZcChatSpeech STATIC
+    utils/speech/Pcm16kConverter.h
+    utils/speech/Pcm16kConverter.cpp
+    utils/speech/SileroVadEngine.h
+    utils/speech/SileroVadEngine.cpp
+    utils/speech/SpeechSessionPolicy.h
+    utils/speech/SpeechSessionPolicy.cpp
+    utils/speech/VadSegmenter.h
+    utils/speech/VadSegmenter.cpp
+    utils/speech/SpeechInteractionController.h
+    utils/speech/SpeechInteractionController.cpp
+)
+target_include_directories(ZcChatSpeech PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/speech
+)
+target_link_libraries(ZcChatSpeech PUBLIC
+    Qt6::Core
+    Qt6::Network
+    Qt6::Multimedia
+    ZcOnnxRuntime
+)
 
 if(APPLE)
     foreach(qt_target Qt6::Widgets Qt6::Gui Qt6::Core)
@@ -178,12 +235,15 @@ target_include_directories(ZcChat2 PRIVATE
 
 # 2. 公共库链接 (全平台通用)
 target_link_libraries(ZcChat2 PRIVATE
+    ZcChatSpeech
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
     Qt${QT_VERSION_MAJOR}::Multimedia
     Qt${QT_VERSION_MAJOR}::Gui
     Qt${QT_VERSION_MAJOR}::Svg
 )
+
+zcchat2_add_silero_resource(ZcChat2)
 
 if(APPLE)
     target_link_libraries(ZcChat2 PRIVATE
@@ -199,7 +259,10 @@ if(APPLE)
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_BUNDLE_NAME "ZcChat2"
         MACOSX_BUNDLE_GUI_IDENTIFIER "com.zaochen.zcchat2"
-        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_INFO_PLIST "${ZCCHAT2_MAC_INFO_PLIST}"
+        LINK_DEPENDS "${ZCCHAT2_MAC_INFO_PLIST}"
         BUILD_RPATH "@executable_path/../Frameworks"
         INSTALL_RPATH "@executable_path/../Frameworks"
     )
@@ -221,6 +284,33 @@ if(APPLE)
             VERBATIM
         )
     endif()
+
+    add_custom_command(TARGET ZcChat2 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_BUNDLE_DIR:ZcChat2>/Contents/Frameworks"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${ZCCHAT2_ONNXRUNTIME_RUNTIME}"
+            "$<TARGET_BUNDLE_DIR:ZcChat2>/Contents/Frameworks"
+        VERBATIM
+    )
+    add_custom_command(TARGET ZcChat2 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_BUNDLE_DIR:ZcChat2>/Contents/Resources"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
+            "$<TARGET_BUNDLE_DIR:ZcChat2>/Contents/Resources"
+        VERBATIM
+    )
+    add_custom_command(TARGET ZcChat2 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${ZCCHAT2_MAC_INFO_PLIST}"
+            "$<TARGET_BUNDLE_DIR:ZcChat2>/Contents/Info.plist"
+        # Bind Info.plist to the local development signature so TCC can use
+        # the stable bundle identifier when recording microphone permission.
+        COMMAND /usr/bin/codesign --force --deep --sign -
+            "$<TARGET_BUNDLE_DIR:ZcChat2>"
+        VERBATIM
+    )
 endif()
 
 # 3. Windows 专用链接
@@ -236,6 +326,9 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${ZCAILIB_WIN_DLL}
             $<TARGET_FILE_DIR:ZcChat2>/ZcAiLib.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${ZCCHAT2_ONNXRUNTIME_RUNTIME}"
+            $<TARGET_FILE_DIR:ZcChat2>
     )
 endif()
 
@@ -257,7 +350,19 @@ if(UNIX AND NOT APPLE)
     )
     
     set_target_properties(ZcChat2 PROPERTIES
-        INSTALL_RPATH "$ORIGIN/3rdparty/ZcJsonLib/lib:$ORIGIN/3rdparty/ZcAILib/lib:$ORIGIN/3rdparty/ZcWidgetTools/lib:$ORIGIN/3rdparty/ElaWidgetTools/lib"
+        INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib:$ORIGIN/3rdparty/ZcJsonLib/lib:$ORIGIN/3rdparty/ZcAILib/lib:$ORIGIN/3rdparty/ZcWidgetTools/lib:$ORIGIN/3rdparty/ElaWidgetTools/lib"
+    )
+
+    add_custom_command(TARGET ZcChat2 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${ZCCHAT2_ONNXRUNTIME_RUNTIME}"
+        $<TARGET_FILE_DIR:ZcChat2>
+        COMMAND ${CMAKE_COMMAND} -E rm -f
+            $<TARGET_FILE_DIR:ZcChat2>/${ZCCHAT2_ONNXRUNTIME_SONAME}
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            "${ZCCHAT2_ONNXRUNTIME_RUNTIME_NAME}"
+            $<TARGET_FILE_DIR:ZcChat2>/${ZCCHAT2_ONNXRUNTIME_SONAME}
+        VERBATIM
     )
 endif()
 
@@ -267,7 +372,40 @@ install(TARGETS ZcChat2
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/ZcChat2)
+
+if(WIN32)
+    install(FILES "${ZCCHAT2_ONNXRUNTIME_RUNTIME}"
+        DESTINATION ${CMAKE_INSTALL_BINDIR})
+elseif(UNIX AND NOT APPLE)
+    install(FILES "${ZCCHAT2_ONNXRUNTIME_RUNTIME}"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    install(CODE
+        "file(CREATE_LINK \"${ZCCHAT2_ONNXRUNTIME_RUNTIME_NAME}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${ZCCHAT2_ONNXRUNTIME_SONAME}\" SYMBOLIC COPY_ON_ERROR)"
+    )
+endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(ZcChat2)
+endif()
+
+include(CTest)
+if(BUILD_TESTING)
+    # 测试目标复用同一模型资源和语音核心库，保证测试路径与正式构建一致。
+    find_package(Qt6 REQUIRED COMPONENTS Test)
+    qt_add_executable(ZcChatSpeechTests
+        tests/test_speech.cpp
+    )
+    zcchat2_add_silero_resource(ZcChatSpeechTests)
+    qt_add_resources(ZcChatSpeechTests "speech_test_fixtures"
+        PREFIX "/fixtures"
+        BASE "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures"
+        FILES "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/voice_sample.pcm.qz.b64"
+    )
+    target_link_libraries(ZcChatSpeechTests PRIVATE
+        ZcChatSpeech
+        Qt6::Test
+    )
+    add_test(NAME ZcChatSpeechTests COMMAND ZcChatSpeechTests)
 endif()
