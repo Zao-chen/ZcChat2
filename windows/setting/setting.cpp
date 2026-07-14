@@ -9,11 +9,14 @@
 #include "child/settingchild_speech.h"
 #include "child/settingchild_vits.h"
 
+#include <QIcon>
+
 MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     : ElaWindow(parent), ui(new Ui::MainWindow)
 {
     /*初始化窗口*/
     setWindowTitle("ZcChat2");
+    setWindowIcon(QIcon(":/res/img/logo/logo.png"));
     setUserInfoCardVisible(false);
 
     /*创建窗口*/

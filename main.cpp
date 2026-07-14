@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
     qputenv("QT_QPA_PLATFORM", "xcb");
 #endif
     QApplication a(argc, argv);
+    QApplication::setWindowIcon(QIcon(":/res/img/logo/logo.png"));
 #ifdef Q_OS_MACOS
     // Keep QLabel text readable when macOS switches to dark mode.
     QPalette labelPalette = a.palette();
