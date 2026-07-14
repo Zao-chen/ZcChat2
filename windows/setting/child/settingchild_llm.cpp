@@ -17,6 +17,8 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
     ui->BreadcrumbBar->setTextPixelSize(25);
     ui->BreadcrumbBar->appendBreadcrumb("对话模型设置");
     modelListModel = new QStringListModel(this);
+    //使用透明列表背景，交由设置窗口统一绘制Ela主题色
+    ui->listView_ModelList->setIsTransparent(true);
     ui->listView_ModelList->setModel(modelListModel);
     ai = new AiProvider(this);
 

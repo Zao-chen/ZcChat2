@@ -21,7 +21,6 @@
 #include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QLabel>
 #include <QProcess>
 #include <QSettings>
 #include <QStandardPaths>
@@ -605,7 +604,8 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
         overwriteDialog.setLeftButtonText("取消");
         overwriteDialog.setRightButtonText("覆盖");
 
-        QLabel *messageLabel = new QLabel(
+        //使用ElaText让确认对话框文字跟随Ela主题
+        ElaText *messageLabel = new ElaText(
             QString("角色 %1 已存在，是否覆盖？").arg(charName), &overwriteDialog);
         messageLabel->setWordWrap(true);
         overwriteDialog.setCentralWidget(messageLabel);
@@ -704,9 +704,10 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
         overwriteDialog.setLeftButtonText("取消");
         overwriteDialog.setRightButtonText("覆盖");
 
-        QLabel *messageLabel =
-            new QLabel(QString("文件 %1 已存在，是否覆盖？").arg(zipFileName),
-                       &overwriteDialog);
+        //使用ElaText让确认对话框文字跟随Ela主题
+        ElaText *messageLabel =
+            new ElaText(QString("文件 %1 已存在，是否覆盖？").arg(zipFileName),
+                        &overwriteDialog);
         messageLabel->setWordWrap(true);
         overwriteDialog.setCentralWidget(messageLabel);
 
@@ -830,8 +831,8 @@ void SettingChild_Char::RefreshTachieActionList()
         label->setFont(font);
         label->setText(actionName);
 
+        //下拉框使用Ela自身主题样式，不复制旧的硬编码QSS
         ElaComboBox *combo = new ElaComboBox(row);
-        combo->setStyleSheet(ui->comboBox_CharList->styleSheet());
         combo->addItem("无动画", "");
         for (const QString &uniqueKey : animationUniqueKeys)
         {

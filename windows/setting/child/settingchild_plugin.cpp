@@ -12,7 +12,6 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QLayoutItem>
 #include <QRegularExpression>
 #include <QStandardPaths>
@@ -25,6 +24,8 @@ SettingChild_Plugin::SettingChild_Plugin(QWidget *parent)
     ui->setupUi(this);
     ui->BreadcrumbBar->setTextPixelSize(25);
     ui->BreadcrumbBar->appendBreadcrumb("插件设置");
+    //使用透明列表背景，交由设置窗口统一绘制Ela主题色
+    ui->listView_PluginAnimations->setIsTransparent(true);
 }
 
 SettingChild_Plugin::~SettingChild_Plugin()
@@ -200,14 +201,18 @@ void SettingChild_Plugin::RefreshAnimePluginList()
 
     if (plugins.isEmpty())
     {
-        QLabel *emptyLabel =
-            new QLabel("暂无动画插件，请先导入json插件文件", ui->scrollAreaWidgetContents_Plugins);
+        //空列表提示使用ElaText，确保文字跟随当前主题
+        ElaText *emptyLabel =
+            new ElaText("暂无动画插件，请先导入json插件文件",
+                        ui->scrollAreaWidgetContents_Plugins);
         cardsLayout->addWidget(emptyLabel);
     }
 
     for (const QString &error : errorList)
     {
-        QLabel *errorLabel = new QLabel(error, ui->scrollAreaWidgetContents_Plugins);
+        //错误提示使用ElaText，确保深色模式下文字可读
+        ElaText *errorLabel =
+            new ElaText(error, ui->scrollAreaWidgetContents_Plugins);
         errorLabel->setWordWrap(true);
         cardsLayout->addWidget(errorLabel);
     }

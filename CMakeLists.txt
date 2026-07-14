@@ -178,7 +178,6 @@ set(PROJECT_SOURCES
         utils/log.h
         windows/setting/setting.cpp
         windows/setting/setting.h
-        windows/setting/setting.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

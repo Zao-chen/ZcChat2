@@ -132,7 +132,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QScrollArea" name="scrollArea_Plugins">
+        <widget class="ElaScrollArea" name="scrollArea_Plugins">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>
@@ -239,6 +239,12 @@
    <class>ElaListView</class>
    <extends>QListView</extends>
    <header location="global">ElaListView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ElaScrollArea</class>
+   <extends>QScrollArea</extends>
+   <header location="global">ElaScrollArea.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

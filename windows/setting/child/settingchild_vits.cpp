@@ -19,6 +19,8 @@ SettingChild_Vits::SettingChild_Vits(QWidget *parent)
     /*初始化*/
     ui->BreadcrumbBar->setTextPixelSize(25);
     ui->BreadcrumbBar->appendBreadcrumb("语音合成设置");
+    //使用透明列表背景，交由设置窗口统一绘制Ela主题色
+    ui->listView_ModelAndSpeakerlList->setIsTransparent(true);
     ZcJsonLib config(JsonSettingPath);
     bool sentenceSplit = config.value("vits/SentenceSplit", true).toBool();
     ui->ToggleSwitch_VitsSentenceSplit->setIsToggled(sentenceSplit);
