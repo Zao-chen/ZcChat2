@@ -6,6 +6,7 @@
 #include "ElaMenu.h"
 
 #include "Version.h"
+#include "utils/log.h"
 
 #include <QApplication>
 #include <QColor>
@@ -99,6 +100,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("ZcChat2");
     QCoreApplication::setApplicationVersion(APP_VERSION);
     QCoreApplication::setOrganizationName("MyOrganization");
+    QT_LOG::logInit();
     qInfo() << "Debugging Output";
 
     /*窗口创建*/

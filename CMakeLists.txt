@@ -174,6 +174,8 @@ endif()
 
 set(PROJECT_SOURCES
         main.cpp
+        utils/log.cpp
+        utils/log.h
         windows/setting/setting.cpp
         windows/setting/setting.h
         windows/setting/setting.ui
@@ -219,6 +221,10 @@ else()
         )
     endif()
 endif()
+
+set_target_properties(ZcChat2 PROPERTIES
+    WIN32_EXECUTABLE TRUE
+)
 
 
 # 添加头文件路径
