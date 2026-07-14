@@ -22,6 +22,8 @@ SettingChild_Speech::SettingChild_Speech(QWidget *parent)
     ZcJsonLib config(JsonSettingPath);
     ui->ToggleSwitch_SpeechInputEnable->setIsToggled(
         config.value("speechInput/Enable", false).toBool());
+    ui->ToggleSwitch_WakeEnable->setIsToggled(
+        config.value("speechInput/Wake/Enable", false).toBool());
     const bool globalHotkeyEnable =
         config.value("speechInput/GlobalHotkey/Enable", false).toBool();
     ui->ToggleSwitch_GlobalHotkeyEnable->setIsToggled(globalHotkeyEnable);
@@ -70,6 +72,14 @@ void SettingChild_Speech::on_ToggleSwitch_SpeechInputEnable_toggled(bool checked
 {
     ZcJsonLib config(JsonSettingPath);
     config.setValue("speechInput/Enable", checked);
+    emit speechConfigChanged();
+}
+
+/*启用或关闭语音唤醒*/
+void SettingChild_Speech::on_ToggleSwitch_WakeEnable_toggled(bool checked)
+{
+    ZcJsonLib config(JsonSettingPath);
+    config.setValue("speechInput/Wake/Enable", checked);
     emit speechConfigChanged();
 }
 

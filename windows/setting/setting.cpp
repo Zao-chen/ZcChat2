@@ -51,6 +51,8 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
             tachie, &Tachie::ResetTachieLoc); //重置立绘位置
     connect(settingchild_charWin, &SettingChild_Char::requestReloadAIConfig,
             dialog, &Dialog::ReloadAIConfig); //重载AI配置
+    connect(settingchild_charWin, &SettingChild_Char::requestReloadSpeechConfig,
+            dialog, &Dialog::ReloadSpeechInputConfig); //重载角色语音关键词
     //获取模型列表后刷新角色页的模型下拉框
     connect(settingchild_llmWin, &SettingChild_LLM::modelListRefreshed,
             settingchild_charWin, &SettingChild_Char::RefreshModelList); //刷新LLM模型列表

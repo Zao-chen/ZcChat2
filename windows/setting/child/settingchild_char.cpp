@@ -232,6 +232,37 @@ bool extractZipArchive(const QString &zipFilePath, const QString &targetDir,
         *errorMessage = errors.join(" | ");
     return false;
 }
+
+//读取角色关键词数组。
+QStringList speechWordsFromValue(const QJsonValue &value,
+                                 const QStringList &fallback)
+{
+    QStringList words;
+    if (value.isArray())
+    {
+        for (const QJsonValue &item : value.toArray())
+        {
+            const QString word = item.toString().trimmed();
+            if (!word.isEmpty())
+                words.append(word);
+        }
+    }
+    return words.isEmpty() ? fallback : words;
+}
+
+//将设置页的 | 分隔输入转换为角色配置数组。
+QJsonArray speechWordsFromEditor(const QString &text)
+{
+    QJsonArray words;
+    const QStringList parts = text.split('|');
+    for (const QString &part : parts)
+    {
+        const QString word = part.trimmed();
+        if (!word.isEmpty())
+            words.append(word);
+    }
+    return words;
+}
 } // namespace
 
 /*初始化窗口*/
@@ -274,6 +305,10 @@ void SettingChild_Char::LoadCurrentCharConfig()
         ui->spinBox_TachieSize->setValue(0);
         ClearTachieBindingRows();
         ui->comboBox_ModelSelect->clear();
+        ui->lineEdit_SpeechWakeWords->clear();
+        ui->lineEdit_SpeechEndWords->clear();
+        ui->lineEdit_SpeechWakeWords->setEnabled(false);
+        ui->lineEdit_SpeechEndWords->setEnabled(false);
         ui->ToggleSwitch_VitsEnable->setIsToggled(false);
         ui->comboBox_Vits_MASSelect->clear();
         ui->comboBox_Vits_MASSelect->setEnabled(false);
@@ -285,6 +320,16 @@ void SettingChild_Char::LoadCurrentCharConfig()
     ZcJsonLib charConfig(CharacterAssestPath + "/" + charName + "/config.json");
     QString charPrompt = charConfig.value("prompt").toString();
     ui->plainTextEdit_CharPrompt->setPlainText(charPrompt);
+    ui->lineEdit_SpeechWakeWords->setEnabled(true);
+    ui->lineEdit_SpeechEndWords->setEnabled(true);
+    ui->lineEdit_SpeechWakeWords->setText(
+        speechWordsFromValue(charConfig.value("speechInput/wakeWords"),
+                             QStringList{charName})
+            .join(QStringLiteral(" | ")));
+    ui->lineEdit_SpeechEndWords->setText(
+        speechWordsFromValue(charConfig.value("speechInput/endWords"),
+                             QStringList{QStringLiteral("结束对话")})
+            .join(QStringLiteral(" | ")));
     //立绘大小
     ZcJsonLib charUserConfig(CharacterUserConfigPath + "/" + charName +
                              "/config.json");
@@ -356,6 +401,8 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
     ui->plainTextEdit_CharPrompt->clear();
     ui->spinBox_TachieSize->setValue(0);
     ui->comboBox_ModelSelect->clear();
+    ui->lineEdit_SpeechWakeWords->clear();
+    ui->lineEdit_SpeechEndWords->clear();
     ui->ToggleSwitch_VitsEnable->setIsToggled(false);
     ui->comboBox_Vits_MASSelect->clear();
     ui->comboBox_Vits_ServerSelect->clear();
@@ -392,6 +439,7 @@ void SettingChild_Char::on_comboBox_CharList_currentTextChanged(
 
     emit requestReloadCharSelect("default");
     emit requestReloadAIConfig();
+    emit requestReloadSpeechConfig();
 }
 
 /*修改角色提示词*/
@@ -504,6 +552,34 @@ void SettingChild_Char::on_ToggleSwitch_VitsEnable_toggled(bool checked)
     charConfig.setValue("vitsEnable", checked);
     ui->comboBox_Vits_MASSelect->setEnabled(checked);
     ui->comboBox_Vits_ServerSelect->setEnabled(checked);
+}
+
+/*保存角色唤醒词*/
+void SettingChild_Char::on_lineEdit_SpeechWakeWords_textChanged(
+    const QString &text)
+{
+    if (!isAlreadyLoading)
+        return;
+    const QString charName = ui->comboBox_CharList->currentText();
+    if (charName.isEmpty() || charName == QStringLiteral("未选择"))
+        return;
+    ZcJsonLib charConfig(CharacterAssestPath + "/" + charName + "/config.json");
+    charConfig.setValue("speechInput/wakeWords", speechWordsFromEditor(text));
+    emit requestReloadSpeechConfig();
+}
+
+/*保存角色结束词*/
+void SettingChild_Char::on_lineEdit_SpeechEndWords_textChanged(
+    const QString &text)
+{
+    if (!isAlreadyLoading)
+        return;
+    const QString charName = ui->comboBox_CharList->currentText();
+    if (charName.isEmpty() || charName == QStringLiteral("未选择"))
+        return;
+    ZcJsonLib charConfig(CharacterAssestPath + "/" + charName + "/config.json");
+    charConfig.setValue("speechInput/endWords", speechWordsFromEditor(text));
+    emit requestReloadSpeechConfig();
 }
 
 /*导入角色压缩包*/

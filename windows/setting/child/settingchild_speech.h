@@ -24,6 +24,8 @@ class SettingChild_Speech : public QWidget
                                             QStringList lastBreadcrumbList);
     void on_pushButton_Baidu_Set_clicked();
     void on_ToggleSwitch_SpeechInputEnable_toggled(bool checked);
+    //语音唤醒是语音模块总开关下的独立功能开关。
+    void on_ToggleSwitch_WakeEnable_toggled(bool checked);
     void on_ToggleSwitch_GlobalHotkeyEnable_toggled(bool checked);
     void on_lineEdit_BaiduApiKey_textChanged(const QString &arg1);
     void on_lineEdit_BaiduSecretKey_textChanged(const QString &arg1);
