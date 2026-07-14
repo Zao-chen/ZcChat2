@@ -327,6 +327,15 @@ if(WIN32)
             ${ZCAILIB_WIN_DLL}
             $<TARGET_FILE_DIR:ZcChat2>/ZcAiLib.dll
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/bin/elawidgettools.dll"
+            $<TARGET_FILE_DIR:ZcChat2>/elawidgettools.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/bin/ZcWidgetTools.dll"
+            $<TARGET_FILE_DIR:ZcChat2>/ZcWidgetTools.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/bin/ZcJsonLib.dll"
+            $<TARGET_FILE_DIR:ZcChat2>/ZcJsonLib.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${ZCCHAT2_ONNXRUNTIME_RUNTIME}"
             $<TARGET_FILE_DIR:ZcChat2>
     )
