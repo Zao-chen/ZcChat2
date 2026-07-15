@@ -332,7 +332,7 @@ Dialog::Dialog(QWidget *parent)
             this,
             [this](const QString &error)
             {
-                qWarning() << "Speech input:" << error;
+                qWarning() << "speech.error" << error;
                 ui->pushButton_input->setToolTip(error);
                 QToolTip::showText(
                     ui->pushButton_input->mapToGlobal(
@@ -407,6 +407,10 @@ Dialog::Dialog(QWidget *parent)
                 const QString finalReply = m_streamRawReply.isEmpty()
                                                ? reply
                                                : m_streamRawReply; //确保使用完整结果
+                qInfo().noquote() << "获取到 API 响应：" << finalReply;
+                if (finalReply.count('|') < 2)
+                    qWarning() << "chat.reply.invalid_format"
+                                     << "separator_count" << finalReply.count('|');
                 //解析回复
                 const QString mood = finalReply.section('|', 0, 0).trimmed();
                 const QString chineseReply = finalReply.section('|', 1, 1).trimmed();
@@ -454,6 +458,7 @@ Dialog::Dialog(QWidget *parent)
     connect(ai, &AiProvider::errorOccurred, [=](const QString &error)
             {
                 m_llmReplyInFlight = false;
+                qCritical().noquote() << "API 请求失败：" << error;
                 ui->pushButton_next->show();
                 ui->textEdit->setText(error);
                 ui->textEdit->setEnabled(false);
@@ -536,6 +541,11 @@ void Dialog::ReloadAIConfig()
     QString modelSelect = CharConfig.value("modelSelect").toString();
     ai->setModel(modelSelect);
 
+    qInfo() << "ai.config.reloaded"
+                  << "provider" << serverSelect
+                  << "model" << modelSelect
+                  << "credential_configured" << !apiKey.trimmed().isEmpty();
+
     loadContextHistory();
 }
 
@@ -574,13 +584,19 @@ void Dialog::ReloadSpeechInputConfig()
         g_speechHotkeyOwner = this;
         g_speechHotkeyHook =
             SetWindowsHookExW(WH_KEYBOARD_LL, SpeechHotkeyHookProc, nullptr, 0);
+        if (!g_speechHotkeyHook)
+        {
+            qWarning() << "global_hotkey.install.failed"
+                                 << "native_key" << globalHotkeyNativeKey;
+            m_globalSpeechHotkeyEnabled = false;
+        }
     }
 #endif
 
 #ifdef Q_OS_MACOS
     if (m_globalSpeechHotkeyEnabled)
     {
-        qWarning() << "Global speech hotkey is not supported on macOS yet";
+        qWarning() << "global_hotkey.unsupported" << "platform" << "macOS";
         m_globalSpeechHotkeyEnabled = false;
     }
 #endif
@@ -844,7 +860,6 @@ bool Dialog::nativeEvent(const QByteArray &eventType, void *message,
 /*追加待合成文本*/
 void Dialog::VitsGetAndPlay(QString text)
 {
-    qDebug() << "请求合成文本：" << text;
 
     m_vitsPendingTexts.append(text);
     tryStartNextVitsRequest();
@@ -854,7 +869,10 @@ void Dialog::VitsGetAndPlay(QString text)
 void Dialog::tryStartNextVitsRequest()
 {
     if (!m_vitsManager || !m_vitsPlayer)
+    {
+        qWarning() << "synthesis.skipped" << "reason" << "not_initialized";
         return;
+    }
     if (m_vitsRequestInFlight || m_vitsPendingTexts.isEmpty())
         return;
 
@@ -878,7 +896,14 @@ void Dialog::tryStartNextVitsRequest()
                             .arg(QString(QUrl::toPercentEncoding(text)))
                             .arg(QString(QUrl::toPercentEncoding(model)))
                             .arg(QString(QUrl::toPercentEncoding(speaker)));
-    qInfo() << "语音合成请求到" << modelAndSpeaker;
+    if (apiUrl.trimmed().isEmpty() || model.isEmpty() || speaker.isEmpty())
+    {
+        qWarning() << "synthesis.config.incomplete"
+                             << "url_configured" << !apiUrl.trimmed().isEmpty()
+                             << "voice_configured"
+                             << (!model.isEmpty() && !speaker.isEmpty());
+    }
+    qInfo().noquote() << "发送语音合成请求：" << urlString;
 
     m_vitsRequestInFlight = true;
     QNetworkRequest request(urlString);
@@ -889,9 +914,11 @@ void Dialog::tryStartNextVitsRequest()
                      {
                          m_vitsRequestInFlight = false;
 
-                         if (reply->error() == QNetworkReply::NoError)
-                         {
-                             QByteArray audioData = reply->readAll();
+                          if (reply->error() == QNetworkReply::NoError)
+                          {
+                              QByteArray audioData = reply->readAll();
+                              qInfo() << "synthesis.request.completed"
+                                                << "bytes" << audioData.size();
                              if (!audioData.isEmpty())
                              {
                                  QTemporaryFile *readyFile =
@@ -904,12 +931,24 @@ void Dialog::tryStartNextVitsRequest()
                                      m_vitsReadyFiles.append(readyFile);
                                      tryStartNextVitsPlayback();
                                  }
-                                 else
-                                 {
-                                     readyFile->deleteLater();
-                                 }
-                             }
-                         }
+                                  else
+                                  {
+                                      qWarning()
+                                          << "synthesis.temp_file.failed";
+                                      readyFile->deleteLater();
+                                  }
+                              }
+                              else
+                              {
+                                  qWarning()
+                                      << "synthesis.response.empty";
+                              }
+                          }
+                          else
+                          {
+                              qWarning() << "synthesis.request.failed"
+                                                   << reply->errorString();
+                          }
 
                          reply->deleteLater();
                          //当前请求结束后立即尝试合成下一句，实现“合成前置”。
@@ -1031,6 +1070,7 @@ bool Dialog::submitCurrentInput()
         ui->textEdit->clear();
         ui->textEdit->setEnabled(true);
         ui->label_name->setText(QStringLiteral("你"));
+        qDebug() << "chat.submit.ignored" << "reason" << "empty_input";
         return false;
     }
 
@@ -1091,7 +1131,14 @@ bool Dialog::submitCurrentInput()
     }
     if (m_vitsPlayer)
         m_vitsPlayer->stop();
-    ai->chat(buildUserMessageWithContext(userInput));
+    const QString requestMessage = buildUserMessageWithContext(userInput);
+    const QString provider = charConfig.value("serverSelect").toString();
+    const QString model = charConfig.value("modelSelect").toString();
+    qInfo().noquote() << "发送 API 请求："
+                      << "服务商=" << provider
+                      << "模型=" << model
+                      << "内容=" << requestMessage;
+    ai->chat(requestMessage);
     ui->textEdit->setText("……");
     return true;
 }

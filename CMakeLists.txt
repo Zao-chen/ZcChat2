@@ -174,6 +174,8 @@ endif()
 
 set(PROJECT_SOURCES
         main.cpp
+        utils/createwin.cpp
+        utils/createwin.h
         utils/log.cpp
         utils/log.h
         windows/setting/setting.cpp

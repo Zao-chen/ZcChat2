@@ -128,6 +128,8 @@ void Tachie::SetTachieImg(QString TachieName)
     const QString tachieDirPath = ReadCharacterTachiePath();
     if (tachieDirPath.isEmpty())
     {
+        qWarning() << "tachie.load.skipped"
+                             << "reason" << "character_not_selected";
         return;
     }
 
@@ -185,7 +187,8 @@ void Tachie::SetTachieImg(QString TachieName)
     }
     else if (NowTachie.isNull())
     {
-        qWarning() << "立绘加载失败:" << normalizedName;
+        qWarning() << "tachie.load.failed"
+                             << "action" << normalizedName;
         return;
     }
 
@@ -224,7 +227,9 @@ void Tachie::TryPlayAnimationForAction(const QString &actionName)
     if (!m_animePluginManager.TryGetAnimationByUniqueKey(uniqueKey, plugin,
                                                          animation))
     {
-        qWarning() << "动画绑定无效:" << actionName << uniqueKey;
+        qWarning() << "animation.binding.invalid"
+                             << "action" << actionName
+                             << "key" << uniqueKey;
         return;
     }
 
@@ -373,7 +378,6 @@ void Tachie::SetTachieSize(int size)
 {
     constexpr double kCanvasScale = 2.0;
     const int safeSize = (size <= 0) ? 100 : size;
-    qInfo() << "设置立绘大小为" << safeSize;
 
     if (NowTachie.isNull())
     {

@@ -6,6 +6,7 @@
 #include "ElaMenu.h"
 
 #include "Version.h"
+#include "GlobalConstants.h"
 #include "utils/log.h"
 
 #include <QApplication>
@@ -15,6 +16,7 @@
 #include <QPalette>
 #include <QStandardPaths>
 #include <QSystemTrayIcon>
+#include <QSysInfo>
 
 #include <QDir>
 
@@ -101,7 +103,16 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(APP_VERSION);
     QCoreApplication::setOrganizationName("MyOrganization");
     QT_LOG::logInit();
-    qInfo() << "Debugging Output";
+    qInfo().noquote()
+        << QStringLiteral("application.start version=%1 platform=%2")
+               .arg(QCoreApplication::applicationVersion(),
+                    QSysInfo::prettyProductName());
+    qInfo().noquote()
+        << QStringLiteral("application.data_paths config=%1 log=%2")
+               .arg(QDir::toNativeSeparators(IniSettingPath),
+                    QDir::toNativeSeparators(QT_LOG::logFilePath()));
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, []()
+                     { qInfo() << "application.stop"; });
 
     /*窗口创建*/
     Dialog dialogWin;
@@ -156,6 +167,8 @@ int main(int argc, char *argv[])
                          settings->activateWindow(); });
     //退出程序
     QObject::connect(actionQuit, &QAction::triggered, &a, &QApplication::quit);
+
+    qInfo() << "application.ready";
 
     return a.exec();
 }

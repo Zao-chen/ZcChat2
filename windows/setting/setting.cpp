@@ -141,4 +141,6 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
             dialog, &Dialog::ReloadGeneralConfig); //刷新通用配置
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow()
+{
+}

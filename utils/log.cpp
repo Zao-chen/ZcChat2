@@ -1,4 +1,5 @@
 #include "log.h"
+#include "createwin.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -14,6 +15,7 @@
 #include <QWidget>
 
 #include <cstdlib>
+#include <iostream>
 
 namespace
 {
@@ -57,6 +59,11 @@ QString activeWindowName()
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context,
                           const QString &message)
 {
+    // User-facing logs keep operational information and above; verbose debug
+    // output from this application and linked libraries is intentionally dropped.
+    if (type == QtDebugMsg)
+        return;
+
     QString logLine = QStringLiteral("%1 [%2] [%3] %4")
                           .arg(QDateTime::currentDateTime().toString(
                                    QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz")),
@@ -84,7 +91,13 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context,
             file.write("\n");
             file.flush();
         }
+
+        // Keep the legacy ZcChat behavior for terminal launches and redirects.
+        std::cout << logLine.toLocal8Bit().constData() << std::endl;
     }
+
+    if (type == QtCriticalMsg)
+        createwin(logLine);
 
     if (type == QtFatalMsg)
         std::abort();
@@ -116,6 +129,7 @@ void logInit()
     }
 
     qInstallMessageHandler(customMessageHandler);
-    qInfo().noquote() << "Logging initialized:" << QDir::toNativeSeparators(path);
+    qInfo().noquote()
+        << "logging.initialized path=" << QDir::toNativeSeparators(path);
 }
 } // namespace QT_LOG

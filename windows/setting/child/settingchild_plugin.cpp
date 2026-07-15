@@ -73,6 +73,7 @@ void SettingChild_Plugin::on_pushButton_ImportAnimePlugin_clicked()
     QString parseError;
     if (!LoadAnimePluginFromFile(pluginJsonPath, plugin, parseError))
     {
+        qWarning() << "plugin.import.invalid" << parseError;
         ElaMessageBar::error(ElaMessageBarType::TopRight, "导入失败",
                              QString("插件格式无效: %1").arg(parseError), 5000,
                              this);
@@ -86,6 +87,8 @@ void SettingChild_Plugin::on_pushButton_ImportAnimePlugin_clicked()
         //导入阶段直接拒绝重复插件名称，名称也是插件唯一标识
         if (existPlugin.name == plugin.name)
         {
+            qWarning() << "plugin.import.duplicate"
+                                 << "name" << plugin.name;
             ElaMessageBar::warning(ElaMessageBarType::TopRight, "导入失败",
                                    QString("插件名称重复: %1").arg(plugin.name),
                                    5000, this);
@@ -100,6 +103,8 @@ void SettingChild_Plugin::on_pushButton_ImportAnimePlugin_clicked()
         QDir(AnimePluginPath).filePath(fileSafePluginName + ".json");
     if (QFile::exists(targetPath))
     {
+        qWarning() << "plugin.import.target_exists"
+                             << "name" << plugin.name;
         ElaMessageBar::warning(ElaMessageBarType::TopRight, "导入失败",
                                QString("目标文件已存在: %1").arg(targetPath),
                                5000, this);
@@ -108,12 +113,17 @@ void SettingChild_Plugin::on_pushButton_ImportAnimePlugin_clicked()
 
     if (!QFile::copy(pluginJsonPath, targetPath))
     {
+        qWarning() << "plugin.import.copy_failed"
+                             << "name" << plugin.name;
         ElaMessageBar::error(ElaMessageBarType::TopRight, "导入失败",
                              "复制插件文件失败", 5000, this);
         return;
     }
 
     RefreshAnimePluginList();
+    qInfo() << "plugin.import.completed"
+                      << "name" << plugin.name
+                      << "animations" << plugin.animations.size();
     ElaMessageBar::success(ElaMessageBarType::TopRight, "导入成功",
                            QString("已导入插件: %1").arg(plugin.name), 4000,
                            this);
@@ -263,6 +273,8 @@ void SettingChild_Plugin::DeletePlugin(const QString &pluginName)
 
         if (!QFile::remove(plugin.filePath))
         {
+            qWarning() << "plugin.delete.failed"
+                                 << "name" << pluginName;
             ElaMessageBar::error(ElaMessageBarType::TopRight, "删除失败",
                                  "无法删除插件文件", 5000, this);
             return;
@@ -275,6 +287,8 @@ void SettingChild_Plugin::DeletePlugin(const QString &pluginName)
         }
 
         RefreshAnimePluginList();
+        qInfo() << "plugin.delete.completed"
+                          << "name" << pluginName;
         ElaMessageBar::success(ElaMessageBarType::TopRight, "删除成功",
                                QString("已删除插件: %1").arg(plugin.name),
                                3500, this);
@@ -283,4 +297,5 @@ void SettingChild_Plugin::DeletePlugin(const QString &pluginName)
 
     ElaMessageBar::warning(ElaMessageBarType::TopRight, "提示",
                            "未找到该插件，可能已被删除", 4000, this);
+    qWarning() << "plugin.delete.not_found" << "name" << pluginName;
 }
