@@ -52,6 +52,7 @@ void SpeechInteractionController::applyConfig(const Config &config)
         m_accessTokenExpiry = QDateTime();
     }
 
+
     //总开关关闭时不申请设备，也不保留连续会话。
     if (!m_config.enabled)
     {
@@ -64,12 +65,16 @@ void SpeechInteractionController::applyConfig(const Config &config)
     {
         if (m_config.wakeWords.isEmpty())
         {
+            qWarning() << "controller.config.invalid"
+                                 << "reason" << "missing_wake_words";
             emit errorOccurred(QStringLiteral("请先选择角色或配置语音唤醒词"));
             setState(State::Disabled);
             return;
         }
         if (!m_vadReady)
         {
+            qWarning() << "controller.config.invalid"
+                                 << "reason" << "vad_unavailable";
             emit errorOccurred(QStringLiteral("Silero VAD 初始化失败，语音唤醒不可用"));
             setState(State::Disabled);
             return;
@@ -165,13 +170,17 @@ void SpeechInteractionController::initializeVad()
     if (!model.open(QIODevice::ReadOnly))
     {
         m_vadReady = false;
+        qCritical() << "vad.model.open.failed";
         return;
     }
 
     QString error;
     m_vadReady = m_vad.initialize(model.readAll(), &error);
     if (!m_vadReady && !error.isEmpty())
+    {
+        qCritical() << "vad.initialize.failed" << error;
         emit errorOccurred(QStringLiteral("Silero VAD 初始化失败：") + error);
+    }
 }
 
 /*创建并启动共享麦克风采集器*/
@@ -190,6 +199,7 @@ bool SpeechInteractionController::ensureCaptureStarted()
     const QAudioDevice inputDevice = QMediaDevices::defaultAudioInput();
     if (inputDevice.isNull())
     {
+        qWarning() << "capture.start.failed" << "reason" << "no_microphone";
         emit errorOccurred(QStringLiteral("未检测到可用麦克风"));
         return false;
     }
@@ -205,6 +215,8 @@ bool SpeechInteractionController::ensureCaptureStarted()
             : inputDevice.preferredFormat();
     if (!captureFormat.isValid())
     {
+        qWarning() << "capture.start.failed"
+                             << "reason" << "invalid_audio_format";
         emit errorOccurred(QStringLiteral("麦克风音频格式无效"));
         return false;
     }
@@ -214,6 +226,8 @@ bool SpeechInteractionController::ensureCaptureStarted()
     m_audioDevice = m_audioSource->start();
     if (!m_audioDevice)
     {
+        qWarning() << "capture.start.failed"
+                             << "reason" << "audio_source_start_failed";
         emit errorOccurred(QStringLiteral("无法启动麦克风采集"));
         m_audioSource->deleteLater();
         m_audioSource = nullptr;
@@ -344,6 +358,7 @@ void SpeechInteractionController::processVadChunk(const QByteArray &chunk)
     const float probability = m_vad.processPcm16(chunk, &error);
     if (probability < 0.0f)
     {
+        qCritical() << "vad.inference.failed" << error;
         emit errorOccurred(QStringLiteral("Silero VAD 推理失败：") + error);
         m_vadReady = false;
         stopCapture();
@@ -398,10 +413,19 @@ void SpeechInteractionController::beginRecognition(const QByteArray &pcm,
     m_pendingRecognitionPcm = pcm;
     m_pendingOrigin = origin;
     const quint64 requestId = ++m_requestGeneration;
+    qInfo() << "recognition.started"
+                      << "request_id" << requestId
+                      << "origin"
+                      << (origin == CaptureOrigin::Manual ? "manual" : "automatic")
+                      << "pcm_bytes" << pcm.size()
+                      << "cached_token" << (!m_accessToken.isEmpty() &&
+                             QDateTime::currentDateTimeUtc() < m_accessTokenExpiry);
 
     if (m_config.apiKey.trimmed().isEmpty() ||
         m_config.secretKey.trimmed().isEmpty())
     {
+        qWarning() << "recognition.config.incomplete"
+                             << "request_id" << requestId;
         emit errorOccurred(QStringLiteral("百度语音识别配置不完整"));
         finishRecognitionWithoutSubmission();
         return;
@@ -418,6 +442,7 @@ void SpeechInteractionController::beginRecognition(const QByteArray &pcm,
 /*异步获取百度 Access Token*/
 void SpeechInteractionController::requestAccessToken(quint64 requestId)
 {
+    qDebug() << "recognition.token.started" << "request_id" << requestId;
     QUrl url(QStringLiteral("https://aip.baidubce.com/oauth/2.0/token"));
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("grant_type"),
@@ -440,9 +465,14 @@ void SpeechInteractionController::requestAccessToken(quint64 requestId)
                 reply->deleteLater();
                 //配置或设备变化后，旧请求的结果不能再影响当前状态。
                 if (!validRequest)
+                {
                     return;
+                }
                 if (!succeeded)
                 {
+                    qWarning() << "recognition.token.failed"
+                                         << "request_id" << requestId
+                                         << networkError;
                     emit errorOccurred(QStringLiteral("百度 Token 获取失败：") +
                                        networkError);
                     finishRecognitionWithoutSubmission();
@@ -457,6 +487,8 @@ void SpeechInteractionController::requestAccessToken(quint64 requestId)
                     object.value(QStringLiteral("expires_in")).toInt(2592000);
                 if (m_accessToken.isEmpty())
                 {
+                    qWarning() << "recognition.token.invalid_response"
+                                         << "request_id" << requestId;
                     emit errorOccurred(QStringLiteral("百度 Token 响应无效"));
                     finishRecognitionWithoutSubmission();
                     return;
@@ -469,6 +501,9 @@ void SpeechInteractionController::requestAccessToken(quint64 requestId)
 /*异步提交 PCM 到百度语音识别接口*/
 void SpeechInteractionController::sendRecognitionRequest(quint64 requestId)
 {
+    qDebug() << "recognition.request.sent"
+                       << "request_id" << requestId
+                       << "pcm_bytes" << m_pendingRecognitionPcm.size();
     QJsonObject payload{
         {QStringLiteral("format"), QStringLiteral("pcm")},
         {QStringLiteral("rate"), 16000},
@@ -495,9 +530,14 @@ void SpeechInteractionController::sendRecognitionRequest(quint64 requestId)
                 const QString networkError = reply->errorString();
                 reply->deleteLater();
                 if (!validRequest)
+                {
                     return;
+                }
                 if (!succeeded)
                 {
+                    qWarning() << "recognition.request.failed"
+                                         << "request_id" << requestId
+                                         << networkError;
                     emit errorOccurred(QStringLiteral("百度语音识别失败：") +
                                        networkError);
                     finishRecognitionWithoutSubmission();
@@ -510,6 +550,9 @@ void SpeechInteractionController::sendRecognitionRequest(quint64 requestId)
                     object.value(QStringLiteral("err_no")).toInt();
                 if (errorNumber != 0)
                 {
+                    qWarning() << "recognition.api.failed"
+                                         << "request_id" << requestId
+                                         << "error_code" << errorNumber;
                     emit errorOccurred(
                         QStringLiteral("百度语音识别失败（%1）：%2")
                             .arg(errorNumber)
@@ -534,6 +577,9 @@ void SpeechInteractionController::sendRecognitionRequest(quint64 requestId)
                     finishRecognitionWithoutSubmission();
                     return;
                 }
+                qInfo() << "recognition.completed"
+                                  << "request_id" << requestId
+                                  << "characters" << text.size();
                 handleRecognizedText(text, origin); });
 }
 

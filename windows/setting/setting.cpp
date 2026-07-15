@@ -1,5 +1,4 @@
 #include "setting.h"
-#include "./ui_setting.h"
 
 #include "child/settingchild_about.h"
 #include "child/settingchild_char.h"
@@ -9,11 +8,80 @@
 #include "child/settingchild_speech.h"
 #include "child/settingchild_vits.h"
 
+#include "ElaTheme.h"
+
+#include <QAbstractScrollArea>
+#include <QIcon>
+#include <QPalette>
+#include <QScrollArea>
+
+namespace
+{
+/*应用Ela主题色到滚动区域及其内容*/
+void applyScrollAreaTheme(QAbstractScrollArea *area,
+                          ElaThemeType::ThemeMode themeMode)
+{
+    const QColor background =
+        ElaThemeColor(themeMode, WindowCentralStackBase);
+    const QColor text = ElaThemeColor(themeMode, BasicText);
+    const QColor disabledText = ElaThemeColor(themeMode, BasicTextDisable);
+
+    QPalette palette = area->palette();
+    palette.setColor(QPalette::Base, background);
+    palette.setColor(QPalette::AlternateBase, background);
+    palette.setColor(QPalette::Window, background);
+    palette.setColor(QPalette::Text, text);
+    palette.setColor(QPalette::WindowText, text);
+    palette.setColor(QPalette::Disabled, QPalette::Text, disabledText);
+    palette.setColor(QPalette::Disabled, QPalette::WindowText, disabledText);
+    area->setPalette(palette);
+
+    QWidget *viewport = area->viewport();
+    if (viewport)
+    {
+        //viewport使用与滚动区域相同的主题色，避免出现原生白底
+        viewport->setPalette(palette);
+        viewport->setAutoFillBackground(true);
+        viewport->update();
+    }
+
+    if (QScrollArea *scrollArea = qobject_cast<QScrollArea *>(area))
+    {
+        if (QWidget *content = scrollArea->widget())
+        {
+            //同步滚动区域内容容器的背景色
+            content->setPalette(palette);
+            content->setAutoFillBackground(true);
+            content->update();
+        }
+    }
+
+    area->update();
+}
+
+/*绑定设置页滚动控件的主题切换*/
+void bindScrollAreasToElaTheme(QWidget *page)
+{
+    const QList<QAbstractScrollArea *> areas =
+        page->findChildren<QAbstractScrollArea *>();
+    for (QAbstractScrollArea *area : areas)
+    {
+        applyScrollAreaTheme(area, eTheme->getThemeMode());
+        QObject::connect(
+            eTheme, &ElaTheme::themeModeChanged, area,
+            [area](ElaThemeType::ThemeMode themeMode)
+            { applyScrollAreaTheme(area, themeMode); });
+    }
+}
+
+} // namespace
+
 MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
-    : ElaWindow(parent), ui(new Ui::MainWindow)
+    : ElaWindow(parent)
 {
     /*初始化窗口*/
     setWindowTitle("ZcChat2");
+    setWindowIcon(QIcon(":/res/img/logo/logo.png"));
     setUserInfoCardVisible(false);
 
     /*创建窗口*/
@@ -42,6 +110,15 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     QString settingchild_aboutKey = "about";
     addFooterNode("关于", settingchild_aboutWin, settingchild_aboutKey, 0, ElaIconType::CircleInfo);
 
+    //绑定各设置子页的滚动区域主题
+    bindScrollAreasToElaTheme(settingchild_generalWin);
+    bindScrollAreasToElaTheme(settingchild_llmWin);
+    bindScrollAreasToElaTheme(settingchild_speechWin);
+    bindScrollAreasToElaTheme(settingchild_vitsWin);
+    bindScrollAreasToElaTheme(settingchild_pluginWin);
+    bindScrollAreasToElaTheme(settingchild_charWin);
+    bindScrollAreasToElaTheme(settingchild_aboutWin);
+
     //连接
     connect(settingchild_charWin, &SettingChild_Char::requestReloadCharSelect,
             tachie, &Tachie::SetTachieImg); //设置立绘图像（重载角色）
@@ -66,5 +143,4 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete ui;
 }

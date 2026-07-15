@@ -103,46 +103,6 @@
             <property name="toolTip">
              <string>当前启用的角色，切换后会重新加载立绘和对话配置</string>
             </property>
-            <property name="styleSheet">
-             <string notr="true">/* 去除滚动条的边框和背景 */
-QScrollBar:vertical {
-    border: none;              /* 去除边框 */
-    background: transparent;   /* 背景透明 */
-    width: 8px;                /* 设置滚动条的宽度 */
-}
-
-QScrollBar::handle:vertical {
-    background: rgba(136, 136, 136, 0.5);
-    border-radius: 4px;
-}
-
-
-/* 滑块悬停时的颜色变化 */
-QScrollBar::handle:vertical:hover {
-    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
-}
-
-/* 去除滚动条上下箭头按钮 */
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    background: transparent; /* 去除上下箭头 */
-    border: none;             /* 去除箭头边框 */
-    height: 0px;              /* 强制去除箭头按钮 */
-}
-
-/* 滚动条轨道样式 */
-QScrollBar::groove:vertical {
-    background: transparent;   /* 设置轨道背景为透明 */
-    border: none;               /* 去除轨道的边框 */
-    width: 8px;                 /* 设置轨道的宽度 */
-}
-
-/* 设置滚动条范围变化时的显示效果 */
-QScrollBar:vertical:disabled {
-    background: transparent;  /* 禁用时的背景色透明 */
-    border: none;              /* 禁用时的边框 */
-}
-</string>
-            </property>
            </widget>
           </item>
           <item>
@@ -210,46 +170,6 @@ QScrollBar:vertical:disabled {
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">/* 去除滚动条的边框和背景 */
-QScrollBar:vertical {
-    border: none;              /* 去除边框 */
-    background: transparent;   /* 背景透明 */
-    width: 8px;                /* 设置滚动条的宽度 */
-}
-
-QScrollBar::handle:vertical {
-    background: rgba(136, 136, 136, 0.5);
-    border-radius: 4px;
-}
-
-
-/* 滑块悬停时的颜色变化 */
-QScrollBar::handle:vertical:hover {
-    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
-}
-
-/* 去除滚动条上下箭头按钮 */
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    background: transparent; /* 去除上下箭头 */
-    border: none;             /* 去除箭头边框 */
-    height: 0px;              /* 强制去除箭头按钮 */
-}
-
-/* 滚动条轨道样式 */
-QScrollBar::groove:vertical {
-    background: transparent;   /* 设置轨道背景为透明 */
-    border: none;               /* 去除轨道的边框 */
-    width: 8px;                 /* 设置轨道的宽度 */
-}
-
-/* 设置滚动条范围变化时的显示效果 */
-QScrollBar:vertical:disabled {
-    background: transparent;  /* 禁用时的背景色透明 */
-    border: none;              /* 禁用时的边框 */
-}
-</string>
             </property>
            </widget>
           </item>
@@ -374,46 +294,6 @@ QScrollBar:vertical:disabled {
             <property name="toolTip">
              <string>选择角色使用的对话模型服务商</string>
             </property>
-            <property name="styleSheet">
-             <string notr="true">/* 去除滚动条的边框和背景 */
-QScrollBar:vertical {
-    border: none;              /* 去除边框 */
-    background: transparent;   /* 背景透明 */
-    width: 8px;                /* 设置滚动条的宽度 */
-}
-
-QScrollBar::handle:vertical {
-    background: rgba(136, 136, 136, 0.5);
-    border-radius: 4px;
-}
-
-
-/* 滑块悬停时的颜色变化 */
-QScrollBar::handle:vertical:hover {
-    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
-}
-
-/* 去除滚动条上下箭头按钮 */
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    background: transparent; /* 去除上下箭头 */
-    border: none;             /* 去除箭头边框 */
-    height: 0px;              /* 强制去除箭头按钮 */
-}
-
-/* 滚动条轨道样式 */
-QScrollBar::groove:vertical {
-    background: transparent;   /* 设置轨道背景为透明 */
-    border: none;               /* 去除轨道的边框 */
-    width: 8px;                 /* 设置轨道的宽度 */
-}
-
-/* 设置滚动条范围变化时的显示效果 */
-QScrollBar:vertical:disabled {
-    background: transparent;  /* 禁用时的背景色透明 */
-    border: none;              /* 禁用时的边框 */
-}
-</string>
-            </property>
             <item>
              <property name="text">
               <string>OpenAI</string>
@@ -435,46 +315,6 @@ QScrollBar:vertical:disabled {
            <widget class="ElaComboBox" name="comboBox_ModelSelect">
             <property name="toolTip">
              <string>选择角色使用的具体对话模型；列表来自对话模型设置页</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">/* 去除滚动条的边框和背景 */
-QScrollBar:vertical {
-    border: none;              /* 去除边框 */
-    background: transparent;   /* 背景透明 */
-    width: 8px;                /* 设置滚动条的宽度 */
-}
-
-QScrollBar::handle:vertical {
-    background: rgba(136, 136, 136, 0.5);
-    border-radius: 4px;
-}
-
-
-/* 滑块悬停时的颜色变化 */
-QScrollBar::handle:vertical:hover {
-    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
-}
-
-/* 去除滚动条上下箭头按钮 */
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    background: transparent; /* 去除上下箭头 */
-    border: none;             /* 去除箭头边框 */
-    height: 0px;              /* 强制去除箭头按钮 */
-}
-
-/* 滚动条轨道样式 */
-QScrollBar::groove:vertical {
-    background: transparent;   /* 设置轨道背景为透明 */
-    border: none;               /* 去除轨道的边框 */
-    width: 8px;                 /* 设置轨道的宽度 */
-}
-
-/* 设置滚动条范围变化时的显示效果 */
-QScrollBar:vertical:disabled {
-    background: transparent;  /* 禁用时的背景色透明 */
-    border: none;              /* 禁用时的边框 */
-}
-</string>
             </property>
            </widget>
           </item>
@@ -628,46 +468,6 @@ QScrollBar:vertical:disabled {
             <property name="toolTip">
              <string>选择语音合成服务商</string>
             </property>
-            <property name="styleSheet">
-             <string notr="true">/* 去除滚动条的边框和背景 */
-QScrollBar:vertical {
-    border: none;              /* 去除边框 */
-    background: transparent;   /* 背景透明 */
-    width: 8px;                /* 设置滚动条的宽度 */
-}
-
-QScrollBar::handle:vertical {
-    background: rgba(136, 136, 136, 0.5);
-    border-radius: 4px;
-}
-
-
-/* 滑块悬停时的颜色变化 */
-QScrollBar::handle:vertical:hover {
-    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
-}
-
-/* 去除滚动条上下箭头按钮 */
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    background: transparent; /* 去除上下箭头 */
-    border: none;             /* 去除箭头边框 */
-    height: 0px;              /* 强制去除箭头按钮 */
-}
-
-/* 滚动条轨道样式 */
-QScrollBar::groove:vertical {
-    background: transparent;   /* 设置轨道背景为透明 */
-    border: none;               /* 去除轨道的边框 */
-    width: 8px;                 /* 设置轨道的宽度 */
-}
-
-/* 设置滚动条范围变化时的显示效果 */
-QScrollBar:vertical:disabled {
-    background: transparent;  /* 禁用时的背景色透明 */
-    border: none;              /* 禁用时的边框 */
-}
-</string>
-            </property>
             <item>
              <property name="text">
               <string>vits-simple-api</string>
@@ -679,46 +479,6 @@ QScrollBar:vertical:disabled {
            <widget class="ElaComboBox" name="comboBox_Vits_MASSelect">
             <property name="toolTip">
              <string>选择当前角色使用的 VITS 模型和说话人</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">/* 去除滚动条的边框和背景 */
-QScrollBar:vertical {
-    border: none;              /* 去除边框 */
-    background: transparent;   /* 背景透明 */
-    width: 8px;                /* 设置滚动条的宽度 */
-}
-
-QScrollBar::handle:vertical {
-    background: rgba(136, 136, 136, 0.5);
-    border-radius: 4px;
-}
-
-
-/* 滑块悬停时的颜色变化 */
-QScrollBar::handle:vertical:hover {
-    background: rgba(136, 136, 136, 0.8);  /* 滑块悬停时的颜色 */
-}
-
-/* 去除滚动条上下箭头按钮 */
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    background: transparent; /* 去除上下箭头 */
-    border: none;             /* 去除箭头边框 */
-    height: 0px;              /* 强制去除箭头按钮 */
-}
-
-/* 滚动条轨道样式 */
-QScrollBar::groove:vertical {
-    background: transparent;   /* 设置轨道背景为透明 */
-    border: none;               /* 去除轨道的边框 */
-    width: 8px;                 /* 设置轨道的宽度 */
-}
-
-/* 设置滚动条范围变化时的显示效果 */
-QScrollBar:vertical:disabled {
-    background: transparent;  /* 禁用时的背景色透明 */
-    border: none;              /* 禁用时的边框 */
-}
-</string>
             </property>
            </widget>
           </item>
@@ -808,38 +568,7 @@ QScrollBar:vertical:disabled {
         <number>15</number>
        </property>
        <item>
-        <widget class="QScrollArea" name="scrollArea_TachieBindingList">
-         <property name="styleSheet">
-          <string notr="true">QScrollArea {
-    border: none;
-    background: transparent;
-}
-
-QScrollBar:vertical, QScrollBar:horizontal {
-    border: none;
-    background: transparent;
-    width: 8px;
-    height: 8px;
-}
-
-QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
-    background: rgba(136, 136, 136, 0.5);
-    border-radius: 4px;
-}
-
-QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
-    background: rgba(136, 136, 136, 0.8);
-}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
-QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
-    background: transparent;
-    border: none;
-    height: 0px;
-    width: 0px;
-}
-</string>
-         </property>
+        <widget class="ElaScrollArea" name="scrollArea_TachieBindingList">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>
@@ -944,6 +673,12 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
    <class>ZcStackedWidget</class>
    <extends>QStackedWidget</extends>
    <header location="global">ZcStackedWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ElaScrollArea</class>
+   <extends>QScrollArea</extends>
+   <header location="global">ElaScrollArea.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

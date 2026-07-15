@@ -19,6 +19,8 @@ SettingChild_Vits::SettingChild_Vits(QWidget *parent)
     /*初始化*/
     ui->BreadcrumbBar->setTextPixelSize(25);
     ui->BreadcrumbBar->appendBreadcrumb("语音合成设置");
+    //使用透明列表背景，交由设置窗口统一绘制Ela主题色
+    ui->listView_ModelAndSpeakerlList->setIsTransparent(true);
     ZcJsonLib config(JsonSettingPath);
     bool sentenceSplit = config.value("vits/SentenceSplit", true).toBool();
     ui->ToggleSwitch_VitsSentenceSplit->setIsToggled(sentenceSplit);
@@ -69,10 +71,14 @@ void SettingChild_Vits::on_pushButton_LoadModelAndSpeakerlList_clicked()
     QUrl url(ui->lineEdit_ApiUrl->text() + "/voice/speakers"); //改成你的地址
     QNetworkRequest request(url);
     QNetworkReply *reply = manager->get(request);
+    qInfo() << "voice_list.fetch.started"
+                      << "endpoint_configured" << url.isValid();
     connect(reply, &QNetworkReply::finished, this, [=]()
             {
                 if (reply->error() != QNetworkReply::NoError)
                 {
+                    qWarning() << "voice_list.fetch.failed"
+                                         << reply->errorString();
                     reply->deleteLater();
                     manager->deleteLater();
                     return;
@@ -81,6 +87,7 @@ void SettingChild_Vits::on_pushButton_LoadModelAndSpeakerlList_clicked()
                 QJsonDocument doc = QJsonDocument::fromJson(data);
                 if (!doc.isObject())
                 {
+                    qWarning() << "voice_list.fetch.invalid_response";
                     reply->deleteLater();
                     manager->deleteLater();
                     return;
@@ -112,6 +119,8 @@ void SettingChild_Vits::on_pushButton_LoadModelAndSpeakerlList_clicked()
                 for (const QString &s : list)
                     arr.append(s);
                 config.setValue("vits/ModelAndSpeakerList", arr);
+                qInfo() << "voice_list.fetch.completed"
+                                  << "voices" << list.size();
                 //发出模型列表刷新信号
                 emit vitsModelListRefreshed(); });
 }

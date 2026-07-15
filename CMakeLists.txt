@@ -174,9 +174,12 @@ endif()
 
 set(PROJECT_SOURCES
         main.cpp
+        utils/createwin.cpp
+        utils/createwin.h
+        utils/log.cpp
+        utils/log.h
         windows/setting/setting.cpp
         windows/setting/setting.h
-        windows/setting/setting.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -219,6 +222,10 @@ else()
         )
     endif()
 endif()
+
+set_target_properties(ZcChat2 PROPERTIES
+    WIN32_EXECUTABLE TRUE
+)
 
 
 # 添加头文件路径
@@ -326,6 +333,15 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${ZCAILIB_WIN_DLL}
             $<TARGET_FILE_DIR:ZcChat2>/ZcAiLib.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ElaWidgetTools/bin/elawidgettools.dll"
+            $<TARGET_FILE_DIR:ZcChat2>/elawidgettools.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcWidgetTools/bin/ZcWidgetTools.dll"
+            $<TARGET_FILE_DIR:ZcChat2>/ZcWidgetTools.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ZcJsonLib/bin/ZcJsonLib.dll"
+            $<TARGET_FILE_DIR:ZcChat2>/ZcJsonLib.dll
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${ZCCHAT2_ONNXRUNTIME_RUNTIME}"
             $<TARGET_FILE_DIR:ZcChat2>

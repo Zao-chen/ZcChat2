@@ -63,6 +63,8 @@ SettingChild_About::SettingChild_About(QWidget *parent)
         if (m_releaseInfoLoaded)
             return;
         m_releaseInfoLoaded = true; //标记已加载，防止重复请求
+        qInfo() << "release_check.started"
+                          << "local_version" << m_localVersion;
         //异步获取GitHub发布列表
         QNetworkReply *reply = m_manager->get(QNetworkRequest(
             QUrl("https://api.github.com/repos/Zao-chen/ZcChat2/releases")));
@@ -81,6 +83,7 @@ void SettingChild_About::handleReleaseInfoReply(QNetworkReply *reply)
 {
     if (reply->error() != QNetworkReply::NoError)
     {
+        qWarning() << "release_check.failed" << reply->errorString();
         ui->pushButton_upDate->setText(tr("获取新版本失败"));
         showError(reply->errorString());
         reply->deleteLater();
@@ -93,6 +96,7 @@ void SettingChild_About::handleReleaseInfoReply(QNetworkReply *reply)
     const QJsonDocument document = QJsonDocument::fromJson(data);
     if (!document.isArray())
     {
+        qWarning() << "release_check.invalid_response";
         ui->pushButton_upDate->setText(tr("获取新版本失败"));
         showError(tr("更新数据格式错误"));
         return;
@@ -103,6 +107,8 @@ void SettingChild_About::handleReleaseInfoReply(QNetworkReply *reply)
 
     if (!tryLoadLatestDownloadUrl(releases))
     {
+        qWarning() << "release_check.no_installer"
+                             << "releases" << releases.size();
         ui->pushButton_upDate->setText(tr("获取新版本失败"));
         return;
     }
@@ -116,6 +122,12 @@ void SettingChild_About::handleReleaseInfoReply(QNetworkReply *reply)
     {
         ui->pushButton_upDate->setText(tr("当前为最新正式版"));
     }
+    qInfo() << "release_check.completed"
+                      << "releases" << releases.size()
+                      << "latest_version" << m_latestTagName
+                      << "update_available"
+                      << (!m_latestTagName.isEmpty() &&
+                          m_latestTagName != m_localVersion);
 }
 
 /*报错显示*/
@@ -213,12 +225,16 @@ void SettingChild_About::on_pushButton_upDate_clicked()
 
     if (m_latestDownloadUrl.isEmpty())
     {
+        qWarning() << "update_download.skipped"
+                             << "reason" << "missing_download_url";
         ui->pushButton_upDate->setText(tr("下载失败"));
         return;
     }
 
     //启动下载过程
     m_downloadInProgress = true;
+    qInfo() << "update_download.started"
+                      << "version" << m_latestTagName;
     ui->pushButton_upDate->setEnabled(false);
     ui->pushButton_upDate->setText(tr("下载中"));
     ui->progressBar->setVisible(true);
@@ -253,6 +269,7 @@ void SettingChild_About::handleDownloadReply(QNetworkReply *reply)
 
     if (reply->error() != QNetworkReply::NoError)
     {
+        qWarning() << "update_download.failed" << reply->errorString();
         resetDownloadUi();
         ui->pushButton_upDate->setText(tr("下载失败"));
         showError(reply->errorString());
@@ -269,6 +286,9 @@ void SettingChild_About::handleDownloadReply(QNetworkReply *reply)
     QFile file(saveFilePath);
     if (!file.open(QIODevice::WriteOnly))
     {
+        qWarning() << "update_download.save_failed"
+                             << "file" << fileName
+                             << "error" << file.errorString();
         resetDownloadUi();
         ui->pushButton_upDate->setText(tr("文件保存失败"));
         showError(tr("安装包打开失败，请前往下载文件夹手动安装"));
@@ -276,10 +296,14 @@ void SettingChild_About::handleDownloadReply(QNetworkReply *reply)
         return;
     }
 
-    file.write(reply->readAll());
+    const QByteArray installerData = reply->readAll();
+    file.write(installerData);
     file.close();
     //启动下载的exe安装程序
     QProcess::startDetached(saveFilePath);
+    qInfo() << "update_download.completed"
+                      << "file" << fileName
+                      << "bytes" << installerData.size();
     resetDownloadUi();
     ui->pushButton_upDate->setText(tr("下载成功，正在打开"));
     reply->deleteLater();

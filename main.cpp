@@ -6,6 +6,8 @@
 #include "ElaMenu.h"
 
 #include "Version.h"
+#include "GlobalConstants.h"
+#include "utils/log.h"
 
 #include <QApplication>
 #include <QColor>
@@ -14,6 +16,7 @@
 #include <QPalette>
 #include <QStandardPaths>
 #include <QSystemTrayIcon>
+#include <QSysInfo>
 
 #include <QDir>
 
@@ -79,6 +82,7 @@ int main(int argc, char *argv[])
     qputenv("QT_QPA_PLATFORM", "xcb");
 #endif
     QApplication a(argc, argv);
+    QApplication::setWindowIcon(QIcon(":/res/img/logo/logo.png"));
 #ifdef Q_OS_MACOS
     // Keep QLabel text readable when macOS switches to dark mode.
     QPalette labelPalette = a.palette();
@@ -98,7 +102,17 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("ZcChat2");
     QCoreApplication::setApplicationVersion(APP_VERSION);
     QCoreApplication::setOrganizationName("MyOrganization");
-    qInfo() << "Debugging Output";
+    QT_LOG::logInit();
+    qInfo().noquote()
+        << QStringLiteral("application.start version=%1 platform=%2")
+               .arg(QCoreApplication::applicationVersion(),
+                    QSysInfo::prettyProductName());
+    qInfo().noquote()
+        << QStringLiteral("application.data_paths config=%1 log=%2")
+               .arg(QDir::toNativeSeparators(IniSettingPath),
+                    QDir::toNativeSeparators(QT_LOG::logFilePath()));
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, []()
+                     { qInfo() << "application.stop"; });
 
     /*窗口创建*/
     Dialog dialogWin;
@@ -153,6 +167,8 @@ int main(int argc, char *argv[])
                          settings->activateWindow(); });
     //退出程序
     QObject::connect(actionQuit, &QAction::triggered, &a, &QApplication::quit);
+
+    qInfo() << "application.ready";
 
     return a.exec();
 }

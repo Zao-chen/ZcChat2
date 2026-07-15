@@ -266,7 +266,7 @@ QPushButton:pressed {
    <item row="2" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="spacing">
-      <number>0</number>
+      <number>8</number>
      </property>
      <property name="leftMargin">
       <number>0</number>
@@ -282,38 +282,55 @@ QPushButton:pressed {
      </property>
      <item>
       <widget class="QPushButton" name="pushButton_input">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>28</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>28</height>
+        </size>
+       </property>
        <property name="styleSheet">
         <string notr="true">QPushButton {
-    background-color: transparent;
-    border: none;
-    border-radius: 5px;
-    padding: 4px 8px;
+    background-color: rgba(255, 255, 255, 150);
+    border: 1px solid rgba(0, 0, 0, 35);
+    border-radius: 7px;
+    padding: 4px 9px;
 }
 
 QPushButton:hover {
-    border: 2px solid #CCCCCC;
+    background-color: rgba(255, 255, 255, 220);
+    border-color: rgba(0, 0, 0, 70);
 }
 
 QPushButton:pressed {
-    border: 2px solid #AAAAAA;
+    background-color: rgba(0, 0, 0, 18);
+    border-color: rgba(0, 0, 0, 95);
 }
 
 QPushButton[speechState="1"],
 QPushButton[speechState="5"] {
-    background-color: rgba(76, 175, 80, 35);
-    border: 1px solid rgba(76, 175, 80, 120);
+    background-color: rgba(76, 175, 80, 32);
+    border-color: rgba(76, 175, 80, 105);
+    color: #245C28;
 }
 
 QPushButton[speechState="2"] {
-    background-color: rgba(33, 150, 243, 45);
-    border: 1px solid rgba(33, 150, 243, 140);
+    background-color: rgba(33, 150, 243, 35);
+    border-color: rgba(33, 150, 243, 115);
+    color: #155B8A;
 }
 
 QPushButton[speechState="3"],
 QPushButton[speechState="4"],
 QPushButton[speechState="6"] {
-    background-color: rgba(128, 128, 128, 25);
-    border: 1px solid rgba(128, 128, 128, 80);
+    background-color: rgba(128, 128, 128, 22);
+    border-color: rgba(128, 128, 128, 65);
+    color: rgba(0, 0, 0, 150);
 }
 </string>
        </property>
@@ -324,18 +341,43 @@ QPushButton[speechState="6"] {
         <iconset resource="../../res.qrc">
          <normaloff>:/res/img/ico/microphone-solid.svg</normaloff>:/res/img/ico/microphone-solid.svg</iconset>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="checkBox_autoInput">
-       <property name="toolTip">
-        <string>语音识别完成后将会直接发送</string>
+       <property name="iconSize">
+        <size>
+         <width>14</width>
+         <height>14</height>
+        </size>
        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="ElaCheckBox" name="checkBox_autoInput">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">ElaCheckBox {
+    spacing: 2px;
+    padding: 4px 0;
+}
+</string>
+        </property>
+        <property name="toolTip">
+         <string>开启后，按住说话的识别结果会立即发送；关闭后会先填入输入框</string>
+        </property>
        <property name="text">
-        <string>直接发送</string>
-       </property>
-      </widget>
-     </item>
+         <string>识别后自动发送</string>
+        </property>
+       </widget>
+      </item>
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
@@ -373,6 +415,13 @@ QPushButton[speechState="6"] {
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ElaCheckBox</class>
+   <extends>QCheckBox</extends>
+   <header location="global">ElaCheckBox.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../res.qrc"/>
  </resources>

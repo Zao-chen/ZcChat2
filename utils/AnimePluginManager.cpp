@@ -32,6 +32,9 @@ bool AnimePluginManager::Reload()
         //加载插件
         if (!LoadAnimePluginFromFile(pluginFile.filePath(), plugin, error))
         {
+            qWarning() << "plugin.load.failed"
+                                 << "file" << pluginFile.fileName()
+                                 << "error" << error;
             m_lastErrors.append(
                 QString("插件加载失败[%1]: %2").arg(pluginFile.fileName()).arg(error));
             continue;
@@ -40,6 +43,9 @@ bool AnimePluginManager::Reload()
         //拒绝重复插件名，防止设置界面无法区分
         if (pluginNameSet.contains(plugin.name))
         {
+            qWarning() << "plugin.load.conflict"
+                                 << "file" << pluginFile.fileName()
+                                 << "name" << plugin.name;
             m_lastErrors.append(QString("插件冲突[%1]: 名称重复(%2)")
                                     .arg(pluginFile.fileName())
                                     .arg(plugin.name));
@@ -60,6 +66,9 @@ bool AnimePluginManager::Reload()
 
             if (m_animationIndexByUniqueKey.contains(uniqueKey))
             {
+                qWarning() << "animation.key.conflict"
+                                     << "file" << pluginFile.fileName()
+                                     << "key" << uniqueKey;
                 m_lastErrors.append(QString("动画唯一键冲突[%1]: %2")
                                         .arg(pluginFile.fileName())
                                         .arg(uniqueKey));

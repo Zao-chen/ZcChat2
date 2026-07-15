@@ -140,14 +140,22 @@ void SettingChild_Speech::initializeNativeGlobalHotkeyBinder()
     /*重建Ela原生按键绑定框*/
     auto *layout = ui->keyBinder_GlobalHotkey->parentWidget()->layout();
     if (!layout)
+    {
+        qWarning() << "speech_hotkey_binder.initialize.failed"
+                               << "reason" << "missing_layout";
         return;
+    }
 
     //保留ui中临时控件已读取到的配置，再交给新的ElaKeyBinder显示。
     const QString binderText = ui->keyBinder_GlobalHotkey->getBinderKeyText();
     const quint32 nativeKey = ui->keyBinder_GlobalHotkey->getNativeVirtualBinderKey();
     const int index = layout->indexOf(ui->keyBinder_GlobalHotkey);
     if (index < 0)
+    {
+        qWarning() << "speech_hotkey_binder.initialize.failed"
+                               << "reason" << "widget_not_in_layout";
         return;
+    }
 
     auto *oldBinder = ui->keyBinder_GlobalHotkey;
     auto *nativeBinder = new ElaKeyBinder(oldBinder->parentWidget());

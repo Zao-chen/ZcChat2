@@ -21,7 +21,6 @@
 #include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QLabel>
 #include <QProcess>
 #include <QSettings>
 #include <QStandardPaths>
@@ -381,6 +380,9 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
 
     if (!charDir.exists())
     {
+        qWarning() << "character.delete.failed"
+                                << "name" << charName
+                                << "reason" << "directory_missing";
         ElaMessageBar::warning(ElaMessageBarType::BottomRight, "删除失败",
                                "角色文件夹不存在", 3000, this);
         return;
@@ -389,6 +391,9 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
     //递归删除文件夹
     if (!charDir.removeRecursively())
     {
+        qWarning() << "character.delete.failed"
+                                << "name" << charName
+                                << "reason" << "remove_failed";
         ElaMessageBar::error(ElaMessageBarType::BottomRight, "删除失败",
                              "无法删除角色文件夹，请检查权限", 5000, this);
         return;
@@ -409,6 +414,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
 
     ElaMessageBar::success(ElaMessageBarType::BottomRight, "删除成功",
                            QString("角色 %1 已删除").arg(charName), 4000, this);
+    qInfo() << "character.delete.completed" << "name" << charName;
 }
 
 /*刷新角色列表*/
@@ -597,6 +603,7 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
     QFileInfo zipInfo(zipFilePath);
     QString charName = zipInfo.completeBaseName();
     QString targetCharPath = QDir(CharacterAssestPath).filePath(charName);
+    qInfo() << "character.import.started" << "name" << charName;
 
     //如果目标角色文件夹已存在，询问用户是否覆盖
     if (QDir(targetCharPath).exists())
@@ -605,7 +612,8 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
         overwriteDialog.setLeftButtonText("取消");
         overwriteDialog.setRightButtonText("覆盖");
 
-        QLabel *messageLabel = new QLabel(
+        //使用ElaText让确认对话框文字跟随Ela主题
+        ElaText *messageLabel = new ElaText(
             QString("角色 %1 已存在，是否覆盖？").arg(charName), &overwriteDialog);
         messageLabel->setWordWrap(true);
         overwriteDialog.setCentralWidget(messageLabel);
@@ -631,6 +639,9 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
     if (!process.waitForFinished(60000))
     {
         process.kill();
+        qWarning() << "character.import.failed"
+                                << "name" << charName
+                                << "reason" << "timeout";
         ElaMessageBar::error(ElaMessageBarType::BottomRight, "导入失败",
                              "解压过程超时", 5000, this);
         return;
@@ -639,6 +650,10 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
     if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0)
     {
         QString error = process.readAllStandardError();
+        qWarning() << "character.import.failed"
+                                << "name" << charName
+                                << "reason" << "extract_failed"
+                                << "exit_code" << process.exitCode();
         ElaMessageBar::error(ElaMessageBarType::BottomRight, "导入失败",
                              QString("解压失败: %1").arg(error), 5000,
                              this);
@@ -648,6 +663,9 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
     QString errorMessage;
     if (!extractZipArchive(zipFilePath, CharacterAssestPath, &errorMessage))
     {
+        qWarning() << "character.import.failed"
+                                << "name" << charName
+                                << "reason" << "extract_failed";
         ElaMessageBar::error(ElaMessageBarType::BottomRight, "导入失败",
                              QString("解压失败: %1").arg(errorMessage), 5000,
                              this);
@@ -661,6 +679,7 @@ void SettingChild_Char::on_pushButton_InputChar_clicked()
 
     ElaMessageBar::success(ElaMessageBarType::TopRight, "导入成功",
                            QString("角色 %1 已导入").arg(charName), 4000, this);
+    qInfo() << "character.import.completed" << "name" << charName;
 }
 
 /*导出选中的角色*/
@@ -679,6 +698,9 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
     QString charPath = QDir(CharacterAssestPath).filePath(charName);
     if (!QDir(charPath).exists())
     {
+        qWarning() << "character.export.failed"
+                                << "name" << charName
+                                << "reason" << "directory_missing";
         ElaMessageBar::warning(ElaMessageBarType::BottomRight, "导出失败",
                                "角色文件夹不存在", 3000, this);
         return;
@@ -704,9 +726,10 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
         overwriteDialog.setLeftButtonText("取消");
         overwriteDialog.setRightButtonText("覆盖");
 
-        QLabel *messageLabel =
-            new QLabel(QString("文件 %1 已存在，是否覆盖？").arg(zipFileName),
-                       &overwriteDialog);
+        //使用ElaText让确认对话框文字跟随Ela主题
+        ElaText *messageLabel =
+            new ElaText(QString("文件 %1 已存在，是否覆盖？").arg(zipFileName),
+                        &overwriteDialog);
         messageLabel->setWordWrap(true);
         overwriteDialog.setCentralWidget(messageLabel);
 
@@ -741,8 +764,12 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
 #endif
 
     process.start();
+    qInfo() << "character.export.started" << "name" << charName;
     if (!process.waitForFinished(60000)) //等待最多60秒
     {
+        qWarning() << "character.export.failed"
+                                << "name" << charName
+                                << "reason" << "timeout";
         ElaMessageBar::error(ElaMessageBarType::BottomRight, "导出失败",
                              "压缩过程超时", 5000, this);
         process.kill();
@@ -752,6 +779,10 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
     if (process.exitCode() != 0)
     {
         QString error = process.readAllStandardError();
+        qWarning() << "character.export.failed"
+                                << "name" << charName
+                                << "reason" << "compress_failed"
+                                << "exit_code" << process.exitCode();
         ElaMessageBar::error(ElaMessageBarType::BottomRight, "导出失败",
                              QString("压缩失败: %1").arg(error), 5000, this);
         return;
@@ -761,6 +792,9 @@ void SettingChild_Char::on_pushButton_OutputChar_clicked()
         ElaMessageBarType::BottomRight, "导出成功",
         QString("角色 %1 已成功导出到:\n%2").arg(charName, zipFilePath), 4000,
         this);
+    qInfo() << "character.export.completed"
+                         << "name" << charName
+                         << "file" << zipFileName;
 }
 
 /*刷新立绘动画列表*/
@@ -830,8 +864,8 @@ void SettingChild_Char::RefreshTachieActionList()
         label->setFont(font);
         label->setText(actionName);
 
+        //下拉框使用Ela自身主题样式，不复制旧的硬编码QSS
         ElaComboBox *combo = new ElaComboBox(row);
-        combo->setStyleSheet(ui->comboBox_CharList->styleSheet());
         combo->addItem("无动画", "");
         for (const QString &uniqueKey : animationUniqueKeys)
         {

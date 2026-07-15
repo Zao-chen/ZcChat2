@@ -17,13 +17,17 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
     ui->BreadcrumbBar->setTextPixelSize(25);
     ui->BreadcrumbBar->appendBreadcrumb("对话模型设置");
     modelListModel = new QStringListModel(this);
+    //使用透明列表背景，交由设置窗口统一绘制Ela主题色
+    ui->listView_ModelList->setIsTransparent(true);
     ui->listView_ModelList->setModel(modelListModel);
     ai = new AiProvider(this);
 
     //错误处理
     connect(ai, &AiProvider::errorOccurred, [=](const QString &error)
             {
-                qWarning() << error;
+                qWarning() << "model_list.fetch.failed"
+                                 << "provider" << modelFetchServer
+                                 << error;
                 modelFetchServer.clear(); });
     //接收模型列表
     connect(ai, &AiProvider::modelsReceived, this,
@@ -62,6 +66,9 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
 
                 if (NowSelectServer == fetchedServer)
                     modelListModel->setStringList(list);
+                qInfo() << "model_list.fetch.completed"
+                              << "provider" << fetchedServer
+                              << "models" << models.size();
             });
     //默认读取状态
     ZcJsonLib config(JsonSettingPath);
@@ -225,6 +232,10 @@ void SettingChild_LLM::on_pushButton_LoadModelList_clicked()
 
     ai->setApiKey(ui->lineEdit_ApiKey->text());
     modelFetchServer = NowSelectServer;
+    qInfo() << "model_list.fetch.started"
+                  << "provider" << modelFetchServer
+                  << "credential_configured"
+                  << !ui->lineEdit_ApiKey->text().trimmed().isEmpty();
     ai->fetchModels();
 }
 
