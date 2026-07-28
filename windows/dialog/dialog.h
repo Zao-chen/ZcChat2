@@ -3,7 +3,9 @@
 
 #include "AiProvider.h"
 #include "SpeechInteractionController.h"
+#include <QByteArray>
 #include <QEvent>
+#include <QJsonObject>
 #include <QMoveEvent>
 #include <QStringList>
 #include <QWidget>
@@ -45,6 +47,9 @@ class Dialog : public QWidget
 
   signals:
     void requestSetCharTachie(QString TachieName);
+    void contextTokenLimitResolved(const QString &model, int tokenLimit);
+    void contextTokenLimitResolutionFailed(const QString &model,
+                                           const QString &message);
 
   public slots:
     void ReloadAIConfig();
@@ -78,6 +83,12 @@ class Dialog : public QWidget
 
     QString buildUserMessageWithContext(
         const QString &input) const; //构建用户消息，包含上下文
+    QString buildSystemPrompt() const;
+    void refreshContextTokenLimit();
+    void requestModelContextCatalog();
+    void applyModelContextCatalog();
+    void reportContextTokenLimitResolutionFailure(const QString &message);
+    void updateContextTokenDisplay();
 
     void appendHistoryLine(const QString &line); //添加历史记录行
     void tryStartNextVitsRequest();              //添加到Vits请求
@@ -86,6 +97,12 @@ class Dialog : public QWidget
     QString m_lastUserInput;
     QString m_streamRawReply;
     QString m_streamDisplayedChinese;
+    QString m_systemPromptForTokenEstimate;
+    QString m_contextTokenLimitSource;
+    QJsonObject m_modelContextCatalog;
+    int m_contextTokenLimit = 0;
+    int m_inFlightRequestTokenEstimate = 0;
+    bool m_modelContextCatalogRequestInFlight = false;
     bool m_speechInputEnabled = false; //语音输入总开关，用于控制按钮可用性。
     bool m_globalSpeechHotkeyEnabled = false; //全局录音热键是否启用
     bool m_globalSpeechHotkeyPressed = false; //当前热键是否处于按下录音中
@@ -98,6 +115,7 @@ class Dialog : public QWidget
     bool m_vitsRequestInFlight = false;
     bool m_llmReplyInFlight = false; //当前是否有未完成的 LLM 回复。
     QNetworkAccessManager *m_vitsManager = nullptr;
+    QNetworkAccessManager *m_modelContextCatalogManager = nullptr;
     QMediaPlayer *m_vitsPlayer = nullptr;
     QAudioOutput *m_vitsAudioOutput = nullptr;
     QTemporaryFile *m_vitsTempFile = nullptr;

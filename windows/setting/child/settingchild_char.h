@@ -23,6 +23,11 @@ class SettingChild_Char : public QWidget
     void RefreshModelList();     ////刷新LLM模型列表
     void RefreshVitsModelList(); ////刷新Vits模型列表
 
+  public slots:
+    void ApplyResolvedContextTokenLimit(const QString &model, int tokenLimit);
+    void ApplyContextTokenLimitResolutionFailure(const QString &model,
+                                                 const QString &message);
+
   private slots:
     void on_pushButton_DeleteChar_clicked();
     void on_comboBox_CharList_currentTextChanged(const QString &arg1);
@@ -30,6 +35,8 @@ class SettingChild_Char : public QWidget
     void on_spinBox_TachieSize_textChanged(const QString &arg1);
     void on_comboBox_ServerSelect_currentTextChanged(const QString &arg1);
     void on_comboBox_ModelSelect_currentTextChanged(const QString &arg1);
+    void on_spinBox_ContextTokenLimit_valueChanged(int value);
+    void on_pushButton_AutoContextTokenLimit_clicked();
     void on_pushButton_ResetTachieLoc_clicked();
     void on_comboBox_Vits_MASSelect_currentTextChanged(const QString &arg1);
     void on_ToggleSwitch_VitsEnable_toggled(bool checked);
@@ -53,8 +60,10 @@ class SettingChild_Char : public QWidget
   private:
     Ui::SettingChild_Char *ui;
     bool isAlreadyLoading = false;
+    bool m_contextTokenLimitAutoRequestPending = false;
     AnimePluginManager m_pluginManager;
     QList<QWidget *> m_tachieBindingRows;
+    void ResetContextTokenLimitEditor();
     void LoadCurrentCharConfig();
     void RefreshCharList();
     void ClearTachieBindingRows();

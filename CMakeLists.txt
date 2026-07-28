@@ -176,6 +176,10 @@ set(PROJECT_SOURCES
         main.cpp
         utils/createwin.cpp
         utils/createwin.h
+        utils/ContextTokenEstimator.cpp
+        utils/ContextTokenEstimator.h
+        utils/ModelContextCatalog.cpp
+        utils/ModelContextCatalog.h
         utils/log.cpp
         utils/log.h
         windows/setting/setting.cpp
@@ -424,4 +428,53 @@ if(BUILD_TESTING)
         Qt6::Test
     )
     add_test(NAME ZcChatSpeechTests COMMAND ZcChatSpeechTests)
+
+    qt_add_executable(ZcChatContextTokenTests
+        tests/test_contexttokenestimator.cpp
+        utils/ContextTokenEstimator.cpp
+        utils/ContextTokenEstimator.h
+    )
+    target_include_directories(ZcChatContextTokenTests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils
+    )
+    target_link_libraries(ZcChatContextTokenTests PRIVATE
+        Qt6::Core
+        Qt6::Test
+    )
+    add_test(NAME ZcChatContextTokenTests COMMAND ZcChatContextTokenTests)
+
+    qt_add_executable(ZcChatModelContextCatalogTests
+        tests/test_modelcontextcatalog.cpp
+        utils/ModelContextCatalog.cpp
+        utils/ModelContextCatalog.h
+    )
+    target_include_directories(ZcChatModelContextCatalogTests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils
+    )
+    target_link_libraries(ZcChatModelContextCatalogTests PRIVATE
+        Qt6::Core
+        Qt6::Test
+    )
+    add_test(NAME ZcChatModelContextCatalogTests
+             COMMAND ZcChatModelContextCatalogTests)
+
+    qt_add_executable(ZcChatDialogLayoutTests
+        tests/test_dialoglayout.cpp
+        tests/fakes/ElaCheckBox.h
+        windows/dialog/dialog.ui
+    )
+    target_include_directories(ZcChatDialogLayoutTests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/fakes
+    )
+    target_link_libraries(ZcChatDialogLayoutTests PRIVATE
+        Qt6::Widgets
+        Qt6::Test
+    )
+    set_target_properties(ZcChatDialogLayoutTests PROPERTIES
+        AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/windows/dialog"
+    )
+    add_test(NAME ZcChatDialogLayoutTests COMMAND ZcChatDialogLayoutTests)
+    set_tests_properties(ZcChatDialogLayoutTests PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
 endif()

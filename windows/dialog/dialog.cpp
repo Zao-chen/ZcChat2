@@ -5,12 +5,18 @@
 #include "../../GlobalConstants.h"
 
 #include "../../utils/CustomScrollBinder.h"
+#include "../../utils/ContextTokenEstimator.h"
 #include "../../utils/DragHelper.h"
+#include "../../utils/ModelContextCatalog.h"
 
 #include "ZcJsonLib.h"
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonParseError>
+#include <QLocale>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -19,7 +25,6 @@
 
 #include <QAudioOutput>
 #include <QGraphicsOpacityEffect>
-#include <QJsonArray>
 #include <QMediaPlayer>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -224,6 +229,324 @@ QString Dialog::buildUserMessageWithContext(const QString &input) const
            input;
 }
 
+/*构建系统提示词*/
+QString Dialog::buildSystemPrompt() const
+{
+    QDir dir(ReadCharacterTachiePath());
+    const QStringList fileNames =
+        dir.entryList(QStringList{"*.png", "*.jpg", "*.jpeg"}, QDir::Files);
+    QString nameListStr;
+    for (const QString &fileName : fileNames)
+        nameListStr += fileName.section('.', 0, 0) + ", ";
+
+    ZcJsonLib roleConfig(CharacterAssestPath + "/" + ReadNowSelectChar() +
+                         "/config.json");
+    const QString characterPrompt =
+        roleConfig.value("prompt").toString().trimmed();
+    QString systemPrompt;
+    if (!characterPrompt.isEmpty())
+        systemPrompt += QStringLiteral("角色设定：") + characterPrompt +
+                        QStringLiteral("\n请始终保持该设定进行回复。\n\n");
+    systemPrompt +=
+        QStringLiteral("你是一个桌宠 AI，输出内容必须严格按照以下格式：\n"
+                       "心情|中文|日语\n\n"
+                       "要求：\n"
+                       "1. 心情必须从以下列表中选择：") +
+        nameListStr + "\n" +
+        QStringLiteral("2. 中文是桌宠此刻想表达的内容\n"
+                       "3. 日语是中文内容的对应翻译\n"
+                       "4. 输出中不能有多余内容或解释，严格用“|”分隔\n\n"
+                       "示例输出：\n"
+                       "快乐|今天的天气真好呀！|今日はいい天気ですね！\n"
+                       "生气|为什么一直打扰我！|なんでずっと邪魔するの！");
+    return systemPrompt;
+}
+
+/*读取上下文 Token 上限，并在需要时通过 models.dev 自动识别*/
+void Dialog::refreshContextTokenLimit()
+{
+    const QString configPath = ReadCharacterUserConfigPath();
+    if (configPath.isEmpty())
+    {
+        m_contextTokenLimit = 0;
+        m_contextTokenLimitSource.clear();
+        updateContextTokenDisplay();
+        return;
+    }
+
+    ZcJsonLib charConfig(configPath);
+    const int storedLimit = ContextTokenEstimator::validatedTokenLimit(
+        charConfig
+            .value("contextTokenLimit",
+                   ContextTokenEstimator::DefaultContextTokenLimit)
+            .toInt(ContextTokenEstimator::DefaultContextTokenLimit));
+
+    const QString storedSource =
+        charConfig.value("contextTokenLimitSource").toString();
+    const QString storedModel =
+        charConfig.value("contextTokenModel").toString();
+    const QString storedProvider =
+        charConfig.value("contextTokenProvider").toString();
+    const QString currentProvider =
+        charConfig.value("serverSelect").toString();
+    const QString currentModel =
+        charConfig.value("modelSelect").toString().trimmed();
+
+    if (currentModel.isEmpty())
+    {
+        m_contextTokenLimit = 0;
+        m_contextTokenLimitSource.clear();
+        updateContextTokenDisplay();
+        return;
+    }
+
+    const bool storedSelectionMatches = ModelContextCatalog::selectionMatches(
+        storedProvider, storedModel, currentProvider, currentModel);
+
+    m_contextTokenLimit = storedLimit;
+    if (storedSource == QStringLiteral("manual"))
+    {
+        m_contextTokenLimitSource =
+            storedSelectionMatches ? QStringLiteral("手动设置")
+                                   : QStringLiteral("手动回退值");
+    }
+    else if (storedSource == QStringLiteral("models.dev"))
+    {
+        if (storedSelectionMatches)
+        {
+            m_contextTokenLimitSource = QStringLiteral("Models.dev");
+        }
+        else
+        {
+            m_contextTokenLimit =
+                ContextTokenEstimator::DefaultContextTokenLimit;
+            m_contextTokenLimitSource = QStringLiteral("默认值，待识别");
+        }
+    }
+    else if (storedSource == QStringLiteral("auto") &&
+             storedSelectionMatches)
+    {
+        m_contextTokenLimitSource = QStringLiteral("自动识别中，当前值作为回退");
+    }
+    else
+        m_contextTokenLimitSource = QStringLiteral("默认值");
+    updateContextTokenDisplay();
+
+    const bool currentManualValue =
+        storedSource == QStringLiteral("manual") &&
+        storedSelectionMatches;
+    if (currentManualValue)
+        return;
+
+    if (!m_modelContextCatalog.isEmpty())
+        applyModelContextCatalog();
+    else
+        requestModelContextCatalog();
+}
+
+/*下载 models.dev 的通用模型元数据*/
+void Dialog::requestModelContextCatalog()
+{
+    if (!m_modelContextCatalogManager ||
+        m_modelContextCatalogRequestInFlight)
+        return;
+
+    m_modelContextCatalogRequestInFlight = true;
+    QNetworkRequest request{QUrl(QStringLiteral(
+        "https://models.dev/models.json"))};
+    request.setRawHeader("Accept", "application/json");
+    request.setHeader(
+        QNetworkRequest::UserAgentHeader,
+        QStringLiteral("ZcChat2/%1")
+            .arg(QCoreApplication::applicationVersion()));
+    request.setTransferTimeout(10000);
+
+    QNetworkReply *reply = m_modelContextCatalogManager->get(request);
+    connect(reply, &QNetworkReply::finished, this,
+            [this, reply]()
+            {
+                m_modelContextCatalogRequestInFlight = false;
+                const QByteArray data = reply->readAll();
+                const QNetworkReply::NetworkError replyError = reply->error();
+                const QString replyErrorString = reply->errorString();
+                reply->deleteLater();
+                if (replyError != QNetworkReply::NoError)
+                {
+                    qWarning() << "model_context.fetch.failed"
+                               << replyErrorString;
+                    reportContextTokenLimitResolutionFailure(
+                        QStringLiteral("Models.dev 访问失败，保留当前值"));
+                    return;
+                }
+
+                QJsonParseError parseError;
+                const QJsonDocument document =
+                    QJsonDocument::fromJson(data, &parseError);
+                const QJsonObject catalog = document.object();
+                if (parseError.error != QJsonParseError::NoError ||
+                    !document.isObject() || catalog.isEmpty())
+                {
+                    qWarning() << "model_context.fetch.invalid_catalog"
+                               << parseError.errorString();
+                    reportContextTokenLimitResolutionFailure(
+                        QStringLiteral("Models.dev 返回无效数据，保留当前值"));
+                    return;
+                }
+
+                m_modelContextCatalog = catalog;
+                applyModelContextCatalog();
+            });
+}
+
+/*将模型名匹配到 models.dev 的上下文窗口*/
+void Dialog::applyModelContextCatalog()
+{
+    const QString configPath = ReadCharacterUserConfigPath();
+    if (configPath.isEmpty() || m_modelContextCatalog.isEmpty())
+        return;
+
+    ZcJsonLib charConfig(configPath);
+    const QString provider = charConfig.value("serverSelect").toString();
+    const QString model = charConfig.value("modelSelect").toString();
+    const QString storedSource =
+        charConfig.value("contextTokenLimitSource").toString();
+    const QString storedModel =
+        charConfig.value("contextTokenModel").toString();
+    const QString storedProvider =
+        charConfig.value("contextTokenProvider").toString();
+    if (storedSource == QStringLiteral("manual") &&
+        ModelContextCatalog::selectionMatches(storedProvider, storedModel,
+                                              provider, model))
+        return;
+
+    const ModelContextCatalog::Match match =
+        ModelContextCatalog::findContextWindow(m_modelContextCatalog,
+                                               provider, model);
+    if (!match.isValid())
+    {
+        qInfo() << "model_context.lookup.not_found"
+                << "provider" << provider << "model" << model;
+        reportContextTokenLimitResolutionFailure(
+            QStringLiteral("Models.dev 未找到该模型，保留当前值"));
+        return;
+    }
+
+    m_contextTokenLimit = qBound(
+        ContextTokenEstimator::MinimumContextTokenLimit,
+        match.contextTokenLimit,
+        ContextTokenEstimator::MaximumContextTokenLimit);
+    m_contextTokenLimitSource = QStringLiteral("Models.dev");
+    charConfig.setValue("contextTokenLimit", m_contextTokenLimit);
+    charConfig.setValue("contextTokenLimitSource",
+                        QStringLiteral("models.dev"));
+    charConfig.setValue("contextTokenModel", model);
+    charConfig.setValue("contextTokenProvider", provider);
+
+    qInfo() << "model_context.lookup.completed"
+            << "provider" << provider << "model" << model
+            << "canonical_model" << match.canonicalModelId
+            << "context_tokens" << m_contextTokenLimit;
+    emit contextTokenLimitResolved(model, m_contextTokenLimit);
+    updateContextTokenDisplay();
+}
+
+/*报告上下文上限自动获取失败*/
+void Dialog::reportContextTokenLimitResolutionFailure(const QString &message)
+{
+    const QString configPath = ReadCharacterUserConfigPath();
+    QString model;
+    if (!configPath.isEmpty())
+    {
+        ZcJsonLib charConfig(configPath);
+        model = charConfig.value("modelSelect").toString().trimmed();
+    }
+    m_contextTokenLimitSource = message;
+    updateContextTokenDisplay();
+    if (!model.isEmpty())
+        emit contextTokenLimitResolutionFailed(model, message);
+}
+
+/*刷新对话框中的上下文剩余量*/
+void Dialog::updateContextTokenDisplay()
+{
+    const auto applyProgressStyle =
+        [this](const QString &chunkColor, const QString &trackColor)
+    {
+        const QString styleSheet =
+            QStringLiteral("QProgressBar {"
+                           "border: none;"
+                           "border-radius: 2px;"
+                           "background-color: %1;"
+                           "}"
+                           "QProgressBar::chunk {"
+                           "border-radius: 2px;"
+                           "background-color: %2;"
+                           "}")
+                .arg(trackColor, chunkColor);
+        if (ui->progressBar_contextTokens->styleSheet() != styleSheet)
+            ui->progressBar_contextTokens->setStyleSheet(styleSheet);
+    };
+    const auto applyToolTip = [this](const QString &toolTip)
+    {
+        ui->widget_contextTokenHoverArea->setToolTip(toolTip);
+        ui->progressBar_contextTokens->setToolTip(toolTip);
+        ui->progressBar_contextTokens->setAccessibleDescription(toolTip);
+    };
+
+    if (m_contextTokenLimit <= 0)
+    {
+        ui->progressBar_contextTokens->setRange(0, 1);
+        ui->progressBar_contextTokens->setValue(0);
+        applyToolTip(QStringLiteral("选择角色和对话模型后显示剩余 Token"));
+        applyProgressStyle(QStringLiteral("rgba(88, 94, 104, 78)"),
+                           QStringLiteral("rgba(44, 49, 56, 18)"));
+        return;
+    }
+
+    QString pendingInput;
+    if (m_llmReplyInFlight && !m_lastUserInput.isEmpty())
+        pendingInput = m_lastUserInput;
+    else if (ui->textEdit->isEnabled())
+        pendingInput = ui->textEdit->toPlainText().trimmed();
+
+    int estimatedUsed = m_inFlightRequestTokenEstimate;
+    if (!m_llmReplyInFlight || estimatedUsed <= 0)
+    {
+        const QString requestMessage =
+            buildUserMessageWithContext(pendingInput);
+        estimatedUsed = ContextTokenEstimator::estimateChatRequestTokens(
+            m_systemPromptForTokenEstimate, requestMessage);
+    }
+    // 生成过程中，模型已输出的内容同样占用本轮上下文窗口。
+    if (m_llmReplyInFlight && !m_streamRawReply.isEmpty())
+        estimatedUsed +=
+            4 + ContextTokenEstimator::estimateTextTokens(m_streamRawReply);
+    const int remaining = ContextTokenEstimator::remainingTokens(
+        m_contextTokenLimit, estimatedUsed);
+    const QLocale locale;
+
+    ui->progressBar_contextTokens->setRange(0, m_contextTokenLimit);
+    ui->progressBar_contextTokens->setValue(remaining);
+
+    const bool isExhausted = remaining <= 0;
+    const bool nearlyExhausted =
+        remaining <= qMax(1, m_contextTokenLimit / 10);
+    const QString chunkColor =
+        isExhausted ? QStringLiteral("#B7605F")
+                    : nearlyExhausted ? QStringLiteral("#B4874C")
+                                      : QStringLiteral("#7A818B");
+    const QString trackColor =
+        isExhausted ? QStringLiteral("rgba(183, 96, 95, 38)")
+                    : QStringLiteral("rgba(44, 49, 56, 20)");
+    applyProgressStyle(chunkColor, trackColor);
+
+    const QString tooltip =
+        ContextTokenEstimator::formatContextProgressToolTip(
+            m_contextTokenLimit, estimatedUsed, m_contextTokenLimitSource,
+            locale);
+    applyToolTip(tooltip);
+}
+
 /*添加历史记录行*/
 void Dialog::appendHistoryLine(const QString &line)
 {
@@ -279,6 +602,7 @@ void Dialog::stopPendingConversationState()
         m_vitsPlayer->stop();
 
     m_llmReplyInFlight = false;
+    m_inFlightRequestTokenEstimate = 0;
     if (m_speechController)
         m_speechController->setConversationBusy(false);
 }
@@ -296,6 +620,7 @@ Dialog::Dialog(QWidget *parent)
 
     /*Vits初始化*/
     m_vitsManager = new QNetworkAccessManager(this);
+    m_modelContextCatalogManager = new QNetworkAccessManager(this);
     m_vitsPlayer = new QMediaPlayer(this);
     m_vitsAudioOutput = new QAudioOutput(this);
     m_vitsPlayer->setAudioOutput(m_vitsAudioOutput);
@@ -339,6 +664,8 @@ Dialog::Dialog(QWidget *parent)
                         QPoint(ui->pushButton_input->width() / 2, 0)),
                     error, ui->pushButton_input, QRect(), 5000);
             });
+    connect(ui->textEdit, &QTextEdit::textChanged, this,
+            &Dialog::updateContextTokenDisplay);
     ReloadAIConfig();
     ReloadGeneralConfig();
     ReloadSpeechInputConfig();
@@ -348,6 +675,7 @@ Dialog::Dialog(QWidget *parent)
     connect(ai, &AiProvider::replyChunkReceived, [=](const QString &chunk)
             {
                 m_streamRawReply += chunk; //追加
+                updateContextTokenDisplay();
 
                 /*提取中文*/
                 const int firstSep = m_streamRawReply.indexOf('|'); //寻找第一个分隔符
@@ -404,6 +732,7 @@ Dialog::Dialog(QWidget *parent)
     connect(ai, &AiProvider::replyReceived, [=](const QString &reply)
             {
                 m_llmReplyInFlight = false;
+                m_inFlightRequestTokenEstimate = 0;
                 const QString finalReply = m_streamRawReply.isEmpty()
                                                ? reply
                                                : m_streamRawReply; //确保使用完整结果
@@ -453,11 +782,13 @@ Dialog::Dialog(QWidget *parent)
                 m_streamDisplayedChinese.clear();
                 m_streamVitsEnabled = false;
                 m_streamSynthCursor = 0;
+                updateContextTokenDisplay();
                 maybeFinishConversationOutput(); });
     //错误处理
     connect(ai, &AiProvider::errorOccurred, [=](const QString &error)
             {
                 m_llmReplyInFlight = false;
+                m_inFlightRequestTokenEstimate = 0;
                 qCritical().noquote() << "API 请求失败：" << error;
                 ui->pushButton_next->show();
                 ui->textEdit->setText(error);
@@ -540,6 +871,7 @@ void Dialog::ReloadAIConfig()
     //读取当前角色的模型选择
     QString modelSelect = CharConfig.value("modelSelect").toString();
     ai->setModel(modelSelect);
+    m_systemPromptForTokenEstimate = buildSystemPrompt();
 
     qInfo() << "ai.config.reloaded"
                   << "provider" << serverSelect
@@ -547,6 +879,7 @@ void Dialog::ReloadAIConfig()
                   << "credential_configured" << !apiKey.trimmed().isEmpty();
 
     loadContextHistory();
+    refreshContextTokenLimit();
 }
 
 /*重载语音输入配置*/
@@ -1074,35 +1407,8 @@ bool Dialog::submitCurrentInput()
         return false;
     }
 
-    QDir dir(ReadCharacterTachiePath());
-    QStringList nameFilters;
-    nameFilters << "*.png" << "*.jpg" << "*.jpeg";
-    QStringList fileNames = dir.entryList(nameFilters, QDir::Files);
-    QString nameListStr;
-    for (const QString &fileName : fileNames)
-        nameListStr += fileName.section('.', 0, 0) + ", ";
-
-    ZcJsonLib roleConfig(CharacterAssestPath + "/" + ReadNowSelectChar() +
-                         "/config.json");
-    const QString characterPrompt =
-        roleConfig.value("prompt").toString().trimmed();
-    QString systemPrompt;
-    if (!characterPrompt.isEmpty())
-        systemPrompt += QStringLiteral("角色设定：") + characterPrompt +
-                        QStringLiteral("\n请始终保持该设定进行回复。\n\n");
-    systemPrompt +=
-        QStringLiteral("你是一个桌宠 AI，输出内容必须严格按照以下格式：\n"
-                       "心情|中文|日语\n\n"
-                       "要求：\n"
-                       "1. 心情必须从以下列表中选择：") +
-        nameListStr + "\n" +
-        QStringLiteral("2. 中文是桌宠此刻想表达的内容\n"
-                       "3. 日语是中文内容的对应翻译\n"
-                       "4. 输出中不能有多余内容或解释，严格用“|”分隔\n\n"
-                       "示例输出：\n"
-                       "快乐|今天的天气真好呀！|今日はいい天気ですね！\n"
-                       "生气|为什么一直打扰我！|なんでずっと邪魔するの！");
-    ai->setSystemPrompt(systemPrompt);
+    m_systemPromptForTokenEstimate = buildSystemPrompt();
+    ai->setSystemPrompt(m_systemPromptForTokenEstimate);
 
     m_lastUserInput = userInput;
     m_llmReplyInFlight = true;
@@ -1132,6 +1438,9 @@ bool Dialog::submitCurrentInput()
     if (m_vitsPlayer)
         m_vitsPlayer->stop();
     const QString requestMessage = buildUserMessageWithContext(userInput);
+    m_inFlightRequestTokenEstimate =
+        ContextTokenEstimator::estimateChatRequestTokens(
+            m_systemPromptForTokenEstimate, requestMessage);
     const QString provider = charConfig.value("serverSelect").toString();
     const QString model = charConfig.value("modelSelect").toString();
     qInfo().noquote() << "发送 API 请求："
