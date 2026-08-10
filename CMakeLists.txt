@@ -176,6 +176,8 @@ set(PROJECT_SOURCES
         main.cpp
         utils/createwin.cpp
         utils/createwin.h
+        utils/ContextHistoryCompressor.cpp
+        utils/ContextHistoryCompressor.h
         utils/ContextTokenEstimator.cpp
         utils/ContextTokenEstimator.h
         utils/ModelContextCatalog.cpp
@@ -442,6 +444,23 @@ if(BUILD_TESTING)
         Qt6::Test
     )
     add_test(NAME ZcChatContextTokenTests COMMAND ZcChatContextTokenTests)
+
+    qt_add_executable(ZcChatContextHistoryCompressorTests
+        tests/test_contexthistorycompressor.cpp
+        utils/ContextHistoryCompressor.cpp
+        utils/ContextHistoryCompressor.h
+        utils/ContextTokenEstimator.cpp
+        utils/ContextTokenEstimator.h
+    )
+    target_include_directories(ZcChatContextHistoryCompressorTests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils
+    )
+    target_link_libraries(ZcChatContextHistoryCompressorTests PRIVATE
+        Qt6::Core
+        Qt6::Test
+    )
+    add_test(NAME ZcChatContextHistoryCompressorTests
+             COMMAND ZcChatContextHistoryCompressorTests)
 
     qt_add_executable(ZcChatModelContextCatalogTests
         tests/test_modelcontextcatalog.cpp

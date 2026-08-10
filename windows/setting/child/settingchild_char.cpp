@@ -5,6 +5,7 @@
 
 #include "ZcJsonLib.h"
 
+#include "../../../utils/ContextHistoryCompressor.h"
 #include "../../../utils/ContextTokenEstimator.h"
 #include "../../../utils/ModelContextCatalog.h"
 
@@ -304,15 +305,21 @@ SettingChild_Char::~SettingChild_Char()
     delete ui;
 }
 
-/*重置上下文上限编辑器*/
-void SettingChild_Char::ResetContextTokenLimitEditor()
+/*重置上下文相关编辑器*/
+void SettingChild_Char::ResetContextEditors()
 {
     m_contextTokenLimitAutoRequestPending = false;
-    const QSignalBlocker blocker(ui->spinBox_ContextTokenLimit);
+    const QSignalBlocker contextLimitBlocker(
+        ui->spinBox_ContextTokenLimit);
+    const QSignalBlocker thresholdBlocker(
+        ui->spinBox_ContextAutoCompactThreshold);
     ui->spinBox_ContextTokenLimit->setValue(
         ContextTokenEstimator::DefaultContextTokenLimit);
     ui->spinBox_ContextTokenLimit->setEnabled(false);
     ui->pushButton_AutoContextTokenLimit->setEnabled(false);
+    ui->spinBox_ContextAutoCompactThreshold->setValue(
+        ContextHistoryCompressor::DefaultTriggerPercent);
+    ui->spinBox_ContextAutoCompactThreshold->setEnabled(false);
     ui->spinBox_ContextTokenLimit->setToolTip(
         QStringLiteral("选择角色和模型后可设置上下文上限"));
 }
@@ -322,13 +329,15 @@ void SettingChild_Char::LoadCurrentCharConfig()
 {
     m_contextTokenLimitAutoRequestPending = false;
     const QSignalBlocker contextLimitBlocker(ui->spinBox_ContextTokenLimit);
+    const QSignalBlocker thresholdBlocker(
+        ui->spinBox_ContextAutoCompactThreshold);
     QString charName = ui->comboBox_CharList->currentText();
     if (charName.isEmpty() || charName == "未选择")
     {
         //如果没有选择角色，清空配置项显示
         ui->plainTextEdit_CharPrompt->clear();
         ui->spinBox_TachieSize->setValue(0);
-        ResetContextTokenLimitEditor();
+        ResetContextEditors();
         ClearTachieBindingRows();
         ui->comboBox_ModelSelect->clear();
         ui->lineEdit_SpeechWakeWords->clear();
@@ -373,12 +382,12 @@ void SettingChild_Char::LoadCurrentCharConfig()
     const bool hasModel = !modelSelect.trimmed().isEmpty();
     ui->spinBox_ContextTokenLimit->setEnabled(hasModel);
     ui->pushButton_AutoContextTokenLimit->setEnabled(hasModel);
-    const int contextTokenLimit = ContextTokenEstimator::validatedTokenLimit(
-        charUserConfig
-            .value("contextTokenLimit",
-                   ContextTokenEstimator::DefaultContextTokenLimit)
-            .toInt(ContextTokenEstimator::DefaultContextTokenLimit));
-    ui->spinBox_ContextTokenLimit->setValue(contextTokenLimit);
+    const int storedContextTokenLimit =
+        ContextTokenEstimator::validatedTokenLimit(
+            charUserConfig
+                .value("contextTokenLimit",
+                       ContextTokenEstimator::DefaultContextTokenLimit)
+                .toInt(ContextTokenEstimator::DefaultContextTokenLimit));
     const QString contextTokenLimitSource =
         charUserConfig.value("contextTokenLimitSource").toString();
     const QString contextTokenModel =
@@ -388,6 +397,9 @@ void SettingChild_Char::LoadCurrentCharConfig()
     const bool contextTokenSelectionMatches =
         ModelContextCatalog::selectionMatches(
             contextTokenProvider, contextTokenModel, serverSelect, modelSelect);
+    ui->spinBox_ContextTokenLimit->setValue(
+        ContextTokenEstimator::tokenLimitForSelection(
+            storedContextTokenLimit, contextTokenSelectionMatches));
     if (modelSelect.trimmed().isEmpty())
     {
         ui->spinBox_ContextTokenLimit->setToolTip(
@@ -416,6 +428,15 @@ void SettingChild_Char::LoadCurrentCharConfig()
         ui->spinBox_ContextTokenLimit->setToolTip(
             QStringLiteral("将优先根据 Models.dev 自动识别；查不到时可手动设置"));
     }
+    const int autoCompactThreshold =
+        ContextHistoryCompressor::validatedTriggerPercent(
+            charUserConfig
+                .value(
+                    "contextAutoCompactThresholdPercent",
+                    ContextHistoryCompressor::DefaultTriggerPercent)
+                .toInt(ContextHistoryCompressor::DefaultTriggerPercent));
+    ui->spinBox_ContextAutoCompactThreshold->setValue(autoCompactThreshold);
+    ui->spinBox_ContextAutoCompactThreshold->setEnabled(hasModel);
     //Vits语音合成选择
     bool vitsEnable = charUserConfig.value("vitsEnable").toBool();
     ui->ToggleSwitch_VitsEnable->setIsToggled(vitsEnable);
@@ -478,7 +499,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
     //清空配置显示
     ui->plainTextEdit_CharPrompt->clear();
     ui->spinBox_TachieSize->setValue(0);
-    ResetContextTokenLimitEditor();
+    ResetContextEditors();
     ui->comboBox_ModelSelect->clear();
     ui->lineEdit_SpeechWakeWords->clear();
     ui->lineEdit_SpeechEndWords->clear();
@@ -603,6 +624,12 @@ void SettingChild_Char::on_comboBox_ModelSelect_currentTextChanged(
     const bool hasModel = !modelSelect.trimmed().isEmpty();
     ui->spinBox_ContextTokenLimit->setEnabled(hasModel);
     ui->pushButton_AutoContextTokenLimit->setEnabled(hasModel);
+    ui->spinBox_ContextAutoCompactThreshold->setEnabled(hasModel);
+    {
+        const QSignalBlocker blocker(ui->spinBox_ContextTokenLimit);
+        ui->spinBox_ContextTokenLimit->setValue(
+            ContextTokenEstimator::DefaultContextTokenLimit);
+    }
     ui->spinBox_ContextTokenLimit->setToolTip(
         modelSelect.trimmed().isEmpty()
             ? QStringLiteral("选择模型后可设置上下文上限")
@@ -631,6 +658,23 @@ void SettingChild_Char::on_pushButton_AutoContextTokenLimit_clicked()
     ui->spinBox_ContextTokenLimit->setToolTip(
         QStringLiteral("正在根据 Models.dev 自动获取；失败时保留当前值"));
     m_contextTokenLimitAutoRequestPending = true;
+    emit requestReloadAIConfig();
+}
+
+/*修改上下文自动压缩触发阈值*/
+void SettingChild_Char::on_spinBox_ContextAutoCompactThreshold_valueChanged(
+    int value)
+{
+    if (!isAlreadyLoading)
+        return;
+
+    const QString configPath = ReadCharacterUserConfigPath();
+    if (configPath.isEmpty())
+        return;
+    ZcJsonLib charConfig(configPath);
+    charConfig.setValue(
+        "contextAutoCompactThresholdPercent",
+        ContextHistoryCompressor::validatedTriggerPercent(value));
     emit requestReloadAIConfig();
 }
 

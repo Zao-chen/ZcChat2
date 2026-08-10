@@ -10,6 +10,8 @@ namespace Ui
 class SettingChild_LLM;
 }
 
+class QTimer;
+
 class SettingChild_LLM : public QWidget
 {
     Q_OBJECT
@@ -20,6 +22,7 @@ class SettingChild_LLM : public QWidget
 
   signals:
     void modelListRefreshed(); //LLM模型列表已刷新
+    void llmConfigChanged();   //API Key 或接口地址已修改
 
   private slots:
     void on_pushButton_Openai_Set_clicked();
@@ -36,6 +39,7 @@ class SettingChild_LLM : public QWidget
     QString NowSelectServer; //当前正在编辑的模型
     QString modelFetchServer;
     QStringListModel *modelListModel;
+    QTimer *m_configReloadDebounce = nullptr;
     bool isLoadingConfig = false;
 };
 

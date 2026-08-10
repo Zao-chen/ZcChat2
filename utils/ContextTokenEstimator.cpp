@@ -57,6 +57,12 @@ int validatedTokenLimit(int tokenLimit)
     return tokenLimit;
 }
 
+int tokenLimitForSelection(int storedTokenLimit, bool selectionMatches)
+{
+    return selectionMatches ? validatedTokenLimit(storedTokenLimit)
+                            : DefaultContextTokenLimit;
+}
+
 int remainingTokens(int tokenLimit, int estimatedUsedTokens)
 {
     return qMax(0, tokenLimit - qMax(0, estimatedUsedTokens));

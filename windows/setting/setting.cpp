@@ -138,6 +138,8 @@ MainWindow::MainWindow(Dialog *dialog, Tachie *tachie, QWidget *parent)
     //获取模型列表后刷新角色页的模型下拉框
     connect(settingchild_llmWin, &SettingChild_LLM::modelListRefreshed,
             settingchild_charWin, &SettingChild_Char::RefreshModelList); //刷新LLM模型列表
+    connect(settingchild_llmWin, &SettingChild_LLM::llmConfigChanged,
+            dialog, &Dialog::ReloadAIConfig); //重载接口凭据和地址
     connect(settingchild_vitsWin, &SettingChild_Vits::vitsModelListRefreshed,
             settingchild_charWin, &SettingChild_Char::RefreshVitsModelList); //刷新Vits模型列表
     connect(settingchild_speechWin, &SettingChild_Speech::speechConfigChanged,

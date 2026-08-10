@@ -37,6 +37,7 @@ class SettingChild_Char : public QWidget
     void on_comboBox_ModelSelect_currentTextChanged(const QString &arg1);
     void on_spinBox_ContextTokenLimit_valueChanged(int value);
     void on_pushButton_AutoContextTokenLimit_clicked();
+    void on_spinBox_ContextAutoCompactThreshold_valueChanged(int value);
     void on_pushButton_ResetTachieLoc_clicked();
     void on_comboBox_Vits_MASSelect_currentTextChanged(const QString &arg1);
     void on_ToggleSwitch_VitsEnable_toggled(bool checked);
@@ -63,7 +64,7 @@ class SettingChild_Char : public QWidget
     bool m_contextTokenLimitAutoRequestPending = false;
     AnimePluginManager m_pluginManager;
     QList<QWidget *> m_tachieBindingRows;
-    void ResetContextTokenLimitEditor();
+    void ResetContextEditors();
     void LoadCurrentCharConfig();
     void RefreshCharList();
     void ClearTachieBindingRows();

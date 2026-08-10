@@ -78,12 +78,32 @@ class Dialog : public QWidget
     void loadContextHistory(); //加载上下文历史
     void saveContextHistory() const;
     void stopPendingConversationState();
+    QStringList activeContextHistory() const;
     bool isHistoryOpen = false;
     QStringList m_contextHistory;
+    QString m_contextSummary;
+    int m_compactedHistoryCount = 0;
 
     QString buildUserMessageWithContext(
         const QString &input) const; //构建用户消息，包含上下文
+    QString buildUserMessageWithHistory(
+        const QString &input, const QStringList &history) const;
     QString buildSystemPrompt() const;
+    QString buildContextCompactionSystemPrompt() const;
+    void configureAiProvider(AiProvider *provider) const;
+    void resetChatProvider();
+    void resetContextCompactionProvider();
+    void handleChatReplyChunk(const QString &chunk);
+    void handleChatReply(const QString &reply);
+    void handleChatError(const QString &error);
+    bool startAutoContextCompaction(const QString &userInput);
+    void handleContextCompactionReply(const QString &reply);
+    void handleContextCompactionError(const QString &error);
+    void finishContextCompactionWithFallback(const QString &message);
+    void clearPendingContextCompaction();
+    void sendChatRequest(
+        const QString &userInput,
+        const QString &preparedRequestMessage = QString());
     void refreshContextTokenLimit();
     void requestModelContextCatalog();
     void applyModelContextCatalog();
@@ -93,16 +113,27 @@ class Dialog : public QWidget
     void appendHistoryLine(const QString &line); //添加历史记录行
     void tryStartNextVitsRequest();              //添加到Vits请求
     AiProvider *ai = nullptr;                    //用于AI交互
+    AiProvider *m_contextCompactionAi = nullptr;
 
     QString m_lastUserInput;
     QString m_streamRawReply;
     QString m_streamDisplayedChinese;
     QString m_systemPromptForTokenEstimate;
     QString m_contextTokenLimitSource;
+    QString m_pendingCompactionUserInput;
+    QString m_pendingCompactionSource;
+    QString m_pendingCompactionContextToReplace;
+    QString m_pendingCompactionContextPath;
+    QString m_aiSessionKey;
     QJsonObject m_modelContextCatalog;
     int m_contextTokenLimit = 0;
     int m_inFlightRequestTokenEstimate = 0;
+    int m_pendingCompactionBoundary = 0;
+    int m_pendingCompactionHistorySize = 0;
+    int m_contextAutoCompactThresholdPercent = 0;
+    int m_contextCompactionConsecutiveFailures = 0;
     bool m_modelContextCatalogRequestInFlight = false;
+    bool m_contextCompactionInFlight = false;
     bool m_speechInputEnabled = false; //语音输入总开关，用于控制按钮可用性。
     bool m_globalSpeechHotkeyEnabled = false; //全局录音热键是否启用
     bool m_globalSpeechHotkeyPressed = false; //当前热键是否处于按下录音中

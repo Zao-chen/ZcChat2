@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QSettings>
+#include <QTimer>
 
 SettingChild_LLM::SettingChild_LLM(QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingChild_LLM)
@@ -17,6 +18,11 @@ SettingChild_LLM::SettingChild_LLM(QWidget *parent)
     ui->BreadcrumbBar->setTextPixelSize(25);
     ui->BreadcrumbBar->appendBreadcrumb("对话模型设置");
     modelListModel = new QStringListModel(this);
+    m_configReloadDebounce = new QTimer(this);
+    m_configReloadDebounce->setSingleShot(true);
+    m_configReloadDebounce->setInterval(300);
+    connect(m_configReloadDebounce, &QTimer::timeout, this,
+            &SettingChild_LLM::llmConfigChanged);
     //使用透明列表背景，交由设置窗口统一绘制Ela主题色
     ui->listView_ModelList->setIsTransparent(true);
     ui->listView_ModelList->setModel(modelListModel);
@@ -261,6 +267,7 @@ void SettingChild_LLM::on_lineEdit_ApiKey_textChanged(const QString &arg1)
         ui->label_Deepseek_Status->setVisible(false);
     else if (NowSelectServer == "Custom")
         ui->label_Custom_Status->setVisible(false);
+    m_configReloadDebounce->start();
 }
 
 //修改Baseurl
@@ -278,4 +285,5 @@ void SettingChild_LLM::on_lineEdit_BaseUrl_textChanged(const QString &arg1)
     config.setValue("llm/Custom/ModelList", QJsonArray());
     modelListModel->setStringList(QStringList());
     ui->label_Custom_Status->setVisible(false);
+    m_configReloadDebounce->start();
 }

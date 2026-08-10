@@ -19,6 +19,8 @@ int estimateChatRequestTokens(const QString &systemPrompt,
                               const QString &userMessage);
 // 配置值越界时回退到默认上限。
 int validatedTokenLimit(int tokenLimit);
+// 保存值只对原服务商和模型有效；选择变化时回退到安全默认值。
+int tokenLimitForSelection(int storedTokenLimit, bool selectionMatches);
 int remainingTokens(int tokenLimit, int estimatedUsedTokens);
 QString formatContextProgressToolTip(int tokenLimit,
                                      int estimatedUsedTokens,

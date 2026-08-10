@@ -11,6 +11,7 @@ class ContextTokenEstimatorTests : public QObject
     void estimatesCommonTextTypes();
     void includesChatMessageOverhead();
     void validatesContextTokenLimits();
+    void doesNotReuseLimitsAcrossSelections();
     void clampsRemainingTokensAtZero();
     void formatsProgressToolTip();
 };
@@ -49,6 +50,14 @@ void ContextTokenEstimatorTests::validatesContextTokenLimits()
              ContextTokenEstimator::DefaultContextTokenLimit);
     QCOMPARE(ContextTokenEstimator::validatedTokenLimit(
                  ContextTokenEstimator::MaximumContextTokenLimit + 1),
+             ContextTokenEstimator::DefaultContextTokenLimit);
+}
+
+void ContextTokenEstimatorTests::doesNotReuseLimitsAcrossSelections()
+{
+    QCOMPARE(ContextTokenEstimator::tokenLimitForSelection(128000, true),
+             128000);
+    QCOMPARE(ContextTokenEstimator::tokenLimitForSelection(1000000, false),
              ContextTokenEstimator::DefaultContextTokenLimit);
 }
 
