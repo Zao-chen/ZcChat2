@@ -5,6 +5,10 @@
 
 #include "ZcJsonLib.h"
 
+#include "../../../utils/ContextHistoryCompressor.h"
+#include "../../../utils/ContextTokenEstimator.h"
+#include "../../../utils/ModelContextCatalog.h"
+
 #include "ElaComboBox.h"
 #include "ElaContentDialog.h"
 #include "ElaMessageBar.h"
@@ -23,6 +27,7 @@
 #include <QJsonObject>
 #include <QProcess>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QStandardPaths>
 #include <QVBoxLayout>
 
@@ -269,6 +274,13 @@ SettingChild_Char::SettingChild_Char(QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingChild_Char)
 {
     ui->setupUi(this);
+    ui->spinBox_ContextTokenLimit->setRange(
+        ContextTokenEstimator::MinimumContextTokenLimit,
+        ContextTokenEstimator::MaximumContextTokenLimit);
+    ui->spinBox_ContextTokenLimit->setSingleStep(
+        ContextTokenEstimator::ContextTokenLimitStep);
+    ui->spinBox_ContextTokenLimit->setValue(
+        ContextTokenEstimator::DefaultContextTokenLimit);
     //初始化动画管理器
     m_pluginManager.Reload();
 
@@ -293,15 +305,39 @@ SettingChild_Char::~SettingChild_Char()
     delete ui;
 }
 
+/*重置上下文相关编辑器*/
+void SettingChild_Char::ResetContextEditors()
+{
+    m_contextTokenLimitAutoRequestPending = false;
+    const QSignalBlocker contextLimitBlocker(
+        ui->spinBox_ContextTokenLimit);
+    const QSignalBlocker thresholdBlocker(
+        ui->spinBox_ContextAutoCompactThreshold);
+    ui->spinBox_ContextTokenLimit->setValue(
+        ContextTokenEstimator::DefaultContextTokenLimit);
+    ui->spinBox_ContextTokenLimit->setEnabled(false);
+    ui->pushButton_AutoContextTokenLimit->setEnabled(false);
+    ui->spinBox_ContextAutoCompactThreshold->setValue(
+        ContextHistoryCompressor::DefaultTriggerPercent);
+    ui->spinBox_ContextAutoCompactThreshold->setEnabled(false);
+    ui->spinBox_ContextTokenLimit->setToolTip(
+        QStringLiteral("选择角色和模型后可设置上下文上限"));
+}
+
 /*加载角色配置*/
 void SettingChild_Char::LoadCurrentCharConfig()
 {
+    m_contextTokenLimitAutoRequestPending = false;
+    const QSignalBlocker contextLimitBlocker(ui->spinBox_ContextTokenLimit);
+    const QSignalBlocker thresholdBlocker(
+        ui->spinBox_ContextAutoCompactThreshold);
     QString charName = ui->comboBox_CharList->currentText();
     if (charName.isEmpty() || charName == "未选择")
     {
         //如果没有选择角色，清空配置项显示
         ui->plainTextEdit_CharPrompt->clear();
         ui->spinBox_TachieSize->setValue(0);
+        ResetContextEditors();
         ClearTachieBindingRows();
         ui->comboBox_ModelSelect->clear();
         ui->lineEdit_SpeechWakeWords->clear();
@@ -343,6 +379,64 @@ void SettingChild_Char::LoadCurrentCharConfig()
     //模型选择
     QString modelSelect = charUserConfig.value("modelSelect").toString();
     ui->comboBox_ModelSelect->setCurrentText(modelSelect);
+    const bool hasModel = !modelSelect.trimmed().isEmpty();
+    ui->spinBox_ContextTokenLimit->setEnabled(hasModel);
+    ui->pushButton_AutoContextTokenLimit->setEnabled(hasModel);
+    const int storedContextTokenLimit =
+        ContextTokenEstimator::validatedTokenLimit(
+            charUserConfig
+                .value("contextTokenLimit",
+                       ContextTokenEstimator::DefaultContextTokenLimit)
+                .toInt(ContextTokenEstimator::DefaultContextTokenLimit));
+    const QString contextTokenLimitSource =
+        charUserConfig.value("contextTokenLimitSource").toString();
+    const QString contextTokenModel =
+        charUserConfig.value("contextTokenModel").toString();
+    const QString contextTokenProvider =
+        charUserConfig.value("contextTokenProvider").toString();
+    const bool contextTokenSelectionMatches =
+        ModelContextCatalog::selectionMatches(
+            contextTokenProvider, contextTokenModel, serverSelect, modelSelect);
+    ui->spinBox_ContextTokenLimit->setValue(
+        ContextTokenEstimator::tokenLimitForSelection(
+            storedContextTokenLimit, contextTokenSelectionMatches));
+    if (modelSelect.trimmed().isEmpty())
+    {
+        ui->spinBox_ContextTokenLimit->setToolTip(
+            QStringLiteral("选择模型后可设置上下文上限"));
+    }
+    else if (contextTokenLimitSource == QStringLiteral("models.dev") &&
+             contextTokenSelectionMatches)
+    {
+        ui->spinBox_ContextTokenLimit->setToolTip(
+            QStringLiteral("已根据 Models.dev 自动识别；修改数值后将改为手动设置"));
+    }
+    else if (contextTokenLimitSource == QStringLiteral("manual") &&
+             contextTokenSelectionMatches)
+    {
+        ui->spinBox_ContextTokenLimit->setToolTip(
+            QStringLiteral("当前为手动设置"));
+    }
+    else if (contextTokenLimitSource == QStringLiteral("auto") &&
+             contextTokenSelectionMatches)
+    {
+        ui->spinBox_ContextTokenLimit->setToolTip(
+            QStringLiteral("正在根据 Models.dev 自动获取；失败时保留当前值"));
+    }
+    else
+    {
+        ui->spinBox_ContextTokenLimit->setToolTip(
+            QStringLiteral("将优先根据 Models.dev 自动识别；查不到时可手动设置"));
+    }
+    const int autoCompactThreshold =
+        ContextHistoryCompressor::validatedTriggerPercent(
+            charUserConfig
+                .value(
+                    "contextAutoCompactThresholdPercent",
+                    ContextHistoryCompressor::DefaultTriggerPercent)
+                .toInt(ContextHistoryCompressor::DefaultTriggerPercent));
+    ui->spinBox_ContextAutoCompactThreshold->setValue(autoCompactThreshold);
+    ui->spinBox_ContextAutoCompactThreshold->setEnabled(hasModel);
     //Vits语音合成选择
     bool vitsEnable = charUserConfig.value("vitsEnable").toBool();
     ui->ToggleSwitch_VitsEnable->setIsToggled(vitsEnable);
@@ -405,6 +499,7 @@ void SettingChild_Char::on_pushButton_DeleteChar_clicked()
     //清空配置显示
     ui->plainTextEdit_CharPrompt->clear();
     ui->spinBox_TachieSize->setValue(0);
+    ResetContextEditors();
     ui->comboBox_ModelSelect->clear();
     ui->lineEdit_SpeechWakeWords->clear();
     ui->lineEdit_SpeechEndWords->clear();
@@ -521,12 +616,125 @@ void SettingChild_Char::on_comboBox_ModelSelect_currentTextChanged(
 {
     if (!isAlreadyLoading)
         return;
-    Q_UNUSED(arg1)
+    m_contextTokenLimitAutoRequestPending = false;
     //保存到角色配置位置下的config.json
-    QString modelSelect = ui->comboBox_ModelSelect->currentText();
+    const QString modelSelect = arg1;
     ZcJsonLib charConfig(ReadCharacterUserConfigPath());
     charConfig.setValue("modelSelect", modelSelect);
+    const bool hasModel = !modelSelect.trimmed().isEmpty();
+    ui->spinBox_ContextTokenLimit->setEnabled(hasModel);
+    ui->pushButton_AutoContextTokenLimit->setEnabled(hasModel);
+    ui->spinBox_ContextAutoCompactThreshold->setEnabled(hasModel);
+    {
+        const QSignalBlocker blocker(ui->spinBox_ContextTokenLimit);
+        ui->spinBox_ContextTokenLimit->setValue(
+            ContextTokenEstimator::DefaultContextTokenLimit);
+    }
+    ui->spinBox_ContextTokenLimit->setToolTip(
+        modelSelect.trimmed().isEmpty()
+            ? QStringLiteral("选择模型后可设置上下文上限")
+            : QStringLiteral("正在根据 Models.dev 识别该模型；查不到时可手动设置"));
     emit requestReloadAIConfig();
+}
+
+/*自动获取当前模型的上下文 Token 上限*/
+void SettingChild_Char::on_pushButton_AutoContextTokenLimit_clicked()
+{
+    if (!isAlreadyLoading)
+        return;
+
+    const QString configPath = ReadCharacterUserConfigPath();
+    const QString model = ui->comboBox_ModelSelect->currentText().trimmed();
+    if (configPath.isEmpty() || model.isEmpty())
+        return;
+
+    const QString provider =
+        ui->comboBox_ServerSelect->currentText().trimmed();
+    ZcJsonLib charConfig(configPath);
+    charConfig.setValue("contextTokenLimitSource", QStringLiteral("auto"));
+    charConfig.setValue("contextTokenModel", model);
+    charConfig.setValue("contextTokenProvider", provider);
+
+    ui->spinBox_ContextTokenLimit->setToolTip(
+        QStringLiteral("正在根据 Models.dev 自动获取；失败时保留当前值"));
+    m_contextTokenLimitAutoRequestPending = true;
+    emit requestReloadAIConfig();
+}
+
+/*修改上下文自动压缩触发阈值*/
+void SettingChild_Char::on_spinBox_ContextAutoCompactThreshold_valueChanged(
+    int value)
+{
+    if (!isAlreadyLoading)
+        return;
+
+    const QString configPath = ReadCharacterUserConfigPath();
+    if (configPath.isEmpty())
+        return;
+    ZcJsonLib charConfig(configPath);
+    charConfig.setValue(
+        "contextAutoCompactThresholdPercent",
+        ContextHistoryCompressor::validatedTriggerPercent(value));
+    emit requestReloadAIConfig();
+}
+
+/*修改当前模型的上下文 Token 上限*/
+void SettingChild_Char::on_spinBox_ContextTokenLimit_valueChanged(int value)
+{
+    if (!isAlreadyLoading)
+        return;
+    m_contextTokenLimitAutoRequestPending = false;
+    const QString configPath = ReadCharacterUserConfigPath();
+    if (configPath.isEmpty())
+        return;
+    const QString model = ui->comboBox_ModelSelect->currentText().trimmed();
+    if (model.isEmpty())
+        return;
+
+    ZcJsonLib charConfig(configPath);
+    charConfig.setValue("contextTokenLimit", value);
+    charConfig.setValue("contextTokenLimitSource", QStringLiteral("manual"));
+    charConfig.setValue("contextTokenModel", model);
+    charConfig.setValue("contextTokenProvider",
+                        ui->comboBox_ServerSelect->currentText());
+    ui->spinBox_ContextTokenLimit->setToolTip(
+        QStringLiteral("当前为手动设置；切换模型后会重新尝试自动识别"));
+    emit requestReloadAIConfig();
+}
+
+/*接收对话框通过 models.dev 识别出的上下文上限*/
+void SettingChild_Char::ApplyResolvedContextTokenLimit(const QString &model,
+                                                       int tokenLimit)
+{
+    if (ui->comboBox_ModelSelect->currentText().compare(
+            model, Qt::CaseInsensitive) != 0)
+        return;
+
+    const QSignalBlocker blocker(ui->spinBox_ContextTokenLimit);
+    ui->spinBox_ContextTokenLimit->setValue(
+        ContextTokenEstimator::validatedTokenLimit(tokenLimit));
+    ui->spinBox_ContextTokenLimit->setToolTip(
+        QStringLiteral("已根据 Models.dev 自动识别；修改数值后将改为手动设置"));
+    if (m_contextTokenLimitAutoRequestPending)
+    {
+        m_contextTokenLimitAutoRequestPending = false;
+        ElaMessageBar::success(
+            ElaMessageBarType::TopRight, QStringLiteral("自动获取成功"),
+            QStringLiteral("当前模型的上下文上限为 %1 Token")
+                .arg(tokenLimit),
+            3000, this);
+    }
+}
+
+/*显示上下文上限自动获取失败状态*/
+void SettingChild_Char::ApplyContextTokenLimitResolutionFailure(
+    const QString &model, const QString &message)
+{
+    if (ui->comboBox_ModelSelect->currentText().compare(
+            model, Qt::CaseInsensitive) != 0)
+        return;
+    m_contextTokenLimitAutoRequestPending = false;
+    ui->spinBox_ContextTokenLimit->setToolTip(message);
 }
 
 /*重置立绘位置*/
